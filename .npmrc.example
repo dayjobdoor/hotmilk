@@ -1,2 +1,4 @@
 legacy-peer-deps=true
-//registry.npmjs.org/:_authToken=
+
+# Put registry auth in ~/.npmrc, not this file:
+# //registry.npmjs.org/:_authToken=YOUR_TOKEN

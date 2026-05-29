@@ -4,7 +4,6 @@
 .agents/
 graphify-out/
 
-.npmrc
 .env
 
 !package-lock.json

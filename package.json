@@ -60,6 +60,12 @@
     "pi-web-access": "^0.10.7"
   },
   "devDependencies": {
+    "@earendil-works/pi-agent-core": "^0.77.0",
+    "@earendil-works/pi-ai": "^0.77.0",
+    "@earendil-works/pi-coding-agent": "^0.77.0",
+    "@earendil-works/pi-tui": "^0.77.0",
+    "@types/node": "^22.15.0",
+    "typebox": "^1.1.39",
     "vite-plus": "^0.1.23"
   },
   "peerDependencies": {
@@ -115,5 +121,8 @@
     "themes": [
       "./themes"
     ]
+  },
+  "engines": {
+    "node": "22"
   }
 }
