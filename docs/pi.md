@@ -96,4 +96,4 @@ Default template keeps `gentle-ai: true`, `subagents: false` for faster startup.
 | ------- | -------------------------------------------------- | ------------------------------- |
 | Install | `npm install` + `pi install -l npm:hotmilk`        | `pi install npm:hotmilk`        |
 | Config  | Edit `hotmilk.json` template + code in `src/`      | Edit `~/.pi/agent/hotmilk.json` |
-| Tests   | `npm test` (no full Pi UI required for unit tests) | Manual session smoke test       |
+| Tests   | `bun test` (no full Pi UI required for unit tests) | Manual session smoke test       |

@@ -6,4 +6,4 @@ graphify-out/
 
 .env
 
-!package-lock.json
+!bun.lock

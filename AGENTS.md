@@ -6,12 +6,12 @@ User-facing setup: [README.md](README.md).
 
 ## Commands (this repo)
 
-| Command         | Purpose                                        |
-| --------------- | ---------------------------------------------- |
-| `npm install`   | Install deps (`legacy-peer-deps` via `.npmrc`) |
-| `npm test`      | Vitest via vite-plus                           |
-| `npm run lint`  | `vp lint`                                      |
-| `npm run check` | lint + format + test                           |
+| Command         | Purpose                          |
+| --------------- | -------------------------------- |
+| `bun install`   | Install deps (`bun.lock`)        |
+| `bun test`      | Vitest via vite-plus             |
+| `bun run lint`  | `vp lint`                        |
+| `bun run check` | lint + format + test             |
 
 Requires **Node.js 22+**. Targets **Pi 0.77** (`@earendil-works/pi-coding-agent` peers).
 
@@ -41,7 +41,7 @@ Merge with your global agent guidelines when present. For this repo:
 
 1. **Scope** — Touch only what the task requires; match existing patterns in `src/`.
 2. **Simplicity** — No speculative features; keep lazy loading (`extensions.ts`) intact.
-3. **Verify** — Run `npm test` (and `npm run lint` when changing TS or config).
+3. **Verify** — Run `bun test` (and `bun run lint` when changing TS or config).
 4. **Docs** — User-facing changes in `README.md`; update `hotmilk.json` when changing defaults (code reads it as the template).
 5. **Pi/runtime** — See [docs/pi.md](docs/pi.md).
 

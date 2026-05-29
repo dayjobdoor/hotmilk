@@ -170,18 +170,20 @@ Older **tabako** users: replace `npm:tabako` with `npm:hotmilk`; let hotmilk see
 
 ## Development
 
-Requires **Node.js 22+** and Pi **0.77** peers installed in the environment.
+Requires **Node.js 22+** (or **Bun 1.3+**), **Bun** for installs in this repo, and Pi **0.77** peers in the environment.
 
 ```bash
-npm install       # uses legacy-peer-deps via .npmrc
-npm test          # vitest via vite-plus
-npm run lint
-npm run check     # lint + format + test
+bun install       # commit bun.lock; peers resolved by Bun
+bun test          # vitest via vite-plus
+bun run lint
+bun run check     # lint + format + test
 ```
+
+`npm install` still works if you use `.npmrc` (`legacy-peer-deps=true`) and `package-lock.json`; CI uses **Bun** only.
 
 ### CI and release
 
-On push to `main`, GitHub Actions runs **lint + test**, then a separate job pushes tag `v<package.json version>` only when that tag is not already the latest GitHub release. Pushing the tag triggers **npm publish** (`publish.yml`). Bump `version` in `package.json` before expecting a new release.
+On push to `main`, GitHub Actions runs **lint + test** (`bun install --frozen-lockfile`), then a separate job pushes tag `v<package.json version>` only when that tag is not already the latest GitHub release. Pushing the tag triggers **`bun publish`** (`publish.yml`). Bump `version` in `package.json` before expecting a new release.
 
 ### Layout
 
