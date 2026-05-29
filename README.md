@@ -195,9 +195,11 @@ On push to `main`, GitHub Actions runs **lint + test** (`bun install --frozen-lo
 | Job | **`publish`** |
 | Environment | *(empty — only if the workflow uses `environment:`)* |
 
-If CI logs show **provenance OK** but **`404 PUT … hotmilk`**, OIDC works but npm did not grant write access — re-check the table above (logged-in npm user must own `hotmilk`). The publish job runs `npm whoami` before upload; it must print `dayjobdoor`.
+If CI logs show **provenance OK** but **`404 PUT … hotmilk`**, OIDC works but npm did not grant write access — re-check the table above (logged-in npm user must own `hotmilk`).
 
-**GitHub secrets:** delete **`NPM_TOKEN`** and any **`NODE_AUTH_TOKEN`** you added for npm (repository, organization, and environment secrets). `actions/setup-node` with `registry-url: https://registry.npmjs.org` automatically maps `NPM_TOKEN` → `NODE_AUTH_TOKEN`; that overrides OIDC and causes **`401` on `npm whoami`**. Keep only the automatic `GITHUB_TOKEN` (checkout/API). Do not set `NODE_AUTH_TOKEN` to `GITHUB_TOKEN` — it is not valid for registry.npmjs.org.
+**Do not use `npm whoami` in CI for Trusted Publishing.** npm docs state that `whoami` does not reflect OIDC auth (401 is expected); authentication applies only during `npm publish` / `npm stage publish`.
+
+**GitHub secrets:** delete **`NPM_TOKEN`** and any **`NODE_AUTH_TOKEN`** you added for npm (repository, organization, and environment secrets). `actions/setup-node` with `registry-url: https://registry.npmjs.org` automatically maps `NPM_TOKEN` → `NODE_AUTH_TOKEN`; that overrides OIDC. A masked `NODE_AUTH_TOKEN` in logs without any secret is normal — it is the short-lived OIDC token from `setup-node`. Keep only the automatic `GITHUB_TOKEN` (checkout/API). Do not set `NODE_AUTH_TOKEN` to `GITHUB_TOKEN` — it is not valid for registry.npmjs.org.
 
 Local `bun publish` / `npm publish` still needs `npm login` or a token; Trusted Publishing applies to CI only.
 

@@ -38,16 +38,13 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run test
 
-      # OIDC token exchange (only when registry-url is set and NPM_TOKEN is absent).
+      # OIDC: setup-node + registry-url exchanges GitHub id-token for a short-lived npm token.
+      # npm whoami is NOT in the official workflow and returns 401 under OIDC — auth applies only to publish.
+      # https://docs.npmjs.com/trusted-publishers#github-actions
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
-
-      - name: Verify npm identity (OIDC)
-        run: |
-          npm whoami
-          npm config get registry
 
       - name: Publish to npm with provenance
         run: npm publish --provenance --access public
