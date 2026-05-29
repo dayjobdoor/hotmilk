@@ -73,20 +73,20 @@ jobs:
           PACKAGE_TAG: ${{ steps.package_version.outputs.version }}
           TAG_PUSH_PAT: ${{ secrets.TAG_PUSH_PAT }}
         run: |
-          if git ls-remote --tags origin "refs/tags/$PACKAGE_TAG" | grep -q "$PACKAGE_TAG"; then
-            echo "tag already exists on origin: $PACKAGE_TAG"
-            echo "If publish.yml did not run, the tag was likely pushed with GITHUB_TOKEN."
-            echo "Re-push with TAG_PUSH_PAT or local credentials to trigger publish:"
-            echo "  git push origin :refs/tags/$PACKAGE_TAG && git push origin $PACKAGE_TAG"
-            exit 0
-          fi
           if [ -z "$TAG_PUSH_PAT" ]; then
             echo "::error::TAG_PUSH_PAT secret is required — GITHUB_TOKEN tag pushes do not trigger publish.yml"
             echo "Add a fine-grained PAT (Contents: Read and write) as repository secret TAG_PUSH_PAT,"
-            echo "or push manually: git tag $PACKAGE_TAG && git push origin $PACKAGE_TAG"
+            echo "or push manually: git push origin :refs/tags/$PACKAGE_TAG && git push origin $PACKAGE_TAG"
             exit 1
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "$PACKAGE_TAG"
-          git push "https://x-access-token:${TAG_PUSH_PAT}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${PACKAGE_TAG}"
+          git remote set-url origin "https://x-access-token:${TAG_PUSH_PAT}@github.com/${GITHUB_REPOSITORY}.git"
+          # Tags created with GITHUB_TOKEN do not trigger other workflows. Re-push with PAT even
+          # when the tag already exists so publish.yml (push:tags) runs.
+          if git ls-remote --tags origin "refs/tags/$PACKAGE_TAG" | grep -q "$PACKAGE_TAG"; then
+            echo "tag exists — deleting and re-pushing with PAT to trigger publish.yml"
+            git push origin ":refs/tags/${PACKAGE_TAG}"
+          fi
+          git tag -f "$PACKAGE_TAG"
+          git push origin "refs/tags/${PACKAGE_TAG}"

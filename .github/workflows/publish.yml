@@ -4,11 +4,12 @@ name: Publish Package
 # Tags must be pushed with TAG_PUSH_PAT (or local credentials) — GITHUB_TOKEN tag
 # pushes do not trigger this workflow.
 # https://docs.npmjs.com/trusted-publishers#github-actions
+# Do NOT add workflow_dispatch — npm Trusted Publishing validates the push:tags
+# event only; manual runs get provenance but PUT returns 404.
 on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
 
 permissions:
   id-token: write
