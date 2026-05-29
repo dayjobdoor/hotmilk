@@ -183,7 +183,9 @@ bun run check     # lint + format + test
 
 ### CI and release
 
-On push to `main`, GitHub Actions runs **lint + test** (`bun install --frozen-lockfile`), then a separate job pushes tag `v<package.json version>` only when that tag is not already the latest GitHub release. Pushing the tag triggers **`publish.yml`**, which runs `npm publish --provenance` via **npm Trusted Publishing** (GitHub OIDC — no `NPM_TOKEN` in CI). Bump `version` in `package.json` before expecting a new release.
+On push to `main`, GitHub Actions runs **lint + test** (`bun install --frozen-lockfile`), then a separate job pushes tag `v<package.json version>` when that tag is not already on origin. **Tag pushes must use `TAG_PUSH_PAT`** (or your local git credentials) — tags pushed with the default `GITHUB_TOKEN` do **not** trigger other workflows. The tag push triggers **`publish.yml`**, which runs `npm publish --provenance` via **npm Trusted Publishing** (GitHub OIDC — no `NPM_TOKEN` in CI). Bump `version` in `package.json` before expecting a new release.
+
+**GitHub secret `TAG_PUSH_PAT`** (one-time): fine-grained PAT scoped to `dayjobdoor/hotmilk` with **Contents: Read and write**. This is **not** an npm token — it only lets CI push tags so `publish.yml` runs.
 
 **npm Trusted Publisher** (one-time, [package settings](https://www.npmjs.com/package/hotmilk/access)):
 
@@ -201,7 +203,7 @@ If CI logs show **provenance OK** but **`404 PUT … hotmilk`**, check: (1) the 
 
 **Do not use `npm whoami` in CI for Trusted Publishing.** npm docs state that `whoami` does not reflect OIDC auth (401 is expected); authentication applies only during `npm publish` / `npm stage publish`.
 
-**GitHub secrets:** delete **`NPM_TOKEN`** and any **`NODE_AUTH_TOKEN`** you added for npm (repository, organization, and environment secrets). `actions/setup-node` with `registry-url: https://registry.npmjs.org` automatically maps `NPM_TOKEN` → `NODE_AUTH_TOKEN`; that overrides OIDC. A masked `NODE_AUTH_TOKEN` in logs without any secret is normal — it is the short-lived OIDC token from `setup-node`. Keep only the automatic `GITHUB_TOKEN` (checkout/API). Do not set `NODE_AUTH_TOKEN` to `GITHUB_TOKEN` — it is not valid for registry.npmjs.org.
+**GitHub secrets:** delete **`NPM_TOKEN`** and any **`NODE_AUTH_TOKEN`** you added for npm (repository, organization, and environment secrets). `actions/setup-node` with `registry-url: https://registry.npmjs.org` automatically maps `NPM_TOKEN` → `NODE_AUTH_TOKEN`; that overrides OIDC. A masked `NODE_AUTH_TOKEN` in logs without any secret is normal — it is the short-lived OIDC token from `setup-node`. Keep the automatic `GITHUB_TOKEN` (checkout/API) and add **`TAG_PUSH_PAT`** for release tags. Do not set `NODE_AUTH_TOKEN` to `GITHUB_TOKEN` — it is not valid for registry.npmjs.org.
 
 Local `bun publish` / `npm publish` still needs `npm login` or a token; Trusted Publishing applies to CI only.
 

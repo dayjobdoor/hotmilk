@@ -1,12 +1,14 @@
 name: Publish Package
 
 # Trusted Publishing validates the tag-push workflow context.
-# Do not add workflow_dispatch — manual runs often get E404 after provenance.
+# Tags must be pushed with TAG_PUSH_PAT (or local credentials) — GITHUB_TOKEN tag
+# pushes do not trigger this workflow.
 # https://docs.npmjs.com/trusted-publishers#github-actions
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -16,13 +18,28 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Publish to npm with provenance
+      - name: Verify tag matches package.json version
         run: |
-          npm ci --legacy-peer-deps
-          echo "Publishing with provenance..."
-          npm publish --provenance --access public
+          expected="v$(node -p "require('./package.json').version")"
+          actual="${GITHUB_REF#refs/tags/}"
+          if [ "$expected" != "$actual" ]; then
+            echo "tag/version mismatch: tag=$actual package.json=$expected" >&2
+            exit 1
+          fi
+          echo "Publishing $actual"
+
+      - run: npm publish --provenance --access public
