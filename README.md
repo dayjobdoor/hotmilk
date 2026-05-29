@@ -183,7 +183,11 @@ bun run check     # lint + format + test
 
 ### CI and release
 
-On push to `main`, GitHub Actions runs **lint + test** (`bun install --frozen-lockfile`), then a separate job pushes tag `v<package.json version>` only when that tag is not already the latest GitHub release. Pushing the tag triggers **`bun publish`** (`publish.yml`). Bump `version` in `package.json` before expecting a new release.
+On push to `main`, GitHub Actions runs **lint + test** (`bun install --frozen-lockfile`), then a separate job pushes tag `v<package.json version>` only when that tag is not already the latest GitHub release. Pushing the tag triggers **`publish.yml`**, which runs `npm publish --provenance` via **npm Trusted Publishing** (GitHub OIDC — no `NPM_TOKEN` in CI). Bump `version` in `package.json` before expecting a new release.
+
+**npm Trusted Publisher** (one-time, [package settings](https://www.npmjs.com/package/hotmilk/access)): provider **GitHub Actions**, repository `dayjobdoor/hotmilk`, workflow file **`publish.yml`**, job **`publish`**, environment *(leave empty)*.
+
+Local `bun publish` / `npm publish` still needs `npm login` or a token; Trusted Publishing applies to CI only.
 
 ### Layout
 
