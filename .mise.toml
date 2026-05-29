@@ -1,0 +1,11 @@
+[tools]
+node = "latest"
+# bun = "latest"
+# pnpm = "latest"
+pi = "latest"
+
+[tasks]
+update = "pi update --self"
+prompt = "pi -e . --no-session -p 'test'"
+dryrun = "npm publish --dry-run"
+publish = "npm publish --access=public"

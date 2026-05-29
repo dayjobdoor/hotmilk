@@ -1,0 +1,10 @@
+# Local Pi runtime state
+.atl/
+.pi/
+.agents/
+graphify-out/
+
+.npmrc
+.env
+
+!package-lock.json

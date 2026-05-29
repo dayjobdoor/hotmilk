@@ -1,0 +1,119 @@
+{
+  "name": "hotmilk",
+  "version": "0.1.0",
+  "description": "hotmilk — Pi package bundling gentle-pi, context-mode, graphify, subagents, and bundled extension toggles via hotmilk.json",
+  "keywords": [
+    "hotmilk",
+    "pi",
+    "pi-package"
+  ],
+  "homepage": "https://github.com/dayjobdoor/hotmilk#readme",
+  "bugs": {
+    "url": "https://github.com/dayjobdoor/hotmilk/issues"
+  },
+  "license": "MIT",
+  "author": "dayjobdoor <dayjobdoor@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dayjobdoor/hotmilk.git"
+  },
+  "files": [
+    "src",
+    "prompts",
+    "skills",
+    "themes",
+    "mcp.json",
+    "hotmilk.json",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "scripts": {
+    "dashboard:start": "pi-dashboard start",
+    "dashboard:stop": "pi-dashboard stop",
+    "dashboard:status": "pi-dashboard status",
+    "lint": "vp lint",
+    "format": "vp fmt --write",
+    "test": "vp test",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@blackbelt-technology/pi-agent-dashboard": "^0.5.4",
+    "@blackbelt-technology/pi-flows": "^0.2.1",
+    "@haispeed/pi-obsidian": "^0.1.1",
+    "@netandreus/pi-cursor-provider": "^0.1.4",
+    "@tomxprime/planning-with-files": "^1.1.0",
+    "context-mode": "^1.0.151",
+    "gentle-pi": "^0.3.10",
+    "graphify-pi": "^0.3.0",
+    "pi-ask-user": "^0.11.1",
+    "pi-btw": "^0.4.0",
+    "pi-caveman": "^1.0.7",
+    "pi-docparser": "^3.0.1",
+    "pi-goal": "^0.1.5",
+    "pi-mcp-adapter": "^2.8.0",
+    "pi-red-green": "^0.2.2",
+    "pi-rtk-optimizer": "^0.8.1",
+    "pi-simplify": "^0.2.2",
+    "pi-subagents": "^0.25.0",
+    "pi-web-access": "^0.10.7"
+  },
+  "devDependencies": {
+    "vite-plus": "^0.1.23"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-agent-core": "^0.77.0",
+    "@earendil-works/pi-ai": "^0.77.0",
+    "@earendil-works/pi-coding-agent": "^0.77.0",
+    "@earendil-works/pi-tui": "^0.77.0",
+    "typebox": "^1.1.39"
+  },
+  "bundleDependencies": [
+    "@blackbelt-technology/pi-agent-dashboard",
+    "@blackbelt-technology/pi-flows",
+    "@haispeed/pi-obsidian",
+    "@netandreus/pi-cursor-provider",
+    "@tomxprime/planning-with-files",
+    "context-mode",
+    "gentle-pi",
+    "graphify-pi",
+    "pi-ask-user",
+    "pi-btw",
+    "pi-caveman",
+    "pi-docparser",
+    "pi-goal",
+    "pi-mcp-adapter",
+    "pi-red-green",
+    "pi-rtk-optimizer",
+    "pi-simplify",
+    "pi-subagents",
+    "pi-web-access"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "prompts": [
+      "./prompts",
+      "node_modules/gentle-pi/prompts",
+      "node_modules/pi-subagents/prompts"
+    ],
+    "skills": [
+      "./skills",
+      "node_modules/gentle-pi/skills",
+      "node_modules/context-mode/skills",
+      "node_modules/graphify-pi/skills",
+      "node_modules/pi-subagents/skills",
+      "node_modules/pi-docparser/skills",
+      "node_modules/@haispeed/pi-obsidian/skills",
+      "node_modules/pi-btw/skills",
+      "node_modules/pi-ask-user/skills",
+      "node_modules/pi-web-access/skills",
+      "node_modules/@tomxprime/planning-with-files"
+    ],
+    "themes": [
+      "./themes"
+    ]
+  }
+}

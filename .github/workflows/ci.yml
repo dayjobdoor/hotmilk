@@ -1,0 +1,81 @@
+name: Test Tag-push
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+  release-tag:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve package version
+        id: package_version
+        run: echo "version=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve latest release tag
+        id: latest_release
+        uses: actions/github-script@v8
+        with:
+          script: |
+            try {
+              const release = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              core.setOutput("tag", release.data.tag_name ?? "");
+            } catch (error) {
+              if (error.status === 404) {
+                core.setOutput("tag", "");
+                return;
+              }
+              throw error;
+            }
+
+      - name: Check whether tag push is needed
+        id: compare
+        env:
+          PACKAGE_TAG: ${{ steps.package_version.outputs.version }}
+          RELEASE_TAG: ${{ steps.latest_release.outputs.tag }}
+        run: |
+          if [ "$PACKAGE_TAG" = "$RELEASE_TAG" ]; then
+            echo "should_push=false" >> "$GITHUB_OUTPUT"
+            echo "latest release tag matches package version: $PACKAGE_TAG"
+          else
+            echo "should_push=true" >> "$GITHUB_OUTPUT"
+            echo "tag push needed: package=$PACKAGE_TAG latest_release=${RELEASE_TAG:-<none>}"
+          fi
+
+      - name: Push tag for publish workflow
+        if: steps.compare.outputs.should_push == 'true'
+        env:
+          PACKAGE_TAG: ${{ steps.package_version.outputs.version }}
+        run: |
+          if git ls-remote --tags origin "refs/tags/$PACKAGE_TAG" | grep -q "$PACKAGE_TAG"; then
+            echo "tag already exists on origin: $PACKAGE_TAG"
+            exit 0
+          fi
+          git tag "$PACKAGE_TAG"
+          git push origin "$PACKAGE_TAG"

@@ -1,0 +1,35 @@
+{
+  "extensions": {
+    "skill-registry": true,
+    "sdd-init": false,
+    "gentle-ai": true,
+    "context-mode": true,
+    "ask-user": true,
+    "graphify": true,
+    "subagents": false,
+    "goal": true,
+    "docparser": true,
+    "obsidian": true,
+    "cursor-provider": true,
+    "btw": true,
+    "simplify": true,
+    "rtk-optimizer": true,
+    "mcp-adapter": false,
+    "planning-with-files": false,
+    "caveman": false,
+    "red-green": false,
+    "agent-dashboard": false,
+    "web-access": false,
+    "pi-flows": false
+  },
+  "graph": {
+    "warnOnStale": true,
+    "autoSuggestUpdate": true
+  },
+  "defaults": {
+    "persona": "gentleman"
+  },
+  "mcp": {
+    "seedOnStart": false
+  }
+}
