@@ -6,7 +6,7 @@ on:
       - "[v]?[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
 
-# Trusted Publishing (OIDC): no NPM_TOKEN / NODE_AUTH_TOKEN in this workflow.
+# Trusted Publishing (OIDC): do not set NODE_AUTH_TOKEN / NPM_TOKEN here.
 permissions:
   id-token: write
   contents: read
@@ -14,17 +14,30 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      # Install/test without registry auth (avoids confusing npm before OIDC exchange).
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org"
 
       - run: npm ci --legacy-peer-deps
       - run: npm run test
 
-      # Trusted Publishing: setup-node wires OIDC into npm for this step only.
+      # OIDC → npm token exchange for Trusted Publishing (registry-url only on publish steps).
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      # - name: Verify npm identity (Trusted Publishing)
+      #   run: |
+      #     npm whoami
+      #     npm config get registry
+
       - name: Publish to npm with provenance
-        run: npm publish --provenance
+        run: npm publish --provenance --access public

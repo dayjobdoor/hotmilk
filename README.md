@@ -185,7 +185,19 @@ bun run check     # lint + format + test
 
 On push to `main`, GitHub Actions runs **lint + test** (`bun install --frozen-lockfile`), then a separate job pushes tag `v<package.json version>` only when that tag is not already the latest GitHub release. Pushing the tag triggers **`publish.yml`**, which runs `npm publish --provenance` via **npm Trusted Publishing** (GitHub OIDC — no `NPM_TOKEN` in CI). Bump `version` in `package.json` before expecting a new release.
 
-**npm Trusted Publisher** (one-time, [package settings](https://www.npmjs.com/package/hotmilk/access)): provider **GitHub Actions**, repository `dayjobdoor/hotmilk`, workflow file **`publish.yml`**, job **`publish`**, environment *(leave empty)*.
+**npm Trusted Publisher** (one-time, [package settings](https://www.npmjs.com/package/hotmilk/access)):
+
+| Field | Value |
+|-------|--------|
+| Provider | GitHub Actions |
+| Repository | `dayjobdoor/hotmilk` |
+| Workflow file | **`publish.yml`** (not the workflow display name) |
+| Job | **`publish`** |
+| Environment | *(empty — only if the workflow uses `environment:`)* |
+
+If CI logs show **provenance OK** but **`404 PUT … hotmilk`**, OIDC works but npm did not grant write access — re-check the table above (logged-in npm user must own `hotmilk`). The publish job runs `npm whoami` before upload; it must print `dayjobdoor`.
+
+Do **not** set `NODE_AUTH_TOKEN` to `GITHUB_TOKEN` in this workflow; that token is not valid for registry.npmjs.org.
 
 Local `bun publish` / `npm publish` still needs `npm login` or a token; Trusted Publishing applies to CI only.
 
