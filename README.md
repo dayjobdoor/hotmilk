@@ -191,11 +191,13 @@ On push to `main`, GitHub Actions runs **lint + test** (`bun install --frozen-lo
 |-------|--------|
 | Provider | GitHub Actions |
 | Repository | `dayjobdoor/hotmilk` |
-| Workflow file | **`publish.yml`** (not the workflow display name) |
-| Job | **`publish`** |
-| Environment | *(empty — only if the workflow uses `environment:`)* |
+| Workflow file | **`publish.yml`** (filename only, not the display name) |
+| Environment | *(leave empty unless the workflow uses `environment:`)* |
+| Allowed actions | **`npm publish`** |
 
-If CI logs show **provenance OK** but **`404 PUT … hotmilk`**, OIDC works but npm did not grant write access — re-check the table above (logged-in npm user must own `hotmilk`).
+Do **not** run **Publish Package** manually from the Actions tab (`workflow_dispatch`). Tag push only — manual runs often sign provenance then fail with **`404 PUT … hotmilk`**.
+
+If CI logs show **provenance OK** but **`404 PUT … hotmilk`**, check: (1) the run was triggered by a **`v*`** tag push, not a manual dispatch; (2) the Trusted Publisher table above; (3) you configured Trusted Publisher while logged in as the npm user that owns `hotmilk`.
 
 **Do not use `npm whoami` in CI for Trusted Publishing.** npm docs state that `whoami` does not reflect OIDC auth (401 is expected); authentication applies only during `npm publish` / `npm stage publish`.
 

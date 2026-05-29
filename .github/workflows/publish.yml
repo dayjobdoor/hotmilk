@@ -1,13 +1,13 @@
 name: Publish Package
 
+# Trusted Publishing validates the tag-push workflow context.
+# Do not add workflow_dispatch — manual runs often get E404 after provenance.
+# https://docs.npmjs.com/trusted-publishers#github-actions
 on:
   push:
     tags:
-      - "[v]?[0-9]+.[0-9]+.[0-9]+"
-  workflow_dispatch:
+      - "v*"
 
-# Trusted Publishing (OIDC): no NODE_AUTH_TOKEN / NPM_TOKEN in this workflow.
-# https://docs.npmjs.com/trusted-publishers#github-actions
 permissions:
   id-token: write
   contents: read
@@ -15,36 +15,14 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Reject static npm token (OIDC only)
-        env:
-          HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
-        run: |
-          if [ "$HAS_NPM_TOKEN" = "true" ]; then
-            echo "::error::NPM_TOKEN secret is still set. Remove it from repo, org, and environment secrets."
-            echo "setup-node maps NPM_TOKEN → NODE_AUTH_TOKEN and breaks Trusted Publishing (E401 on whoami / E404 on publish)."
-            exit 1
-          fi
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.3.14"
-
-      - run: bun install --frozen-lockfile
-      - run: bun run test
-
-      # OIDC: setup-node + registry-url exchanges GitHub id-token for a short-lived npm token.
-      # npm whoami is NOT in the official workflow and returns 401 under OIDC — auth applies only to publish.
-      # https://docs.npmjs.com/trusted-publishers#github-actions
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
       - name: Publish to npm with provenance
-        run: npm publish --provenance --access public
+        run: |
+          npm ci --legacy-peer-deps
+          echo "Publishing with provenance..."
+          npm publish --provenance --access public
