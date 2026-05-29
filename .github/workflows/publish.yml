@@ -34,10 +34,10 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      # - name: Verify npm identity (Trusted Publishing)
-      #   run: |
-      #     npm whoami
-      #     npm config get registry
+      - name: Verify npm identity (Trusted Publishing)
+        run: |
+          npm whoami
+          npm config get registry
 
       - name: Publish to npm with provenance
         run: npm publish --provenance --access public
