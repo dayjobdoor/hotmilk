@@ -186,28 +186,24 @@ bun run check     # lint + format + test
 On push to `main`, GitHub Actions runs **lint + test**, then a **`publish` job** (`needs: test`) when `package.json` version is **newer than npm**. No separate workflow or tag push is required to start publish.
 
 ```text
-push main → test → publish (npm publish --provenance) → git tag v<version>
+push main → test → publish (npm publish) → git tag v<version>
 ```
 
 Bump `version` in `package.json` before pushing to `main`.
 
-**npm Trusted Publisher** (one-time, [package settings](https://www.npmjs.com/package/hotmilk/access)):
+**GitHub secret `NPM_TOKEN`** (required for CI publish):
 
-| Field | Value |
-|-------|--------|
-| Provider | GitHub Actions |
-| Repository | `dayjobdoor/hotmilk` |
-| Workflow file | **`publish.yml`** (filename only — not display name `CI`, not job name `publish`) |
-| Environment | *(leave empty — do not put job name here)* |
-| Allowed actions | **`npm publish`** |
+1. [npm Access Tokens](https://www.npmjs.com/settings/~/tokens) → **Granular Access Token** or **Classic Automation token**
+2. Scope: publish to **`hotmilk`** (or classic `publish` on the account)
+3. Repository → **Settings → Secrets → Actions** → name **`NPM_TOKEN`**
 
-**GitHub secrets:** delete **`NPM_TOKEN`**, **`TAG_PUSH_PAT`**, and any manual **`NODE_AUTH_TOKEN`**. Trusted Publishing uses OIDC only. A masked `NODE_AUTH_TOKEN` in logs without any secret is normal — it is the short-lived token from `setup-node`.
+CI uses [npm’s CI/CD workflow pattern](https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow): `setup-node` + `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}`. No `--provenance` (that path is Trusted Publishing / OIDC only).
 
-**Do not use `npm whoami` in CI for Trusted Publishing.** npm docs state that `whoami` does not reflect OIDC auth (401 is expected); authentication applies only during `npm publish`.
+Trusted Publisher on npm can stay configured or be removed; CI no longer depends on it.
 
 GitHub Release is optional — npm publish does not require it.
 
-Local `bun publish` / `npm publish` still needs `npm login` or a token; Trusted Publishing applies to CI only.
+Local `bun publish` / `npm publish` still needs `npm login` or a token on your machine.
 
 ### Layout
 

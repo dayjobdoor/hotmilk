@@ -23,17 +23,9 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: write
     steps:
       - uses: actions/checkout@v5
-
-      - name: Trusted Publisher context
-        run: |
-          echo "event=${GITHUB_EVENT_NAME}"
-          echo "workflow_file=publish.yml"
-          echo "repository=${GITHUB_REPOSITORY}"
-          echo "Configure npm Trusted Publisher workflow file to: publish.yml (not ci.yml, not job name publish)"
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -64,9 +56,11 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Publish to npm (Trusted Publishing)
+      - name: Publish to npm
         if: steps.should_publish.outputs.need == 'true'
-        run: npm publish --provenance --access public
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push git tag after publish
         if: steps.should_publish.outputs.need == 'true'
