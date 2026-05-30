@@ -197,8 +197,8 @@ Bump `version` in `package.json` before pushing to `main`.
 |-------|--------|
 | Provider | GitHub Actions |
 | Repository | `dayjobdoor/hotmilk` |
-| Workflow file | **`ci.yml`** (filename only, not the display name `CI`) |
-| Environment | *(leave empty unless the workflow uses `environment:`)* |
+| Workflow file | **`publish.yml`** (filename only — not display name `CI`, not job name `publish`) |
+| Environment | *(leave empty — do not put job name here)* |
 | Allowed actions | **`npm publish`** |
 
 **GitHub secrets:** delete **`NPM_TOKEN`**, **`TAG_PUSH_PAT`**, and any manual **`NODE_AUTH_TOKEN`**. Trusted Publishing uses OIDC only. A masked `NODE_AUTH_TOKEN` in logs without any secret is normal — it is the short-lived token from `setup-node`.

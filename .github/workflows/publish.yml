@@ -1,15 +1,78 @@
-# Publish moved to ci.yml (job: publish, needs: test).
-# Update npm Trusted Publisher: workflow file publish.yml → ci.yml
-name: Publish Package (deprecated)
+name: CI
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  redirect:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "::error::Publish runs in ci.yml after test passes on push to main."
-          echo "Update npm Trusted Publisher workflow file: publish.yml → ci.yml"
-          exit 1
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run test
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Trusted Publisher context
+        run: |
+          echo "event=${GITHUB_EVENT_NAME}"
+          echo "workflow_file=publish.yml"
+          echo "repository=${GITHUB_REPOSITORY}"
+          echo "Configure npm Trusted Publisher workflow file to: publish.yml (not ci.yml, not job name publish)"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - name: Check whether npm publish is needed
+        id: should_publish
+        run: |
+          LOCAL=$(node -p "require('./package.json').version")
+          REMOTE=$(npm view hotmilk version 2>/dev/null || true)
+          if [ "$LOCAL" = "$REMOTE" ]; then
+            echo "need=false" >> "$GITHUB_OUTPUT"
+            echo "npm already has hotmilk@$LOCAL — skipping publish"
+          else
+            echo "need=true" >> "$GITHUB_OUTPUT"
+            echo "will publish hotmilk@$LOCAL (npm latest: ${REMOTE:-none})"
+          fi
+
+      - run: bun install --frozen-lockfile
+        if: steps.should_publish.outputs.need == 'true'
+
+      - run: bun run test
+        if: steps.should_publish.outputs.need == 'true'
+
+      - uses: actions/setup-node@v6
+        if: steps.should_publish.outputs.need == 'true'
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish to npm (Trusted Publishing)
+        if: steps.should_publish.outputs.need == 'true'
+        run: npm publish
+
+      - name: Push git tag after publish
+        if: steps.should_publish.outputs.need == 'true'
+        run: |
+          TAG="v$(node -p "require('./package.json').version")"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$TAG"
+          git push origin "refs/tags/${TAG}"

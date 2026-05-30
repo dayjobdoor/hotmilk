@@ -1,71 +1,13 @@
-name: CI
+# CI + publish moved to publish.yml (Trusted Publisher expects that filename).
+name: CI (deprecated)
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
-  test:
+  redirect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.3.14"
-
-      - run: bun install --frozen-lockfile
-      - run: bun run lint
-      - run: bun run test
-
-  publish:
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.3.14"
-
-      - name: Check whether npm publish is needed
-        id: should_publish
-        run: |
-          LOCAL=$(node -p "require('./package.json').version")
-          REMOTE=$(npm view hotmilk version 2>/dev/null || true)
-          if [ "$LOCAL" = "$REMOTE" ]; then
-            echo "need=false" >> "$GITHUB_OUTPUT"
-            echo "npm already has hotmilk@$LOCAL — skipping publish"
-          else
-            echo "need=true" >> "$GITHUB_OUTPUT"
-            echo "will publish hotmilk@$LOCAL (npm latest: ${REMOTE:-none})"
-          fi
-
-      - run: bun install --frozen-lockfile
-        if: steps.should_publish.outputs.need == 'true'
-
-      - run: bun run test
-        if: steps.should_publish.outputs.need == 'true'
-
-      - uses: actions/setup-node@v6
-        if: steps.should_publish.outputs.need == 'true'
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Publish to npm (Trusted Publishing)
-        if: steps.should_publish.outputs.need == 'true'
-        run: npm publish --provenance --access public
-
-      - name: Push git tag after publish
-        if: steps.should_publish.outputs.need == 'true'
-        run: |
-          TAG="v$(node -p "require('./package.json').version")"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f "$TAG"
-          git push origin "refs/tags/${TAG}"
+      - run: |
+          echo "::error::CI runs in publish.yml on push to main."
+          exit 1
