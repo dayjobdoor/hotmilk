@@ -50,17 +50,15 @@ jobs:
       - run: bun run test
         if: steps.should_publish.outputs.need == 'true'
 
-      - uses: actions/setup-node@v6
+      - name: Configure npm auth for bun publish
         if: steps.should_publish.outputs.need == 'true'
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to npm
         if: steps.should_publish.outputs.need == 'true'
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: bun publish --access public
 
       - name: Push git tag after publish
         if: steps.should_publish.outputs.need == 'true'

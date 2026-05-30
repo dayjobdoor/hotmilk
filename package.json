@@ -75,27 +75,6 @@
     "@earendil-works/pi-tui": "^0.77.0",
     "typebox": "^1.1.39"
   },
-  "bundleDependencies": [
-    "@blackbelt-technology/pi-agent-dashboard",
-    "@blackbelt-technology/pi-flows",
-    "@haispeed/pi-obsidian",
-    "@netandreus/pi-cursor-provider",
-    "@tomxprime/planning-with-files",
-    "context-mode",
-    "gentle-pi",
-    "graphify-pi",
-    "pi-ask-user",
-    "pi-btw",
-    "pi-caveman",
-    "pi-docparser",
-    "pi-goal",
-    "pi-mcp-adapter",
-    "pi-red-green",
-    "pi-rtk-optimizer",
-    "pi-simplify",
-    "pi-subagents",
-    "pi-web-access"
-  ],
   "pi": {
     "extensions": [
       "./src/index.ts"

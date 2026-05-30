@@ -186,7 +186,7 @@ bun run check     # lint + format + test
 On push to `main`, GitHub Actions runs **lint + test**, then a **`publish` job** (`needs: test`) when `package.json` version is **newer than npm**. No separate workflow or tag push is required to start publish.
 
 ```text
-push main → test → publish (npm publish) → git tag v<version>
+push main → test → publish (bun publish) → git tag v<version>
 ```
 
 Bump `version` in `package.json` before pushing to `main`.
@@ -197,13 +197,20 @@ Bump `version` in `package.json` before pushing to `main`.
 2. Scope: publish to **`hotmilk`** (or classic `publish` on the account)
 3. Repository → **Settings → Secrets → Actions** → name **`NPM_TOKEN`**
 
-CI uses [npm’s CI/CD workflow pattern](https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow): `setup-node` + `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}`. No `--provenance` (that path is Trusted Publishing / OIDC only).
+CI runs `bun publish --access public` with `NPM_TOKEN` (same secret name as [npm’s CI/CD doc](https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow)). Dependencies are **not** bundled into the tarball (`bundleDependencies` removed — npm rejected the 162 MB hard-linked bundle with `E415`).
 
 Trusted Publisher on npm can stay configured or be removed; CI no longer depends on it.
 
 GitHub Release is optional — npm publish does not require it.
 
-Local `bun publish` / `npm publish` still needs `npm login` or a token on your machine.
+Local publish: run `npm login` once, **or** add the token to **`~/.npmrc`** (not the repo `.npmrc`):
+
+```bash
+echo "//registry.npmjs.org/:_authToken=YOUR_NPM_TOKEN" >> ~/.npmrc
+bun publish --access public
+```
+
+`bun publish` does not read the `NPM_TOKEN` environment variable by itself — it uses `~/.npmrc` auth (same as npm).
 
 ### Layout
 

@@ -28,7 +28,7 @@ Disabled toggles **never** call their loader — no import cost.
 
 ## Adding or changing a bundled extension
 
-1. Add dependency in `package.json` `dependencies` and `bundleDependencies`.
+1. Add dependency in `package.json` `dependencies` (do not add `bundleDependencies` — npm rejects hard-linked bundled tarballs with `E415`).
 2. Add id to `BUNDLED_EXTENSION_IDS` in `src/config/hotmilk.ts`.
 3. Add default toggle in bundled `hotmilk.json` (runtime derives `DEFAULT_HOTMILK_CONFIG` from it).
 4. Add loader in `src/bootstrap/extensions.ts` (`() => import("…/index.ts")`).
