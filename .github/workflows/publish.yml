@@ -67,8 +67,8 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm publish --provenance --access public
         if: steps.should_publish.outputs.need == 'true'
-        # env:
-        # NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push git tag after publish
         if: steps.should_publish.outputs.need == 'true'
