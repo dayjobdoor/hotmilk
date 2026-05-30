@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { CONTEXT_STACK_EXTENSION_IDS } from "./context-stack.ts";
 import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmilk.ts";
 
 type ExtensionFactory = (pi: ExtensionAPI) => void | Promise<void>;
@@ -8,12 +9,13 @@ type ExtensionModule = { default: unknown };
 
 /**
  * Load bundled extensions on demand so disabled toggles do not pay import cost.
- * Registrations run in parallel — extensions must not depend on each other's init order.
+ * Context stack registers sequentially; other enabled extensions load in parallel.
  */
 const BUNDLED_EXTENSION_LOADERS: Record<BundledExtensionId, () => Promise<ExtensionModule>> = {
   "skill-registry": () => import("../../node_modules/gentle-pi/extensions/skill-registry.ts"),
   "sdd-init": () => import("../../node_modules/gentle-pi/extensions/sdd-init.ts"),
   "gentle-ai": () => import("../../node_modules/gentle-pi/extensions/gentle-ai.ts"),
+  // Same entry as upstream .pi/extensions/context-mode → build/adapters/pi/extension.js
   "context-mode": () => import("../../node_modules/context-mode/build/adapters/pi/extension.js"),
   "ask-user": () => import("pi-ask-user"),
   graphify: () => import("../../node_modules/graphify-pi/extensions/graphify.ts"),
@@ -36,15 +38,23 @@ const BUNDLED_EXTENSION_LOADERS: Record<BundledExtensionId, () => Promise<Extens
   "pi-flows": () => import("../../node_modules/@blackbelt-technology/pi-flows/extensions/index.ts"),
 };
 
+async function registerOne(pi: ExtensionAPI, id: BundledExtensionId): Promise<void> {
+  const mod = await BUNDLED_EXTENSION_LOADERS[id]();
+  await (mod.default as ExtensionFactory)(pi);
+}
+
 export async function registerBundledExtensions(
   pi: ExtensionAPI,
   enabled: Record<BundledExtensionId, boolean>,
 ): Promise<void> {
-  const enabledIds = BUNDLED_EXTENSION_IDS.filter((id) => enabled[id]);
-  await Promise.all(
-    enabledIds.map(async (id) => {
-      const mod = await BUNDLED_EXTENSION_LOADERS[id]();
-      await (mod.default as ExtensionFactory)(pi);
-    }),
-  );
+  const enabledIds = new Set(BUNDLED_EXTENSION_IDS.filter((id) => enabled[id]));
+
+  for (const id of CONTEXT_STACK_EXTENSION_IDS) {
+    if (enabledIds.has(id)) {
+      await registerOne(pi, id);
+      enabledIds.delete(id);
+    }
+  }
+
+  await Promise.all([...enabledIds].map((id) => registerOne(pi, id)));
 }

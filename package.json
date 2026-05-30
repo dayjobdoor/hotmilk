@@ -1,6 +1,6 @@
 {
   "name": "hotmilk",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "hotmilk — Pi package bundling gentle-pi, context-mode, graphify, subagents, and bundled extension toggles via hotmilk.json",
   "keywords": [
     "hotmilk",
@@ -60,20 +60,23 @@
     "pi-web-access": "^0.10.7"
   },
   "devDependencies": {
-    "@earendil-works/pi-agent-core": "^0.77.0",
-    "@earendil-works/pi-ai": "^0.77.0",
-    "@earendil-works/pi-coding-agent": "^0.77.0",
-    "@earendil-works/pi-tui": "^0.77.0",
-    "@types/node": "^22.15.0",
+    "@earendil-works/pi-agent-core": "^0.78.0",
+    "@earendil-works/pi-ai": "^0.78.0",
+    "@earendil-works/pi-coding-agent": "^0.78.0",
+    "@earendil-works/pi-tui": "^0.78.0",
+    "@types/node": "^22.19.19",
     "typebox": "^1.1.39",
     "vite-plus": "^0.1.23"
   },
   "peerDependencies": {
-    "@earendil-works/pi-agent-core": "^0.77.0",
-    "@earendil-works/pi-ai": "^0.77.0",
-    "@earendil-works/pi-coding-agent": "^0.77.0",
-    "@earendil-works/pi-tui": "^0.77.0",
+    "@earendil-works/pi-agent-core": "^0.78.0",
+    "@earendil-works/pi-ai": "^0.78.0",
+    "@earendil-works/pi-coding-agent": "^0.78.0",
+    "@earendil-works/pi-tui": "^0.78.0",
     "typebox": "^1.1.39"
+  },
+  "engines": {
+    "node": "22"
   },
   "pi": {
     "extensions": [
@@ -100,8 +103,5 @@
     "themes": [
       "./themes"
     ]
-  },
-  "engines": {
-    "node": "22"
   }
 }

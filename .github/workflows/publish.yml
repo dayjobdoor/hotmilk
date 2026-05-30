@@ -51,16 +51,6 @@ jobs:
       - run: bun run test
         if: steps.should_publish.outputs.need == 'true'
 
-      # - name: Configure npm auth for bun publish
-      # if: steps.should_publish.outputs.need == 'true'
-      # run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
-      # env:
-      # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # - name: Publish to npm
-      #   if: steps.should_publish.outputs.need == 'true'
-      #   run: npm publish --access public
-
       - uses: actions/setup-node@v6
         if: steps.should_publish.outputs.need == 'true'
         with:

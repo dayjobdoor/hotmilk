@@ -3,6 +3,16 @@ import { dirname, join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { ResolvedDefaults } from "../config/hotmilk.ts";
 
+export const CAVEMAN_JA_CONFLICT_MESSAGE =
+  "caveman is on while defaults.language is ja — caveman adds English terse rules that fight the Japanese language hint. Turn off caveman (/mode), clear defaults.language, or use /caveman off.";
+
+export function shouldWarnCavemanJaConflict(
+  cavemanEnabled: boolean,
+  language: string | undefined,
+): boolean {
+  return cavemanEnabled && language?.trim().toLowerCase() === "ja";
+}
+
 export function seedPersonaFromDefaults(cwd: string, defaults: ResolvedDefaults): void {
   const path = join(cwd, ".pi", "gentle-ai", "persona.json");
   if (existsSync(path)) {

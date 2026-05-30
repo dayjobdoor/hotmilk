@@ -50,11 +50,11 @@ pi install -l npm:hotmilk
 2. On first session, hotmilk creates `~/.pi/agent/hotmilk.json` if missing (defaults match the bundled template).
 3. After config changes, run `/reload`.
 
-### Pi 0.77 and npm peers
+### Pi 0.78 and npm peers
 
-hotmilk targets **Pi 0.77** (`@earendil-works/pi-coding-agent` and peers). Several bundled dependencies still declare **0.74.x** peer ranges (`pi-simplify`, `pi-btw`, `pi-docparser`, `@blackbelt-technology/pi-flows`, and others). npm may report `ERESOLVE` until those packages publish 0.77-compatible peers.
+hotmilk targets **Pi 0.78** (`@earendil-works/pi-coding-agent` and peers). Several bundled dependencies still declare **0.74.x** peer ranges (`pi-simplify`, `pi-btw`, `pi-docparser`, `@blackbelt-technology/pi-flows`, and others). npm may report `ERESOLVE` until those packages publish 0.78-compatible peers.
 
-This repo ships **`.npmrc`** with `legacy-peer-deps=true` so `npm install` and `npm ci` succeed. Copy from `.npmrc.example` if you clone without `.npmrc`. Treat upstream extensions as **best-effort on 0.77** until their maintainers widen peer ranges.
+This repo ships **`.npmrc`** with `legacy-peer-deps=true` so `npm install` and `npm ci` succeed. Copy from `.npmrc.example` if you clone without `.npmrc`. Treat upstream extensions as **best-effort on 0.78** until their maintainers widen peer ranges.
 
 Heavy optional stacks (`agent-dashboard`, `pi-flows`) stay **off by default**; enable in `/mode` only when you need them and accept extra peer / startup cost.
 
@@ -98,7 +98,7 @@ Or ask Pi to use the planning-with-files skill. The extension maintains `task_pl
     "cursor-provider": true,
     "btw": true,
     "simplify": true,
-    "rtk-optimizer": true,
+    "rtk-optimizer": false,
     "mcp-adapter": false,
     "planning-with-files": false,
     "caveman": false,
@@ -121,20 +121,22 @@ Or ask Pi to use the planning-with-files skill. The extension maintains `task_pl
 }
 ```
 
-| Key / area                        | Behavior                                                                                                           |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                          |
-| `extensions.subagents`            | Default `false`. When `true`, imports pi-subagents (~10s). Use with `gentle-ai` for delegation                     |
-| `extensions.goal` … `mcp-adapter` | Integration / perf extensions (formerly always loaded via `pi.extensions`; now toggled like other bundled deps)    |
-| Enabled extensions                | Loaded **in parallel** on session start (faster than sequential import when many toggles are on)                   |
-| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                     |
-| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                    |
-| `defaults.persona`                | Seeds `.pi/gentle-ai/persona.json` when missing (`gentleman` \| `neutral`)                                         |
-| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                     |
-| `mcp.seedOnStart`                 | Copy `mcp.json` template into `~/.pi/agent/mcp.json` when missing (empty template; for pi-mcp-adapter)             |
-| `extensions.mcp-adapter`          | Default `false`. Enable only when you want MCP servers from `~/.pi/agent/mcp.json` (do not duplicate context-mode) |
+| Key / area                        | Behavior                                                                                                                                                                                        |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                       |
+| `extensions.subagents`            | Default `false`. When `true`, imports pi-subagents (~10s). Use with `gentle-ai` for delegation                                                                                                  |
+| `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                             |
+| `extensions.rtk-optimizer`        | Default `false`. Bash/read/grep output compaction; enable with `context-mode` for leftover shell output. Install [`rtk` CLI](https://github.com/rtk-ai/rtk) for command rewrite (`/rtk verify`) |
+| `extensions.goal` … `mcp-adapter` | Integration / perf extensions (formerly always loaded via `pi.extensions`; now toggled like other bundled deps)                                                                                 |
+| Enabled extensions                | Loaded **in parallel** on session start (faster than sequential import when many toggles are on)                                                                                                |
+| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                                                                                                  |
+| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                                                                                                 |
+| `defaults.persona`                | Seeds `.pi/gentle-ai/persona.json` when missing (`gentleman` \| `neutral`)                                                                                                                      |
+| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                                                                                                  |
+| `mcp.seedOnStart`                 | Copy `mcp.json` template into `~/.pi/agent/mcp.json` when missing (empty template; for pi-mcp-adapter)                                                                                          |
+| `extensions.mcp-adapter`          | Default `false`. Enable only when you want MCP servers from `~/.pi/agent/mcp.json` (do not duplicate context-mode)                                                                              |
 
-**MCP (default):** `context-mode` extension registers `ctx_*` tools via its built-in bridge. Do **not** run `context-mode` as an MCP server at the same time. Hotmilk removes a legacy `context-mode` entry from `~/.pi/agent/mcp.json` on session start when the extension is on and mcp-adapter is off.
+**MCP (default):** `context-mode` extension registers `ctx_*` via its built-in bridge (same module as [upstream `.pi/extensions/context-mode`](https://github.com/mksglu/context-mode/tree/main/.pi/extensions/context-mode), loaded from `build/adapters/pi/extension.js`). Hotmilk removes any `context-mode` server from `~/.pi/agent/mcp.json` when the extension is on. Enable `mcp-adapter` only for **other** MCP servers—not a second context-mode entry.
 
 ### Optional extensions (off by default)
 
@@ -144,9 +146,9 @@ Enable in `/mode` or set the key to `true` in `hotmilk.json`, then `/reload`.
 | ----------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | `caveman`         | [pi-caveman](https://www.npmjs.com/package/pi-caveman)                                                             | Terse English (`/caveman`). Conflicts with `defaults.language: ja`                                              |
 | `red-green`       | [pi-red-green](https://www.npmjs.com/package/pi-red-green)                                                         | TDD via `/tdd`, `/tdd-status`. Config: `~/.pi/red-green/config.json`                                            |
-| `agent-dashboard` | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-starts via `pi-dashboard start` (~30s). Peers **0.74**; test on 0.77 before relying on it. Node.js ≥ 22.18 |
+| `agent-dashboard` | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-starts via `pi-dashboard start` (~30s). Peers **0.74**; test on 0.78 before relying on it. Node.js ≥ 22.18 |
 | `web-access`      | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                       | `web_search`, fetch, GitHub clone, PDF/video. Optional keys: `~/.pi/web-search.json`                            |
-| `pi-flows`        | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | YAML DAG workflows (`/flows`). Peers **0.74** + `@sinclair/typebox`; off by default on 0.77 stacks              |
+| `pi-flows`        | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | YAML DAG workflows (`/flows`). Peers **0.74** + `@sinclair/typebox`; off by default on 0.78 stacks              |
 
 **Agent dashboard troubleshooting**
 
@@ -170,7 +172,7 @@ Older **tabako** users: replace `npm:tabako` with `npm:hotmilk`; let hotmilk see
 
 ## Development
 
-Requires **Node.js 22+** (or **Bun 1.3+**), **Bun** for installs in this repo, and Pi **0.77** peers in the environment.
+Requires **Node.js 22+** (or **Bun 1.3+**), **Bun** for installs in this repo, and Pi **0.78** peers in the environment.
 
 ```bash
 bun install       # commit bun.lock; peers resolved by Bun
@@ -186,7 +188,7 @@ bun run check     # lint + format + test
 On push to `main`, GitHub Actions runs **lint + test**, then a **`publish` job** (`needs: test`) when `package.json` version is **newer than npm**. No separate workflow or tag push is required to start publish.
 
 ```text
-push main → test → publish (bun publish) → git tag v<version>
+push main → test → publish (npm publish --provenance) → git tag v<version>
 ```
 
 Bump `version` in `package.json` before pushing to `main`.
@@ -197,20 +199,20 @@ Bump `version` in `package.json` before pushing to `main`.
 2. Scope: publish to **`hotmilk`** (or classic `publish` on the account)
 3. Repository → **Settings → Secrets → Actions** → name **`NPM_TOKEN`**
 
-CI runs `bun publish --access public` with `NPM_TOKEN` (same secret name as [npm’s CI/CD doc](https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow)). Dependencies are **not** bundled into the tarball (`bundleDependencies` removed — npm rejected the 162 MB hard-linked bundle with `E415`).
+CI uses [npm’s CI/CD workflow](https://docs.npmjs.com/using-private-packages-in-a-ci-cd-workflow): `actions/setup-node` with `registry-url`, then `npm publish --provenance --access public` with **`NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}`**. The secret is named `NPM_TOKEN`; `setup-node` reads **`NODE_AUTH_TOKEN`** for auth. Dependencies are **not** bundled into the tarball (`bundleDependencies` removed — npm rejected the 162 MB hard-linked bundle with `E415`).
 
-Trusted Publisher on npm can stay configured or be removed; CI no longer depends on it.
+Trusted Publisher on npm can stay configured or be removed; CI uses the token path above.
 
 GitHub Release is optional — npm publish does not require it.
 
-Local publish: run `npm login` once, **or** add the token to **`~/.npmrc`** (not the repo `.npmrc`):
+Local publish: `npm login` once, then `npm publish --access public`. Or add the token to **`~/.npmrc`** (not the repo `.npmrc`):
 
 ```bash
 echo "//registry.npmjs.org/:_authToken=YOUR_NPM_TOKEN" >> ~/.npmrc
-bun publish --access public
+npm publish --access public
 ```
 
-`bun publish` does not read the `NPM_TOKEN` environment variable by itself — it uses `~/.npmrc` auth (same as npm).
+`bun publish` also works locally if `~/.npmrc` has a token; it does not read the `NPM_TOKEN` environment variable by itself.
 
 ### Layout
 

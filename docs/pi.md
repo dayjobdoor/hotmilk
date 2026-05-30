@@ -26,6 +26,17 @@ pi session start
 
 Disabled toggles **never** call their loader — no import cost.
 
+## gentle-pi vs hotmilk branding
+
+| gentle-pi upstream                                    | hotmilk                                    |
+| ----------------------------------------------------- | ------------------------------------------ |
+| `extensions/startup-banner.ts` (animated GENTLE logo) | **Not loaded** — use hotmilk figlet banner |
+| `extensions/gentle-ai.ts`                             | Toggle `gentle-ai` (default ON)            |
+| `extensions/skill-registry.ts`                        | Toggle `skill-registry` (default ON)       |
+| `extensions/sdd-init.ts`                              | Toggle `sdd-init` (default OFF)            |
+
+Session start shows **`hotmilk` ASCII in the header** via `ctx.ui.setHeader` (accent color, **stays until session ends**). Same `setHeader` hook as gentle-pi `startup-banner` after its animation finishes, but **static** (no 25ms render loop — avoids interrupting chat). Shown on every `session_start` except **`reload`**. Cleared on `session_shutdown` only. gentle-pi `startup-banner` is not loaded.
+
 ## Adding or changing a bundled extension
 
 1. Add dependency in `package.json` `dependencies` (do not add `bundleDependencies` — npm rejects hard-linked bundled tarballs with `E415`).
@@ -47,9 +58,9 @@ Disabled toggles **never** call their loader — no import cost.
 
 Upstream packages register their own commands (gentle-pi SDD, graphify, context-mode, etc.).
 
-## Pi 0.77 vs dependency peers
+## Pi 0.78 vs dependency peers
 
-hotmilk peers target **0.77**. Some bundled packages still declare **0.74** peer ranges. npm may show `ERESOLVE`; this repo uses `legacy-peer-deps=true` in `.npmrc`. Treat mismatched peers as **best-effort** until upstream widens ranges.
+hotmilk peers target **0.78**. Some bundled packages still declare **0.74** peer ranges. npm may show `ERESOLVE`; this repo uses `legacy-peer-deps=true` in `.npmrc`. Treat mismatched peers as **best-effort** until upstream widens ranges.
 
 Heavy optional stacks (`agent-dashboard`, `pi-flows`) default **off**.
 
@@ -61,12 +72,12 @@ When `graphify` is enabled and `graphify-out/GRAPH_REPORT.md` exists in the proj
 
 Default (**option A**): `context-mode` extension **on**, `mcp-adapter` **off**, `mcp.seedOnStart` **off**.
 
-| Path                                    | What runs                                                                    |
-| --------------------------------------- | ---------------------------------------------------------------------------- |
-| context-mode extension                  | Built-in MCP bridge → `ctx_*` Pi tools (one subprocess)                      |
-| pi-mcp-adapter + `~/.pi/agent/mcp.json` | Separate MCP client per server entry (duplicate if both define context-mode) |
+| Path                                    | What runs                                                                                                       |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| context-mode extension                  | Built-in MCP bridge → `ctx_*` (npm `build/adapters/pi/extension.js`; upstream `.pi/extensions/` is a re-export) |
+| pi-mcp-adapter + `~/.pi/agent/mcp.json` | Separate MCP client per server entry (duplicate if both define context-mode)                                    |
 
-On session start, when context-mode is on and mcp-adapter is off, hotmilk **removes** a `context-mode` entry from `~/.pi/agent/mcp.json` if present (legacy hotmilk seed).
+On session start, when the context-mode extension is on, hotmilk **removes** a `context-mode` entry from `~/.pi/agent/mcp.json` if present (legacy seed or upstream docs). The extension bridge (`ctx_*`) is the single context-mode path; mcp.json should list only **other** MCP servers when using `mcp-adapter`.
 
 To use **external MCP servers** via adapter: enable `mcp-adapter`, set `mcp.seedOnStart: true` or edit `mcp.json` manually, and **do not** add a second context-mode server — keep context-mode on the extension bridge only.
 
@@ -80,15 +91,42 @@ To use **external MCP servers** via adapter: enable `mcp-adapter`, set `mcp.seed
 
 Default template keeps `gentle-ai: true`, `subagents: false` for faster startup. Enable `subagents` when you want delegation, not just skills in `package.json`.
 
+## context-mode vs pi-rtk-optimizer
+
+| Layer              | `context-mode` (default on)     | `rtk-optimizer` (default off)                       |
+| ------------------ | ------------------------------- | --------------------------------------------------- |
+| Strategy           | Keep raw bytes out of the model | Compact tool output that still enters the session   |
+| Tools              | `ctx_*`, indexing, sandbox      | Hooks on `bash` / `read` / `grep` results           |
+| Bash rewrite       | —                               | Optional `rtk` CLI rewrite (`rewrite` or `suggest`) |
+| hotmilk load order | Registers **before** rtk        | After context-mode when both enabled                |
+
+**Recommended:** leave `context-mode` on; turn `rtk-optimizer` on when you still run heavy `bash`/`grep` and want smaller transcripts. Install the [`rtk`](https://github.com/rtk-ai/rtk) binary for rewrite mode (`/rtk verify`).
+
+On first enable, hotmilk seeds `~/.pi/agent/extensions/pi-rtk-optimizer/config.json` only if missing:
+
+- With `context-mode` on: `mode: "suggest"`, output compaction on, `readCompaction` off
+- With `context-mode` off: `mode: "rewrite"` (needs `rtk` on PATH for rewrite)
+
+On every session (and before rtk loads), hotmilk **syncs** only `mode` and `readCompaction.enabled` when context-mode is on — so stale `rewrite` configs from an earlier setup do not fight ctx routing. **Pi auto-compaction** (`settings.json` → `compaction.enabled`) is never modified by hotmilk.
+
+| Priority | Layer           | Role                                        |
+| -------- | --------------- | ------------------------------------------- |
+| 1        | Pi auto-compact | Summarize history when context window fills |
+| 2        | context-mode    | Keep raw tool bytes out via `ctx_*`         |
+| 3        | rtk-optimizer   | Compact bash/read/grep still in the session |
+
+Tune via `/rtk` in the session. Do not enable aggressive `readCompaction` unless you accept edit-anchor risk (see upstream README).
+
 ## Common mistakes
 
-| Mistake                                                       | Why it hurts                                                          |
-| ------------------------------------------------------------- | --------------------------------------------------------------------- |
-| context-mode extension **and** `mcp.json` context-mode server | Duplicate ctx tools / extra process                                   |
-| Listing every package under `pi.extensions`                   | Bypasses toggles; slows every session                                 |
-| Forgetting `/reload` after `/mode`                            | UI shows new toggles but old extensions stay loaded                   |
-| Sequential `await` in extension registration                  | Slower startup; use parallel registration pattern in `extensions.ts`  |
-| Editing only `hotmilk.json` in repo                           | User file is under `~/.pi/agent/`; repo file is the **seed template** |
+| Mistake                                                       | Why it hurts                                                                |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| context-mode extension **and** `mcp.json` context-mode server | Duplicate ctx tools / extra process                                         |
+| `context-mode` + `rtk-optimizer` both on without `rtk` CLI    | Compaction still works; bash rewrite stays bypassed (`guardWhenRtkMissing`) |
+| Listing every package under `pi.extensions`                   | Bypasses toggles; slows every session                                       |
+| Forgetting `/reload` after `/mode`                            | UI shows new toggles but old extensions stay loaded                         |
+| Sequential `await` in extension registration                  | Slower startup; use parallel registration pattern in `extensions.ts`        |
+| Editing only `hotmilk.json` in repo                           | User file is under `~/.pi/agent/`; repo file is the **seed template**       |
 
 ## Development vs end-user Pi
 

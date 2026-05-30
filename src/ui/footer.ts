@@ -4,9 +4,50 @@ import {
   type ReadonlyFooterDataProvider,
 } from "@earendil-works/pi-coding-agent";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
-import { truncateToWidth } from "@earendil-works/pi-tui";
+import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import type { ExtensionContext } from "../controller/context.ts";
 import { formatFooterTime } from "./footer-time.ts";
+
+function sanitizeStatusText(text: string): string {
+  return text
+    .replace(/[\r\n\t]/g, " ")
+    .replace(/ +/g, " ")
+    .trim();
+}
+
+function extensionStatusLines(
+  footerData: ReadonlyFooterDataProvider,
+  width: number,
+  dim: (text: string) => string,
+  ellipsis: string,
+): string[] {
+  const extensionStatuses = footerData.getExtensionStatuses();
+  if (extensionStatuses.size === 0) {
+    return [];
+  }
+
+  return [...extensionStatuses.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, text]) => sanitizeStatusText(text))
+    .filter((text) => text.length > 0)
+    .map((text) => truncateToWidth(dim(text), width, ellipsis));
+}
+
+function appendMetaToLastLine(lines: string[], meta: string, width: number): string[] {
+  if (lines.length === 0) {
+    return [meta];
+  }
+
+  const lastIndex = lines.length - 1;
+  const lastLine = lines[lastIndex] ?? "";
+  const gap = 2;
+  if (visibleWidth(lastLine) + gap + visibleWidth(meta) <= width) {
+    const padding = " ".repeat(width - visibleWidth(lastLine) - visibleWidth(meta));
+    return [...lines.slice(0, lastIndex), lastLine + padding + meta];
+  }
+
+  return [...lines, meta];
+}
 
 const FOOTER_TIME_REFRESH_MS = 30_000;
 
@@ -55,9 +96,17 @@ export function setupHotmilkFooter(ctx: ExtensionContext, termProgram: string): 
         base.invalidate();
       },
       render(width: number): string[] {
-        const lines = base.render(width);
-        const meta = theme.fg("dim", `${formatFooterTime(new Date())}  ${termProgram}`);
-        return [...lines, "", truncateToWidth(meta, width, theme.fg("dim", "..."))];
+        const baseLines = base.render(width);
+        const coreLines = baseLines.slice(0, 2);
+        const dim = (text: string) => theme.fg("dim", text);
+        const ellipsis = theme.fg("dim", "...");
+        const statusLines = extensionStatusLines(footerData, width, dim, ellipsis);
+        const meta = truncateToWidth(
+          dim(`${formatFooterTime(new Date())}  ${termProgram}`),
+          width,
+          ellipsis,
+        );
+        return appendMetaToLastLine([...coreLines, ...statusLines], meta, width);
       },
     };
   });

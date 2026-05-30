@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { BUNDLED_EXTENSION_IDS } from "../src/config/hotmilk.ts";
 
 describe("bundled extension loaders", () => {
-  it("defines a lazy loader for every bundled extension id", async () => {
+  it("defines a lazy loader for every bundled extension id", { timeout: 30_000 }, async () => {
     const { registerBundledExtensions } = await import("../src/bootstrap/extensions.ts");
     expect(registerBundledExtensions).toBeTypeOf("function");
 

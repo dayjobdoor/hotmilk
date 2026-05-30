@@ -10,21 +10,16 @@ export const BUNDLED_EXTENSION_GROUPS: BundledExtensionGroup[] = [
   { label: "Harness", ids: ["skill-registry", "sdd-init", "gentle-ai"] },
   {
     label: "Agent tools",
-    ids: [
-      "context-mode",
-      "ask-user",
-      "graphify",
-      "subagents",
-      "agent-dashboard",
-      "web-access",
-      "pi-flows",
-    ],
+    ids: ["ask-user", "graphify", "subagents", "agent-dashboard", "web-access", "pi-flows"],
+  },
+  {
+    label: "Context & performance",
+    ids: ["context-mode", "rtk-optimizer", "simplify"],
   },
   {
     label: "Integrations",
     ids: ["goal", "docparser", "obsidian", "cursor-provider", "btw", "mcp-adapter"],
   },
-  { label: "Performance", ids: ["simplify", "rtk-optimizer"] },
   { label: "Workflow", ids: ["planning-with-files", "red-green"] },
   { label: "Output", ids: ["caveman"] },
 ];

@@ -13,7 +13,7 @@
     "cursor-provider": true,
     "btw": true,
     "simplify": true,
-    "rtk-optimizer": true,
+    "rtk-optimizer": false,
     "mcp-adapter": false,
     "planning-with-files": false,
     "caveman": false,

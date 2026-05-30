@@ -6,14 +6,14 @@ User-facing setup: [README.md](README.md).
 
 ## Commands (this repo)
 
-| Command         | Purpose                          |
-| --------------- | -------------------------------- |
-| `bun install`   | Install deps (`bun.lock`)        |
-| `bun test`      | Vitest via vite-plus             |
-| `bun run lint`  | `vp lint`                        |
-| `bun run check` | lint + format + test             |
+| Command         | Purpose                   |
+| --------------- | ------------------------- |
+| `bun install`   | Install deps (`bun.lock`) |
+| `bun test`      | Vitest via vite-plus      |
+| `bun run lint`  | `vp lint`                 |
+| `bun run check` | lint + format + test      |
 
-Requires **Node.js 22+**. Targets **Pi 0.77** (`@earendil-works/pi-coding-agent` peers).
+Requires **Node.js 22+**. Targets **Pi 0.78** (`@earendil-works/pi-coding-agent` peers).
 
 ## Pi essentials
 
