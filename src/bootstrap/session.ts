@@ -16,6 +16,16 @@ const HOTMILK_PARSE_ERROR_MESSAGE = (path: string, error: string): string =>
 const MCP_SEEDED_MESSAGE = (path: string): string =>
   `Created ${path} from hotmilk MCP template (add servers for pi-mcp-adapter; context-mode uses the extension bridge).`;
 
+function formatGlobalExtensionSkipsMessage(
+  skips: HotmilkRuntime["globalExtensionSkips"],
+): string | undefined {
+  if (skips.length === 0) {
+    return undefined;
+  }
+  const rows = skips.map((skip) => `${skip.id}: global ${skip.packageName}`).join("\n");
+  return `Bundled extensions skipped (Pi settings already provide the package):\n${rows}`;
+}
+
 export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntime): void {
   const termProgram = process.env.TERM_PROGRAM ?? "none";
 
@@ -38,6 +48,11 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
     }
 
     applyContextStackOnSessionStart(runtime, uiNotify);
+
+    const globalSkipMessage = formatGlobalExtensionSkipsMessage(runtime.globalExtensionSkips);
+    if (globalSkipMessage) {
+      uiNotify(globalSkipMessage, "info");
+    }
 
     if (shouldWarnCavemanJaConflict(runtime.extensionToggles.caveman, runtime.defaults.language)) {
       uiNotify(CAVEMAN_JA_CONFLICT_MESSAGE, "warning");

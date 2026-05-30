@@ -6,19 +6,19 @@ Use it when you want a practical engineering workstation without hand-picking a 
 
 ## What you get
 
-| Layer                   | Packages / assets                                                                                                                                                                                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) (SDD, skill registry, `sdd-init`)                                                                                                                                                                                                       |
-| **Context**             | [context-mode](https://www.npmjs.com/package/context-mode)                                                                                                                                                                                                                                   |
-| **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi)                                                                                                                                                                                                                                     |
-| **Subagents**           | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user)                                                                                                                                                                         |
-| **Goals & docs**        | [pi-goal](https://www.npmjs.com/package/pi-goal), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                                                                                                 |
-| **File-based planning** | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files)                                                                                                                                                                                               |
-| **Integrations**        | [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), [pi-btw](https://www.npmjs.com/package/pi-btw), [@haispeed/pi-obsidian](https://www.npmjs.com/package/@haispeed/pi-obsidian), [@netandreus/pi-cursor-provider](https://www.npmjs.com/package/@netandreus/pi-cursor-provider) |
-| **Dashboard**           | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard)                                                                                                                                                                           |
-| **Web tools**           | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                                                                                                                 |
-| **Flows**               | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                                                                                                                                                                                               |
-| **Local assets**        | `./prompts`, `./skills`, `./themes`, `mcp.json` template                                                                                                                                                                                                                                     |
+| Layer                   | Packages / assets                                                                                                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) (SDD, skill registry, `sdd-init`)                                                                                                       |
+| **Context**             | [context-mode](https://www.npmjs.com/package/context-mode)                                                                                                                                   |
+| **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi)                                                                                                                                     |
+| **Subagents**           | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user)                                                                         |
+| **Goals & docs**        | [pi-goal](https://www.npmjs.com/package/pi-goal), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                 |
+| **File-based planning** | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files)                                                                                               |
+| **Integrations**        | [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), [pi-btw](https://www.npmjs.com/package/pi-btw), [@haispeed/pi-obsidian](https://www.npmjs.com/package/@haispeed/pi-obsidian) |
+| **Dashboard**           | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard)                                                                           |
+| **Web tools**           | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                 |
+| **Flows**               | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                                                                                               |
+| **Local assets**        | `./prompts`, `./skills`, `./themes`, `mcp.json` template                                                                                                                                     |
 
 Bundled extension **on/off** is controlled in `hotmilk.json` (via `/mode`), then `/reload`. Only `src/index.ts` is listed in `package.json` → `pi.extensions`; every other bundled package is loaded dynamically when its toggle is `true`.
 
@@ -95,7 +95,6 @@ Or ask Pi to use the planning-with-files skill. The extension maintains `task_pl
     "goal": true,
     "docparser": true,
     "obsidian": true,
-    "cursor-provider": true,
     "btw": true,
     "simplify": true,
     "rtk-optimizer": false,
@@ -105,7 +104,9 @@ Or ask Pi to use the planning-with-files skill. The extension maintains `task_pl
     "red-green": false,
     "agent-dashboard": false,
     "web-access": false,
-    "pi-flows": false
+    "pi-flows": false,
+    "kanagawa": false,
+    "tetris": false
   },
   "graph": {
     "warnOnStale": true,
@@ -142,20 +143,34 @@ Or ask Pi to use the planning-with-files skill. The extension maintains `task_pl
 
 Enable in `/mode` or set the key to `true` in `hotmilk.json`, then `/reload`.
 
-| Toggle            | Package                                                                                                            | Notes                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `caveman`         | [pi-caveman](https://www.npmjs.com/package/pi-caveman)                                                             | Terse English (`/caveman`). Conflicts with `defaults.language: ja`                                              |
-| `red-green`       | [pi-red-green](https://www.npmjs.com/package/pi-red-green)                                                         | TDD via `/tdd`, `/tdd-status`. Config: `~/.pi/red-green/config.json`                                            |
-| `agent-dashboard` | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-starts via `pi-dashboard start` (~30s). Peers **0.74**; test on 0.78 before relying on it. Node.js ≥ 22.18 |
-| `web-access`      | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                       | `web_search`, fetch, GitHub clone, PDF/video. Optional keys: `~/.pi/web-search.json`                            |
-| `pi-flows`        | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | YAML DAG workflows (`/flows`). Peers **0.74** + `@sinclair/typebox`; off by default on 0.78 stacks              |
+| Toggle            | Package                                                                                                            | Notes                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `caveman`         | [pi-caveman](https://www.npmjs.com/package/pi-caveman)                                                             | Terse English (`/caveman`). Conflicts with `defaults.language: ja`                                                             |
+| `red-green`       | [pi-red-green](https://www.npmjs.com/package/pi-red-green)                                                         | TDD via `/tdd`, `/tdd-status`. Config: `~/.pi/red-green/config.json`                                                           |
+| `agent-dashboard` | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-starts before the bridge loads (cold boot up to ~60s). Peers **0.74**; test on 0.78 before relying on it. Node.js ≥ 22.18 |
+| `web-access`      | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                       | `web_search`, fetch, GitHub clone, PDF/video. Optional keys: `~/.pi/web-search.json`                                           |
+| `pi-flows`        | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | YAML DAG workflows (`/flows`). Peers **0.74** + `@sinclair/typebox`; off by default on 0.78 stacks                             |
+| `kanagawa`        | [pi-kanagawa](https://www.npmjs.com/package/pi-kanagawa)                                                           | Kanagawa theme (also in `/theme` via shipped assets), wave animation, `/thinking`. **Replaces hotmilk footer** when on         |
+| `tetris`          | [pi-tetris](https://www.npmjs.com/package/pi-tetris)                                                               | Play Tetris with `/tetris`. Lightweight; default off                                                                           |
 
 **Agent dashboard troubleshooting**
 
 - Run **one** dashboard process: either hotmilk warm-start (`agent-dashboard: true`) **or** manual `npm run dashboard:start`, not both.
 - Keep only `"hotmilk"` in `~/.pi/agent/settings.json` `packages[]` (not a standalone dashboard extension path). Hotmilk prunes duplicate dashboard paths on session start when `agent-dashboard` is enabled.
-- `EADDRINUSE` on `8000` or `9999`: `npm run dashboard:stop`, then `lsof -i :8000` / `:9999` and kill the stale PID before starting again.
+- Hotmilk seeds dashboard HTTP port **8102** (when config still has upstream default `8000`) to avoid common port conflicts. Custom ports are preserved.
+- `EADDRINUSE` on `8102` (or `9999` for pi bridge): stop the stale dashboard (`pi-dashboard stop` or `lsof -i :8102` / `:9999`), then restart Pi.
 - Without `zrok` on PATH, hotmilk sets `tunnel.enabled` to `false`.
+- **`ERR TypeScript loader` / jiti or tsx not found** (paths under `~/.pi-dashboard/node_modules/`): the bridge doctor checks the legacy managed dashboard dir. That directory is often empty when you only use hotmilk. Enable `agent-dashboard`, restart Pi (warm-start uses hotmilk’s bundled `pi-dashboard-server`, which ships jiti), or run `bun run dashboard:start` from a hotmilk checkout. If the error persists, install globally: `pi install npm:@blackbelt-technology/pi-agent-dashboard` and complete **Help → Setup**, or `npm install jiti` under `~/.pi-dashboard` after `pi-dashboard` setup creates that tree.
+
+### Cursor models (optional, not bundled)
+
+hotmilk does not ship [@netandreus/pi-cursor-provider](https://www.npmjs.com/package/@netandreus/pi-cursor-provider). Install when you route Pi through the Cursor Agent CLI:
+
+```bash
+pi install npm:@netandreus/pi-cursor-provider
+agent login
+# then in Pi: /model cursor/auto
+```
 
 ### Migrating from `pi-ninja`
 

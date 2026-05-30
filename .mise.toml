@@ -5,8 +5,10 @@ pnpm = "latest"
 pi = "latest"
 
 [tasks]
+dash = "pi-dashboard status"
 update = "pi update --self"
 prompt = "pi -e . --no-session -p 'test'"
+check = "bun run check"
 dryrun = "bun publish --dry-run"
 publish = "bun publish --access public"
 tag-push = '''

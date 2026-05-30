@@ -1,6 +1,6 @@
-import { getSettingsListTheme } from "@earendil-works/pi-coding-agent";
+import { getSettingsListTheme, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Container, SettingsList, Text, type SettingItem } from "@earendil-works/pi-tui";
-import { BUNDLED_EXTENSION_GROUPS } from "../config/extension-groups.ts";
+import { BUNDLED_EXTENSION_GROUPS } from "../config/bundled-extensions.ts";
 import {
   AGENT_HOTMILK_CONFIG_LABEL,
   type BundledExtensionId,
@@ -8,7 +8,6 @@ import {
   loadHotmilkConfig,
   saveHotmilkConfig,
 } from "../config/hotmilk.ts";
-import type { ExtensionContext } from "./context.ts";
 
 function formatToggleState(enabled: boolean): "on" | "off" {
   return enabled ? "on" : "off";

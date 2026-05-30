@@ -40,11 +40,15 @@ Session start shows **`hotmilk` ASCII in the header** via `ctx.ui.setHeader` (ac
 ## Adding or changing a bundled extension
 
 1. Add dependency in `package.json` `dependencies` (do not add `bundleDependencies` — npm rejects hard-linked bundled tarballs with `E415`).
-2. Add id to `BUNDLED_EXTENSION_IDS` in `src/config/hotmilk.ts`.
+2. Add **one row** to `BUNDLED_EXTENSION_DEFINITIONS` in `src/config/bundled-extensions.ts` (`id`, `package`, `module`, `group`, optional `loadPhase: "context-stack"`).
 3. Add default toggle in bundled `hotmilk.json` (runtime derives `DEFAULT_HOTMILK_CONFIG` from it).
-4. Add loader in `src/bootstrap/extensions.ts` via `loadBundled("package/path/to/entry.ts")` from `resolve-bundled.ts` — do **not** use `../../node_modules/` (breaks hoisted `pi install npm:hotmilk`).
-5. Add UI group entry in `src/config/extension-groups.ts` (must cover every id).
-6. Document toggle in `README.md`.
+4. Document toggle in `README.md`.
+
+Derived automatically from the manifest (do not edit separately):
+
+- `BUNDLED_EXTENSION_IDS`, `/mode` groups, global-install dedupe package map, dynamic import loaders.
+
+New `/mode` section? Add its label to `BUNDLED_EXTENSION_GROUP_ORDER` in the same file.
 
 **Do not** append to `pi.extensions` unless the package must load unconditionally (hotmilk uses only `./src/index.ts`).
 
@@ -91,6 +95,18 @@ To use **external MCP servers** via adapter: enable `mcp-adapter`, set `mcp.seed
 
 Default template keeps `gentle-ai: true`, `subagents: false` for faster startup. Enable `subagents` when you want delegation, not just skills in `package.json`.
 
+## Global vs bundled extension dedupe
+
+When `npm:hotmilk` is active **and** Pi settings also list a bundled package (e.g. `npm:graphify-pi` or a local path to `graphify-pi`), hotmilk **skips** the bundled dynamic import for that toggle and lets the global Pi extension register instead. Detection reads `packages` and `extensions` from both `~/.pi/agent/settings.json` and project `.pi/settings.json`.
+
+| Automatic dedupe today                      | Mechanism                                                              |
+| ------------------------------------------- | ---------------------------------------------------------------------- |
+| context-mode MCP server in `mcp.json`       | Pruned on session start when extension bridge is on                    |
+| agent-dashboard local bridge path           | Pruned from `packages[]` on warm-start when hotmilk bundles dashboard  |
+| Any bundled npm package also in Pi settings | Bundled import skipped; session notifies which ids used global install |
+
+Package names for dedupe are declared on each `BUNDLED_EXTENSION_DEFINITIONS` row (`package` field). Do not maintain a separate registry file.
+
 ## context-mode vs pi-rtk-optimizer
 
 | Layer              | `context-mode` (default on)     | `rtk-optimizer` (default off)                       |
@@ -119,14 +135,15 @@ Tune via `/rtk` in the session. Do not enable aggressive `readCompaction` unless
 
 ## Common mistakes
 
-| Mistake                                                       | Why it hurts                                                                |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| context-mode extension **and** `mcp.json` context-mode server | Duplicate ctx tools / extra process                                         |
-| `context-mode` + `rtk-optimizer` both on without `rtk` CLI    | Compaction still works; bash rewrite stays bypassed (`guardWhenRtkMissing`) |
-| Listing every package under `pi.extensions`                   | Bypasses toggles; slows every session                                       |
-| Forgetting `/reload` after `/mode`                            | UI shows new toggles but old extensions stay loaded                         |
-| Sequential `await` in extension registration                  | Slower startup; use parallel registration pattern in `extensions.ts`        |
-| Editing only `hotmilk.json` in repo                           | User file is under `~/.pi/agent/`; repo file is the **seed template**       |
+| Mistake                                                               | Why it hurts                                                                        |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| context-mode extension **and** `mcp.json` context-mode server         | Duplicate ctx tools / extra process                                                 |
+| `context-mode` + `rtk-optimizer` both on without `rtk` CLI            | Compaction still works; bash rewrite stays bypassed (`guardWhenRtkMissing`)         |
+| Listing every package under `pi.extensions`                           | Bypasses toggles; slows every session                                               |
+| Same bundled npm package in `settings.json` **and** hotmilk toggle on | Usually OK — hotmilk skips bundled import when Pi settings already list the package |
+| Forgetting `/reload` after `/mode`                                    | UI shows new toggles but old extensions stay loaded                                 |
+| Sequential `await` in extension registration                          | Slower startup; use parallel registration pattern in `extensions.ts`                |
+| Editing only `hotmilk.json` in repo                                   | User file is under `~/.pi/agent/`; repo file is the **seed template**               |
 
 ## Development vs end-user Pi
 

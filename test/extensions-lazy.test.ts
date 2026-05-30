@@ -11,6 +11,8 @@ describe("bundled extension loaders", () => {
       boolean
     >;
 
-    await expect(registerBundledExtensions({} as never, enabled)).resolves.toBeUndefined();
+    await expect(
+      registerBundledExtensions({} as never, enabled, { globalSkips: [] }),
+    ).resolves.toEqual({ globalSkips: [] });
   });
 });

@@ -1,7 +1,13 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { TUI } from "@earendil-works/pi-tui";
-import type { ExtensionContext } from "../controller/context.ts";
-import { HOTMILK_LOGO } from "./logo.ts";
+
+/** Session-start banner (figlet small, "hotmilk"). */
+export const HOTMILK_LOGO = [
+  " _        _         _ _ _   ",
+  "| |_  ___| |_ _ __ (_) | |__",
+  "| ' \\/ _ \\  _| '  \\| | | / /",
+  "|_||_\\___/\\__|_|_|_|_|_|_\\_\\",
+].join("\n");
 
 const LOGO_LINES = HOTMILK_LOGO.split("\n");
 /** Same lead time as gentle-pi `startup-banner.ts`. */

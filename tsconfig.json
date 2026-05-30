@@ -10,7 +10,7 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node", "vite-plus/test/importMeta"]
   },
   "include": ["src/**/*.ts", "test/**/*.ts", "vite.config.ts"],
   "exclude": ["node_modules", "dist", "graphify-out"]

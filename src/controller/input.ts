@@ -1,5 +1,4 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { ExtensionContext } from "./context.ts";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { openModeSettingsModal } from "./mode.ts";
 
 const INTERRUPT_PREFIX = "/interrupt ";

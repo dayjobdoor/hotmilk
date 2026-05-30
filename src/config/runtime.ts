@@ -1,3 +1,4 @@
+import type { GlobalBundledExtensionSkip } from "../bootstrap/global-extension-sources.ts";
 import {
   loadHotmilkConfig,
   type BundledExtensionId,
@@ -18,6 +19,8 @@ export type HotmilkRuntime = {
   configPath: string;
   configError?: string;
   extensionToggles: Record<BundledExtensionId, boolean>;
+  /** Bundled ids skipped because the same npm package is in Pi settings. */
+  globalExtensionSkips: GlobalBundledExtensionSkip[];
   defaults: ResolvedDefaults;
   graph: ResolvedGraphSettings;
   mcp: ResolvedMcpSettings;
@@ -30,6 +33,7 @@ export function createHotmilkRuntime(configRoot?: string): HotmilkRuntime {
     configPath: loaded.path,
     configError: loaded.error,
     extensionToggles: resolveBundledExtensionToggles(loaded.config),
+    globalExtensionSkips: [],
     defaults: resolveDefaults(loaded.config),
     graph: resolveGraphSettings(loaded.config),
     mcp: resolveMcpSettings(loaded.config),

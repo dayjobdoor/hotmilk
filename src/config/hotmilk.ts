@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveBundledExtensionToggles } from "./resolve.ts";
+import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "./bundled-extensions.ts";
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const BUNDLED_TEMPLATE_PATH = join(PACKAGE_ROOT, "hotmilk.json");
@@ -52,31 +53,7 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): {
 export const CONFIG_FILENAME = "hotmilk.json";
 export const AGENT_HOTMILK_CONFIG_LABEL = "~/.pi/agent/hotmilk.json";
 
-export const BUNDLED_EXTENSION_IDS = [
-  "skill-registry",
-  "sdd-init",
-  "gentle-ai",
-  "context-mode",
-  "ask-user",
-  "graphify",
-  "subagents",
-  "goal",
-  "docparser",
-  "obsidian",
-  "cursor-provider",
-  "btw",
-  "simplify",
-  "rtk-optimizer",
-  "mcp-adapter",
-  "planning-with-files",
-  "caveman",
-  "red-green",
-  "agent-dashboard",
-  "web-access",
-  "pi-flows",
-] as const;
-
-export type BundledExtensionId = (typeof BUNDLED_EXTENSION_IDS)[number];
+export { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "./bundled-extensions.ts";
 
 export type PersonaMode = "gentleman" | "neutral";
 

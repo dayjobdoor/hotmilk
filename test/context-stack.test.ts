@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import {
   buildHotmilkRtkConfig,
-  CONTEXT_STACK_EXTENSION_IDS,
   expectedRtkMode,
   seedRtkConfigIfMissing,
   syncRtkConfigForContextStack,
 } from "../src/bootstrap/context-stack.ts";
+import { CONTEXT_STACK_EXTENSION_IDS } from "../src/config/bundled-extensions.ts";
 import { BUNDLED_EXTENSION_IDS } from "../src/config/hotmilk.ts";
 
 describe("context-stack", () => {

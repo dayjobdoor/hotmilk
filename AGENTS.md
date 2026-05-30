@@ -20,7 +20,7 @@ Requires **Node.js 22+**. Targets **Pi 0.78** (`@earendil-works/pi-coding-agent`
 - **Runtime**: [Pi](https://github.com/badlogic/pi-mono) with `@earendil-works/pi-coding-agent` — install hotmilk via `pi install npm:hotmilk`.
 - **Single extension entry**: only `./src/index.ts` is listed under `package.json` → `pi.extensions`. All other bundled packages load via **dynamic `import()`** when their toggle is `true`.
 - **Config**: `~/.pi/agent/hotmilk.json` — change with `/mode`, apply with `/reload`.
-- **Do not** add packages to `pi.extensions` for toggled deps; add `BUNDLED_EXTENSION_IDS` + a loader in `src/bootstrap/extensions.ts`.
+- **Do not** add packages to `pi.extensions` for toggled deps; add one row to `BUNDLED_EXTENSION_DEFINITIONS` in `src/config/bundled-extensions.ts`.
 
 Details: [docs/pi.md](docs/pi.md).
 

@@ -8,15 +8,6 @@ import type { BundledExtensionId } from "../config/hotmilk.ts";
 const RTK_EXTENSION_DIR = "pi-rtk-optimizer";
 const RTK_CONFIG_FILENAME = "config.json";
 
-/**
- * Register in this order so context-mode hooks run before rtk-optimizer compacts tool output.
- * Loader paths match upstream npm `pi.extensions` (not `.pi/extensions/` shims in the git repo).
- */
-export const CONTEXT_STACK_EXTENSION_IDS = [
-  "context-mode",
-  "rtk-optimizer",
-] as const satisfies readonly BundledExtensionId[];
-
 export function getRtkOptimizerConfigPath(): string {
   return `${getAgentDir()}/extensions/${RTK_EXTENSION_DIR}/${RTK_CONFIG_FILENAME}`;
 }
@@ -144,15 +135,16 @@ export function applyContextStackOnSessionStart(
   notify: (message: string, level: "info" | "warning") => void,
 ): void {
   const { extensionToggles } = runtime;
+  const contextModeEnabled = extensionToggles["context-mode"];
 
   if (extensionToggles["rtk-optimizer"]) {
-    const sync = syncRtkConfigForContextStack(extensionToggles["context-mode"], true);
+    const sync = syncRtkConfigForContextStack(contextModeEnabled, true);
     if (sync.updated && !sync.seeded) {
       notify(RTK_SYNC_MESSAGE, "info");
     }
   }
 
-  if (!extensionToggles["context-mode"]) {
+  if (!contextModeEnabled) {
     return;
   }
 

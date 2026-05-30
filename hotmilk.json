@@ -10,7 +10,6 @@
     "goal": true,
     "docparser": true,
     "obsidian": true,
-    "cursor-provider": true,
     "btw": true,
     "simplify": true,
     "rtk-optimizer": false,
@@ -20,7 +19,9 @@
     "red-green": false,
     "agent-dashboard": false,
     "web-access": false,
-    "pi-flows": false
+    "pi-flows": false,
+    "kanagawa": false,
+    "tetris": false
   },
   "graph": {
     "warnOnStale": true,

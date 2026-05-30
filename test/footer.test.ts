@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { formatFooterTime } from "../src/ui/footer-time.ts";
+import { formatFooterTime } from "../src/ui/footer.ts";
 
 describe("formatFooterTime", () => {
   it("formats as HH:mm:ss in 24-hour style", () => {

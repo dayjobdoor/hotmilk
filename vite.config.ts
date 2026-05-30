@@ -11,5 +11,8 @@ export default defineConfig({
     },
   },
   fmt: { ignorePatterns },
-  test: { include: ["test/**/*.test.ts"] },
+  test: {
+    include: ["test/**/*.test.ts"],
+    includeSource: ["src/**/*.ts"],
+  },
 });

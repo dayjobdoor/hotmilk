@@ -1,5 +1,12 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { CONTEXT_STACK_EXTENSION_IDS } from "./context-stack.ts";
+import {
+  BUNDLED_EXTENSION_DEFINITIONS,
+  CONTEXT_STACK_EXTENSION_IDS,
+} from "../config/bundled-extensions.ts";
+import {
+  detectGlobalBundledExtensionSkips,
+  type GlobalBundledExtensionSkip,
+} from "./global-extension-sources.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
 import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmilk.ts";
 
@@ -12,48 +19,49 @@ function loadBundled(relativePath: string): () => Promise<ExtensionModule> {
   return () => import(bundledImportUrl(relativePath));
 }
 
-/**
- * Load bundled extensions on demand so disabled toggles do not pay import cost.
- * Context stack registers sequentially; other enabled extensions load in parallel.
- */
-const BUNDLED_EXTENSION_LOADERS: Record<BundledExtensionId, () => Promise<ExtensionModule>> = {
-  "skill-registry": loadBundled("gentle-pi/extensions/skill-registry.ts"),
-  "sdd-init": loadBundled("gentle-pi/extensions/sdd-init.ts"),
-  "gentle-ai": loadBundled("gentle-pi/extensions/gentle-ai.ts"),
-  "context-mode": loadBundled("context-mode/build/adapters/pi/extension.js"),
-  "ask-user": loadBundled("pi-ask-user/index.ts"),
-  graphify: loadBundled("graphify-pi/extensions/graphify.ts"),
-  subagents: loadBundled("pi-subagents/src/extension/index.ts"),
-  goal: loadBundled("pi-goal/.pi/extensions/pi-goal/index.ts"),
-  docparser: loadBundled("pi-docparser/extensions/docparser/index.ts"),
-  obsidian: loadBundled("@haispeed/pi-obsidian/extensions/obsidian-cli.ts"),
-  "cursor-provider": loadBundled("@netandreus/pi-cursor-provider/index.ts"),
-  btw: loadBundled("pi-btw/extensions/btw.ts"),
-  simplify: loadBundled("pi-simplify/dist/index.js"),
-  "rtk-optimizer": loadBundled("pi-rtk-optimizer/index.ts"),
-  "mcp-adapter": loadBundled("pi-mcp-adapter/index.ts"),
-  "planning-with-files": loadBundled(
-    "@tomxprime/planning-with-files/extensions/planning-with-files/index.ts",
-  ),
-  caveman: loadBundled("pi-caveman/extensions/caveman.ts"),
-  "red-green": loadBundled("pi-red-green/dist/index.js"),
-  "agent-dashboard": loadBundled(
-    "@blackbelt-technology/pi-agent-dashboard/packages/extension/src/bridge.ts",
-  ),
-  "web-access": loadBundled("pi-web-access/index.ts"),
-  "pi-flows": loadBundled("@blackbelt-technology/pi-flows/extensions/index.ts"),
-};
+/** Derived from {@link BUNDLED_EXTENSION_DEFINITIONS} — one loader per manifest row. */
+const BUNDLED_EXTENSION_LOADERS = Object.fromEntries(
+  BUNDLED_EXTENSION_DEFINITIONS.map((definition) => [
+    definition.id,
+    loadBundled(definition.module),
+  ]),
+) as Record<BundledExtensionId, () => Promise<ExtensionModule>>;
 
 async function registerOne(pi: ExtensionAPI, id: BundledExtensionId): Promise<void> {
   const mod = await BUNDLED_EXTENSION_LOADERS[id]();
   await (mod.default as ExtensionFactory)(pi);
 }
 
+export type RegisterBundledExtensionsOptions = {
+  cwd?: string;
+  /** Precomputed skips (tests); defaults to scanning Pi settings. */
+  globalSkips?: GlobalBundledExtensionSkip[];
+};
+
+export type RegisterBundledExtensionsResult = {
+  globalSkips: GlobalBundledExtensionSkip[];
+};
+
 export async function registerBundledExtensions(
   pi: ExtensionAPI,
   enabled: Record<BundledExtensionId, boolean>,
-): Promise<void> {
-  const enabledIds = new Set(BUNDLED_EXTENSION_IDS.filter((id) => enabled[id]));
+  options: RegisterBundledExtensionsOptions = {},
+): Promise<RegisterBundledExtensionsResult> {
+  const globalSkips =
+    options.globalSkips ?? detectGlobalBundledExtensionSkips({ cwd: options.cwd });
+  const skipById = new Map(globalSkips.map((skip) => [skip.id, skip] as const));
+
+  const enabledIds = new Set<BundledExtensionId>();
+  const appliedSkips: GlobalBundledExtensionSkip[] = [];
+  for (const id of BUNDLED_EXTENSION_IDS) {
+    if (!enabled[id]) continue;
+    const skip = skipById.get(id);
+    if (skip) {
+      appliedSkips.push(skip);
+      continue;
+    }
+    enabledIds.add(id);
+  }
 
   for (const id of CONTEXT_STACK_EXTENSION_IDS) {
     if (enabledIds.has(id)) {
@@ -62,5 +70,14 @@ export async function registerBundledExtensions(
     }
   }
 
+  if (enabledIds.has("agent-dashboard")) {
+    enabledIds.delete("agent-dashboard");
+    const { ensureDashboardWarmStarted } = await import("./dashboard.ts");
+    await ensureDashboardWarmStarted();
+    await registerOne(pi, "agent-dashboard");
+  }
+
   await Promise.all([...enabledIds].map((id) => registerOne(pi, id)));
+
+  return { globalSkips: appliedSkips };
 }
