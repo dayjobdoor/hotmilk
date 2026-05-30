@@ -58,7 +58,8 @@ jobs:
 
       - name: Publish to npm
         if: steps.should_publish.outputs.need == 'true'
-        run: bun publish --access public
+        run: npm publish --access public
+        # run: bun publish --access public
 
       - name: Push git tag after publish
         if: steps.should_publish.outputs.need == 'true'
