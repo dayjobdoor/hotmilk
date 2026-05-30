@@ -15,6 +15,9 @@ import { registerHotmilkSessionLogo } from "./ui/session-logo.ts";
 export default async function registerHotmilk(pi: ExtensionAPI): Promise<void> {
   const runtime = createHotmilkRuntime();
 
+  // Register before bundled imports so session_start handlers exist when bindExtensions emits.
+  registerHotmilkSessionLogo(pi);
+
   if (runtime.extensionToggles["agent-dashboard"]) {
     const { scheduleDashboardWarmStart } = await import("./bootstrap/dashboard.ts");
     scheduleDashboardWarmStart();
@@ -27,6 +30,5 @@ export default async function registerHotmilk(pi: ExtensionAPI): Promise<void> {
   registerDefaultsHandlers(pi, runtime.defaults);
   registerSessionHandlers(pi, runtime);
   registerInputCommands(pi);
-  registerHotmilkSessionLogo(pi);
   pi.on("input", (event, ctx) => routeInputCommand(event.text, pi, ctx));
 }

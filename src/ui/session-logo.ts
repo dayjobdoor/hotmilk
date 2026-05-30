@@ -56,7 +56,6 @@ function showHotmilkSessionLogo(ctx: ExtensionContext): void {
         },
       };
     });
-    activeTui?.requestRender();
   }, LOGO_SHOW_DELAY_MS);
 }
 

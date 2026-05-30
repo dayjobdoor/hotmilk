@@ -42,7 +42,7 @@ Session start shows **`hotmilk` ASCII in the header** via `ctx.ui.setHeader` (ac
 1. Add dependency in `package.json` `dependencies` (do not add `bundleDependencies` — npm rejects hard-linked bundled tarballs with `E415`).
 2. Add id to `BUNDLED_EXTENSION_IDS` in `src/config/hotmilk.ts`.
 3. Add default toggle in bundled `hotmilk.json` (runtime derives `DEFAULT_HOTMILK_CONFIG` from it).
-4. Add loader in `src/bootstrap/extensions.ts` (`() => import("…/index.ts")`).
+4. Add loader in `src/bootstrap/extensions.ts` via `loadBundled("package/path/to/entry.ts")` from `resolve-bundled.ts` — do **not** use `../../node_modules/` (breaks hoisted `pi install npm:hotmilk`).
 5. Add UI group entry in `src/config/extension-groups.ts` (must cover every id).
 6. Document toggle in `README.md`.
 

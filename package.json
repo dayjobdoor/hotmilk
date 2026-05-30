@@ -1,6 +1,6 @@
 {
   "name": "hotmilk",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "hotmilk — Pi package bundling gentle-pi, context-mode, graphify, subagents, and bundled extension toggles via hotmilk.json",
   "keywords": [
     "hotmilk",
