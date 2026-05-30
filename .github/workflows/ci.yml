@@ -1,12 +1,9 @@
-name: Test Tag-push
+name: CI
 
 on:
   push:
     branches:
       - main
-
-permissions:
-  contents: write
 
 jobs:
   test:
@@ -22,71 +19,53 @@ jobs:
       - run: bun run lint
       - run: bun run test
 
-  release-tag:
+  publish:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
         with:
-          fetch-depth: 0
+          bun-version: "1.3.14"
 
-      - name: Resolve package version
-        id: package_version
-        run: echo "version=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Resolve latest release tag
-        id: latest_release
-        uses: actions/github-script@v8
-        with:
-          script: |
-            try {
-              const release = await github.rest.repos.getLatestRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-              });
-              core.setOutput("tag", release.data.tag_name ?? "");
-            } catch (error) {
-              if (error.status === 404) {
-                core.setOutput("tag", "");
-                return;
-              }
-              throw error;
-            }
-
-      - name: Check whether tag push is needed
-        id: compare
-        env:
-          PACKAGE_TAG: ${{ steps.package_version.outputs.version }}
-          RELEASE_TAG: ${{ steps.latest_release.outputs.tag }}
+      - name: Check whether npm publish is needed
+        id: should_publish
         run: |
-          if [ "$PACKAGE_TAG" = "$RELEASE_TAG" ]; then
-            echo "should_push=false" >> "$GITHUB_OUTPUT"
-            echo "latest release tag matches package version: $PACKAGE_TAG"
+          LOCAL=$(node -p "require('./package.json').version")
+          REMOTE=$(npm view hotmilk version 2>/dev/null || true)
+          if [ "$LOCAL" = "$REMOTE" ]; then
+            echo "need=false" >> "$GITHUB_OUTPUT"
+            echo "npm already has hotmilk@$LOCAL — skipping publish"
           else
-            echo "should_push=true" >> "$GITHUB_OUTPUT"
-            echo "tag push needed: package=$PACKAGE_TAG latest_release=${RELEASE_TAG:-<none>}"
+            echo "need=true" >> "$GITHUB_OUTPUT"
+            echo "will publish hotmilk@$LOCAL (npm latest: ${REMOTE:-none})"
           fi
 
-      - name: Push tag for publish workflow
-        if: steps.compare.outputs.should_push == 'true'
-        env:
-          PACKAGE_TAG: ${{ steps.package_version.outputs.version }}
-          TAG_PUSH_PAT: ${{ secrets.TAG_PUSH_PAT }}
+      - run: bun install --frozen-lockfile
+        if: steps.should_publish.outputs.need == 'true'
+
+      - run: bun run test
+        if: steps.should_publish.outputs.need == 'true'
+
+      - uses: actions/setup-node@v6
+        if: steps.should_publish.outputs.need == 'true'
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish to npm (Trusted Publishing)
+        if: steps.should_publish.outputs.need == 'true'
+        run: npm publish --provenance --access public
+
+      - name: Push git tag after publish
+        if: steps.should_publish.outputs.need == 'true'
         run: |
-          if [ -z "$TAG_PUSH_PAT" ]; then
-            echo "::error::TAG_PUSH_PAT secret is required — GITHUB_TOKEN tag pushes do not trigger publish.yml"
-            echo "Add a fine-grained PAT (Contents: Read and write) as repository secret TAG_PUSH_PAT,"
-            echo "or push manually: git push origin :refs/tags/$PACKAGE_TAG && git push origin $PACKAGE_TAG"
-            exit 1
-          fi
+          TAG="v$(node -p "require('./package.json').version")"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${TAG_PUSH_PAT}@github.com/${GITHUB_REPOSITORY}.git"
-          # Tags created with GITHUB_TOKEN do not trigger other workflows. Re-push with PAT even
-          # when the tag already exists so publish.yml (push:tags) runs.
-          if git ls-remote --tags origin "refs/tags/$PACKAGE_TAG" | grep -q "$PACKAGE_TAG"; then
-            echo "tag exists — deleting and re-pushing with PAT to trigger publish.yml"
-            git push origin ":refs/tags/${PACKAGE_TAG}"
-          fi
-          git tag -f "$PACKAGE_TAG"
-          git push origin "refs/tags/${PACKAGE_TAG}"
+          git tag -f "$TAG"
+          git push origin "refs/tags/${TAG}"

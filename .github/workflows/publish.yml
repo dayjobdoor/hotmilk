@@ -1,46 +1,15 @@
-name: Publish Package
+# Publish moved to ci.yml (job: publish, needs: test).
+# Update npm Trusted Publisher: workflow file publish.yml → ci.yml
+name: Publish Package (deprecated)
 
-# Trusted Publishing validates the tag-push workflow context.
-# Tags must be pushed with TAG_PUSH_PAT (or local credentials) — GITHUB_TOKEN tag
-# pushes do not trigger this workflow.
-# https://docs.npmjs.com/trusted-publishers#github-actions
-# Do NOT add workflow_dispatch — npm Trusted Publishing validates the push:tags
-# event only; manual runs get provenance but PUT returns 404.
 on:
-  push:
-    tags:
-      - "v*"
-
-permissions:
-  id-token: write
-  contents: read
+  workflow_dispatch:
 
 jobs:
-  publish:
+  redirect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.3.14"
-
-      - run: bun install --frozen-lockfile
-      - run: bun run test
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Verify tag matches package.json version
-        run: |
-          expected="v$(node -p "require('./package.json').version")"
-          actual="${GITHUB_REF#refs/tags/}"
-          if [ "$expected" != "$actual" ]; then
-            echo "tag/version mismatch: tag=$actual package.json=$expected" >&2
-            exit 1
-          fi
-          echo "Publishing $actual"
-
-      - run: npm publish --provenance --access public
+      - run: |
+          echo "::error::Publish runs in ci.yml after test passes on push to main."
+          echo "Update npm Trusted Publisher workflow file: publish.yml → ci.yml"
+          exit 1
