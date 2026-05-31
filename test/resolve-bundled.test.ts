@@ -22,6 +22,19 @@ describe("resolveBundledModule", () => {
     });
   });
 
+  it("parses hotmilk-owned wrapper paths", () => {
+    expect(parseBundledModulePath("hotmilk/src/extensions/btw.ts")).toEqual({
+      pkgName: "hotmilk",
+      subpath: "src/extensions/btw.ts",
+    });
+  });
+
+  it("resolves hotmilk wrapper modules from the package tree", () => {
+    const resolved = resolveBundledModule("hotmilk/src/extensions/btw.ts", import.meta.url);
+    expect(resolved).toMatch(/src[/\\]extensions[/\\]btw\.ts$/);
+    expect(existsSync(resolved)).toBe(true);
+  });
+
   it("resolves nested node_modules in dev layout", () => {
     const resolved = resolveBundledModule(
       "context-mode/build/adapters/pi/extension.js",

@@ -99,17 +99,57 @@ export function persistDashboardPiPort(piPort: number): boolean {
 
 export type DashboardWarmStartDecision = "skip-running" | "skip-conflict" | "launch";
 
+/** When TCP is bound but /api/health is not ready yet (cold boot). */
+const WARM_START_PORT_OCCUPIED_WAIT_MS = 5_000;
+const WARM_START_PORT_OCCUPIED_POLL_MS = 500;
+
+export type DashboardWarmStartDecisionOpts = {
+  occupiedWaitMs?: number;
+  occupiedPollMs?: number;
+};
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function resolveDashboardWarmStartDecision(
   port: number,
   probe: typeof isDashboardRunning = isDashboardRunning,
+  isFree: (port: number) => Promise<boolean> = isTcpPortFree,
+  opts: DashboardWarmStartDecisionOpts = {},
 ): Promise<DashboardWarmStartDecision> {
-  const status = await probe(port, "localhost", WARM_START_PROBE_OPTS);
+  const occupiedWaitMs = opts.occupiedWaitMs ?? WARM_START_PORT_OCCUPIED_WAIT_MS;
+  const occupiedPollMs = opts.occupiedPollMs ?? WARM_START_PORT_OCCUPIED_POLL_MS;
+  let status = await probe(port, "localhost", WARM_START_PROBE_OPTS);
   if (status.running) {
     return "skip-running";
   }
   if (status.portConflict) {
     return "skip-conflict";
   }
+
+  if (!(await isFree(port))) {
+    const deadline = Date.now() + occupiedWaitMs;
+    while (Date.now() < deadline) {
+      await sleep(occupiedPollMs);
+      status = await probe(port, "localhost", WARM_START_PROBE_OPTS);
+      if (status.running) {
+        return "skip-running";
+      }
+      if (status.portConflict) {
+        return "skip-conflict";
+      }
+      if (await isFree(port)) {
+        return "launch";
+      }
+    }
+    status = await probe(port, "localhost", WARM_START_PROBE_OPTS);
+    if (status.running) {
+      return "skip-running";
+    }
+    return "skip-conflict";
+  }
+
   return "launch";
 }
 
@@ -184,7 +224,13 @@ export function applyHotmilkDashboardDefaults(): ApplyHotmilkDashboardDefaultsRe
   return { updated: true, path: CONFIG_FILE };
 }
 
-let warmStartPromise: Promise<DashboardWarmStartResult> | undefined;
+/** Dedupes concurrent warm-start only; each session_start/reload re-probes. */
+let warmStartInFlight: Promise<DashboardWarmStartResult> | undefined;
+
+/** @internal Clears in-flight warm-start dedupe (tests). */
+export function resetDashboardWarmStartForTests(): void {
+  warmStartInFlight = undefined;
+}
 
 export type DashboardWarmStartResult = {
   status: "running" | "started" | "skipped-conflict" | "failed";
@@ -207,15 +253,14 @@ function warmStartResult(
  * the bridge extension loads so its 2s auto-start sees a healthy server.
  */
 export async function ensureDashboardWarmStarted(): Promise<DashboardWarmStartResult> {
-  if (warmStartPromise) {
-    return warmStartPromise;
+  if (warmStartInFlight) {
+    return warmStartInFlight;
   }
 
-  warmStartPromise = runDashboardWarmStart().catch((err) => {
-    warmStartPromise = undefined;
-    throw err;
+  warmStartInFlight = runDashboardWarmStart().finally(() => {
+    warmStartInFlight = undefined;
   });
-  return warmStartPromise;
+  return warmStartInFlight;
 }
 
 async function runDashboardWarmStart(): Promise<DashboardWarmStartResult> {
@@ -246,9 +291,12 @@ async function runDashboardWarmStart(): Promise<DashboardWarmStartResult> {
 
   const launchConfig = { port: config.port, piPort };
 
+  const cliPath = resolveDashboardServerCliPath();
+
   try {
     await launchDashboardServer({
-      cliPath: resolveDashboardServerCliPath(),
+      cliPath,
+      anchor: cliPath,
       extraArgs: buildWarmStartLaunchArgs(launchConfig),
       stdio: { logFile: dashboardServerLogPath() },
       starter: "Hotmilk",
@@ -268,4 +316,18 @@ async function runDashboardWarmStart(): Promise<DashboardWarmStartResult> {
     const detail = err instanceof Error ? err.message : String(err);
     return warmStartResult("failed", port, piPort, `${detail}. See ${dashboardServerLogPath()}`);
   }
+}
+
+/** Doctor checks ~/.pi-dashboard; hotmilk warm-start uses bundled jiti instead. */
+export function logHotmilkDashboardDoctorHint(result: DashboardWarmStartResult): void {
+  if (result.status !== "running" && result.status !== "started") {
+    return;
+  }
+  const managedDir = path.join(os.homedir(), ".pi-dashboard");
+  if (fs.existsSync(managedDir)) {
+    return;
+  }
+  console.warn(
+    `[hotmilk] Dashboard doctor may warn about TypeScript loader or ~/.pi-dashboard — hotmilk uses bundled jiti on port ${result.port}. Ignore if http://localhost:${result.port}/api/health is ok.`,
+  );
 }

@@ -85,15 +85,41 @@ On session start, when the context-mode extension is on, hotmilk **removes** a `
 
 To use **external MCP servers** via adapter: enable `mcp-adapter`, set `mcp.seedOnStart: true` or edit `mcp.json` manually, and **do not** add a second context-mode server — keep context-mode on the extension bridge only.
 
-## gentle-ai vs subagents
+## gentle-ai, subagents, and btw
 
-| `gentle-ai` | `subagents` | Effect                                                                                 |
-| ----------- | ----------- | -------------------------------------------------------------------------------------- |
-| on          | on          | Orchestrator prompts can delegate via pi-subagents tools                               |
-| on          | off         | gentle-ai SDD/skills still load; **no** `subagent` tool until you enable and `/reload` |
-| off         | on          | Subagent tools without el Gentleman harness prompts                                    |
+Default template keeps **`gentle-ai: true`**, **`subagents: true`**, **`btw: true`**. el Gentleman orchestration and delegation load together; BTW is the human side-channel while the main session (or subagents) runs.
 
-Default template keeps `gentle-ai: true`, `subagents: false` for faster startup. Enable `subagents` when you want delegation, not just skills in `package.json`.
+| `gentle-ai` | `subagents` | `btw` | Effect                                                                      |
+| ----------- | ----------- | ----- | --------------------------------------------------------------------------- |
+| on          | on          | on    | **Recommended stack** — delegate via Task/`/run`; ask the human with `/btw` |
+| on          | off         | on    | gentle-ai SDD/skills without delegation; BTW still works                    |
+| on          | on          | off   | Full orchestration; no side conversation channel                            |
+| off         | on          | \*    | Subagent tools without el Gentleman harness prompts                         |
+
+There is **no slash-command or extension-id conflict** between pi-subagents and pi-btw. Soft conflicts are operational — route work by intent:
+
+| Goal                                         | Use                                                                                    | Avoid                                                          |
+| -------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Scout / worker / review / SDD phase          | **subagents** (`Task`, `/run`, `/chain`; prefer `worktree: true` for parallel writers) | BTW for multi-file implementation                              |
+| Quick question while main is busy            | **`/btw`** or **`/btw:tangent`**                                                       | Spawning Task for a one-line check                             |
+| Return BTW findings to the main line         | **`/btw:inject`** (queues as `followUp` when main is busy)                             | Inject mid-chain then immediately start another large delegate |
+| Graph / `ctx_*` investigation                | **Main session** or **subagent**                                                       | BTW — **`ctx_search` proxy only** (no `ctx_execute` / batch)   |
+| Architecture / cross-module questions in BTW | **`graphify_query`** tool or `graphify query` via bash (when graph exists)             | Broad grep across the repo                                     |
+| Human override of orchestration              | BTW                                                                                    | Editing the same files subagents touch on main cwd             |
+
+**cwd:** subagents can run in isolated worktrees; BTW always uses the **main session cwd**. During parallel subagent work, keep BTW to read-only or `:tangent` questions so main-tree files are not edited concurrently.
+
+**hotmilk BTW shim** (`hotmilk/src/extensions/btw.ts` loads upstream `pi-btw` and patches `createAgentSession`):
+
+- Strips main-session harness blocks (gentle-ai orchestrator, graphify rules, caveman) from inherited prompts; keeps project AGENTS.md content.
+- When **`subagents: true`**: BTW tools are read-biased (`read`, `grep`, `find`, `ls`, `bash`) — no `edit`/`write` on main cwd by default.
+- When **`graphify: true`** and `graphify-out/graph.json` exists: registers **`graphify_query`** for graph traversal without loading the full graphify extension.
+- **`context-mode: true`:** adds **`ctx_search`** proxy to the main session knowledge base (read-only; no second MCP bridge).
+- Still **no** bundled extensions inside BTW (no context-mode load, Task, or MCP). The shim forces an empty extension list and no-op `extendResources`/`reload` so a second context-mode bridge cannot start (fork-bomb guard #516). Installing `npm:pi-btw` globally skips the shim — dedupe uses upstream pi-btw.
+
+**API cost:** main turn, subagent runs, and BTW sessions can consume provider quota **at the same time**.
+
+Disable either toggle in `/mode` when you want a lighter session (`subagents: false` saves ~10s startup; `btw: false` removes the side channel).
 
 ## Global vs bundled extension dedupe
 

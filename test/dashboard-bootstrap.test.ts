@@ -4,6 +4,7 @@ import {
   buildWarmStartLaunchArgs,
   HOTMILK_DASHBOARD_PORT,
   isZrokOnPath,
+  resetDashboardWarmStartForTests,
   resolveAvailablePiPort,
   resolveDashboardServerCliPath,
   resolveDashboardWarmStartDecision,
@@ -59,29 +60,63 @@ describe("dashboard bootstrap", () => {
   });
 
   it("resolveDashboardWarmStartDecision skips when dashboard is already running", async () => {
-    const decision = await resolveDashboardWarmStartDecision(8000, async () => ({
-      running: true,
-      pid: 42,
-    }));
+    const decision = await resolveDashboardWarmStartDecision(
+      8000,
+      async () => ({ running: true, pid: 42 }),
+      async () => false,
+    );
     expect(decision).toBe("skip-running");
   });
 
   it("resolveDashboardWarmStartDecision skips on port conflict", async () => {
-    const decision = await resolveDashboardWarmStartDecision(8000, async () => ({
-      running: false,
-      portConflict: true,
-    }));
+    const decision = await resolveDashboardWarmStartDecision(
+      8000,
+      async () => ({ running: false, portConflict: true }),
+      async () => true,
+    );
     expect(decision).toBe("skip-conflict");
   });
 
   it("resolveDashboardWarmStartDecision launches when port is free", async () => {
-    const decision = await resolveDashboardWarmStartDecision(8000, async () => ({
-      running: false,
-    }));
+    const decision = await resolveDashboardWarmStartDecision(
+      8000,
+      async () => ({ running: false }),
+      async () => true,
+    );
     expect(decision).toBe("launch");
+  });
+
+  it("resolveDashboardWarmStartDecision waits when port is occupied then running", async () => {
+    let probeCount = 0;
+    const decision = await resolveDashboardWarmStartDecision(
+      8102,
+      async () => {
+        probeCount += 1;
+        return probeCount >= 2 ? { running: true, pid: 1 } : { running: false };
+      },
+      async () => false,
+      { occupiedWaitMs: 100, occupiedPollMs: 10 },
+    );
+    expect(decision).toBe("skip-running");
+    expect(probeCount).toBeGreaterThanOrEqual(2);
+  });
+
+  it("resolveDashboardWarmStartDecision treats persistent port occupancy as conflict", async () => {
+    const decision = await resolveDashboardWarmStartDecision(
+      8102,
+      async () => ({ running: false }),
+      async () => false,
+      { occupiedWaitMs: 0 },
+    );
+    expect(decision).toBe("skip-conflict");
   });
 
   it("isZrokOnPath returns boolean", () => {
     expect(typeof isZrokOnPath()).toBe("boolean");
+  });
+
+  it("resetDashboardWarmStartForTests clears in-flight dedupe", () => {
+    resetDashboardWarmStartForTests();
+    expect(resetDashboardWarmStartForTests).toBeTypeOf("function");
   });
 });

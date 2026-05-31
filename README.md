@@ -6,19 +6,19 @@ Use it when you want a practical engineering workstation without hand-picking a 
 
 ## What you get
 
-| Layer                   | Packages / assets                                                                                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) (SDD, skill registry, `sdd-init`)                                                                                                       |
-| **Context**             | [context-mode](https://www.npmjs.com/package/context-mode)                                                                                                                                   |
-| **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi)                                                                                                                                     |
-| **Subagents**           | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user)                                                                         |
-| **Goals & docs**        | [pi-goal](https://www.npmjs.com/package/pi-goal), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                 |
-| **File-based planning** | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files)                                                                                               |
-| **Integrations**        | [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), [pi-btw](https://www.npmjs.com/package/pi-btw), [@haispeed/pi-obsidian](https://www.npmjs.com/package/@haispeed/pi-obsidian) |
-| **Dashboard**           | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard)                                                                           |
-| **Web tools**           | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                 |
-| **Flows**               | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                                                                                               |
-| **Local assets**        | `./prompts`, `./skills`, `./themes`, `mcp.json` template                                                                                                                                     |
+| Layer                   | Packages / assets                                                                                                                                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) (SDD, skill registry, `sdd-init`)                                                                                                                                  |
+| **Context**             | [context-mode](https://www.npmjs.com/package/context-mode)                                                                                                                                                              |
+| **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi)                                                                                                                                                                |
+| **Subagents**           | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user)                                                                                                    |
+| **Goals & docs**        | [pi-goal](https://www.npmjs.com/package/pi-goal), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                            |
+| **File-based planning** | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files)                                                                                                                          |
+| **Integrations**        | [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), [pi-btw](https://www.npmjs.com/package/pi-btw) (side channel — see below), [@haispeed/pi-obsidian](https://www.npmjs.com/package/@haispeed/pi-obsidian) |
+| **Dashboard**           | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard)                                                                                                      |
+| **Web tools**           | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                                            |
+| **Flows**               | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                                                                                                                          |
+| **Local assets**        | `./prompts`, `./skills`, `./themes`, `mcp.json` template                                                                                                                                                                |
 
 Bundled extension **on/off** is controlled in `hotmilk.json` (via `/mode`), then `/reload`. Only `src/index.ts` is listed in `package.json` → `pi.extensions`; every other bundled package is loaded dynamically when its toggle is `true`.
 
@@ -91,7 +91,7 @@ Or ask Pi to use the planning-with-files skill. The extension maintains `task_pl
     "context-mode": true,
     "ask-user": true,
     "graphify": true,
-    "subagents": false,
+    "subagents": true,
     "goal": true,
     "docparser": true,
     "obsidian": true,
@@ -122,22 +122,47 @@ Or ask Pi to use the planning-with-files skill. The extension maintains `task_pl
 }
 ```
 
-| Key / area                        | Behavior                                                                                                                                                                                        |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                       |
-| `extensions.subagents`            | Default `false`. When `true`, imports pi-subagents (~10s). Use with `gentle-ai` for delegation                                                                                                  |
-| `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                             |
-| `extensions.rtk-optimizer`        | Default `false`. Bash/read/grep output compaction; enable with `context-mode` for leftover shell output. Install [`rtk` CLI](https://github.com/rtk-ai/rtk) for command rewrite (`/rtk verify`) |
-| `extensions.goal` … `mcp-adapter` | Integration / perf extensions (formerly always loaded via `pi.extensions`; now toggled like other bundled deps)                                                                                 |
-| Enabled extensions                | Loaded **in parallel** on session start (faster than sequential import when many toggles are on)                                                                                                |
-| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                                                                                                  |
-| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                                                                                                 |
-| `defaults.persona`                | Seeds `.pi/gentle-ai/persona.json` when missing (`gentleman` \| `neutral`)                                                                                                                      |
-| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                                                                                                  |
-| `mcp.seedOnStart`                 | Copy `mcp.json` template into `~/.pi/agent/mcp.json` when missing (empty template; for pi-mcp-adapter)                                                                                          |
-| `extensions.mcp-adapter`          | Default `false`. Enable only when you want MCP servers from `~/.pi/agent/mcp.json` (do not duplicate context-mode)                                                                              |
+| Key / area                        | Behavior                                                                                                                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                              |
+| `extensions.subagents`            | Default `true`. Imports pi-subagents (~10s). Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools                                                                    |
+| `extensions.btw`                  | Default `true`. Side conversation via `/btw` while main runs. **Delegate implementation to subagents**; use BTW for quick human questions. See [pi-btw coexistence](#pi-btw-with-subagents-default-on) |
+| `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                                    |
+| `extensions.rtk-optimizer`        | Default `false`. Bash/read/grep output compaction; enable with `context-mode` for leftover shell output. Install [`rtk` CLI](https://github.com/rtk-ai/rtk) for command rewrite (`/rtk verify`)        |
+| `extensions.goal` … `mcp-adapter` | Integration / perf extensions (formerly always loaded via `pi.extensions`; now toggled like other bundled deps)                                                                                        |
+| Enabled extensions                | Loaded **in parallel** on session start (faster than sequential import when many toggles are on)                                                                                                       |
+| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                                                                                                         |
+| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                                                                                                        |
+| `defaults.persona`                | Seeds `.pi/gentle-ai/persona.json` when missing (`gentleman` \| `neutral`)                                                                                                                             |
+| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                                                                                                         |
+| `mcp.seedOnStart`                 | Copy `mcp.json` template into `~/.pi/agent/mcp.json` when missing (empty template; for pi-mcp-adapter)                                                                                                 |
+| `extensions.mcp-adapter`          | Default `false`. Enable only when you want MCP servers from `~/.pi/agent/mcp.json` (do not duplicate context-mode)                                                                                     |
 
 **MCP (default):** `context-mode` extension registers `ctx_*` via its built-in bridge (same module as [upstream `.pi/extensions/context-mode`](https://github.com/mksglu/context-mode/tree/main/.pi/extensions/context-mode), loaded from `build/adapters/pi/extension.js`). Hotmilk removes any `context-mode` server from `~/.pi/agent/mcp.json` when the extension is on. Enable `mcp-adapter` only for **other** MCP servers—not a second context-mode entry.
+
+### pi-btw with subagents (default on)
+
+Both **`subagents`** and **`btw`** default to **on**. They do not share commands or extension IDs; hotmilk loads them in parallel.
+
+| Do this                                         | Tool                                                                                         |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Exploration, implementation, review, SDD phases | **subagents** (`Task`, `/run`, `/chain`; use `worktree: true` when running parallel writers) |
+| Ask a quick question while main is working      | **`/btw`** or **`/btw:tangent`** (`Alt+/` toggles BTW ↔ main)                                |
+| Bring BTW results back to the main thread       | **`/btw:inject`**                                                                            |
+
+BTW runs a **separate** Pi session. hotmilk wraps upstream pi-btw (`src/extensions/btw.ts`):
+
+- **`subagents: true` (default):** read-biased tools only (`read`, `grep`, `find`, `ls`, `bash`) — no main-cwd `edit`/`write`.
+- **`graphify: true` + `graphify-out/graph.json`:** adds **`graphify_query`** (CLI-backed) for architecture questions.
+- **`context-mode: true`:** adds **`ctx_search`** proxy to the main session knowledge base (read-only).
+- Inherited prompts drop main-session harness noise (gentle-ai orchestrator, graphify rules, caveman); project AGENTS.md stays.
+- Still **no** `ctx_execute`, Task, or MCP inside BTW — use main/subagents for heavy ctx work.
+
+Global `npm:pi-btw` in Pi settings skips the hotmilk shim (standard dedupe). Prefer bundled hotmilk so BTW gets prompt/tool patches via `createAgentSession` hook.
+
+During subagent chains, avoid BTW file edits on the main cwd; use read-only or `:tangent` until workers finish.
+
+Set `"btw": false` in `/mode` if you want delegation only with no side channel.
 
 ### Optional extensions (off by default)
 
@@ -160,7 +185,7 @@ Enable in `/mode` or set the key to `true` in `hotmilk.json`, then `/reload`.
 - Hotmilk seeds dashboard HTTP port **8102** (when config still has upstream default `8000`) to avoid common port conflicts. Custom ports are preserved.
 - `EADDRINUSE` on `8102` (or `9999` for pi bridge): stop the stale dashboard (`pi-dashboard stop` or `lsof -i :8102` / `:9999`), then restart Pi.
 - Without `zrok` on PATH, hotmilk sets `tunnel.enabled` to `false`.
-- **`ERR TypeScript loader` / jiti or tsx not found** (paths under `~/.pi-dashboard/node_modules/`): the bridge doctor checks the legacy managed dashboard dir. That directory is often empty when you only use hotmilk. Enable `agent-dashboard`, restart Pi (warm-start uses hotmilk’s bundled `pi-dashboard-server`, which ships jiti), or run `bun run dashboard:start` from a hotmilk checkout. If the error persists, install globally: `pi install npm:@blackbelt-technology/pi-agent-dashboard` and complete **Help → Setup**, or `npm install jiti` under `~/.pi-dashboard` after `pi-dashboard` setup creates that tree.
+- **`ERR TypeScript loader` / jiti or tsx not found** (paths under `~/.pi-dashboard/node_modules/`): the dashboard doctor checks the legacy managed install dir and hardcodes port **8000** in its messages. Hotmilk runs on **8102** with bundled jiti from `pi-dashboard-server`. If `http://localhost:8102/api/health` returns `{"ok":true}`, the doctor error is a false positive — hotmilk logs a hint on warm-start. To silence it entirely: run **Help → Setup** once, or `npm install jiti` under `~/.pi-dashboard` after setup creates that tree.
 
 ### Cursor models (optional, not bundled)
 

@@ -6,7 +6,7 @@
     "context-mode": true,
     "ask-user": true,
     "graphify": true,
-    "subagents": false,
+    "subagents": true,
     "goal": true,
     "docparser": true,
     "obsidian": true,

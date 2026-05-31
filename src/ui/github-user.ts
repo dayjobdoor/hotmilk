@@ -13,7 +13,9 @@ function githubUserFromEnv(env: NodeJS.ProcessEnv): string | undefined {
   return env.GITHUB_USER?.trim() || env.GH_USER?.trim() || undefined;
 }
 
-function githubUsernameCommands(cwd: string): Array<{ file: string; args: string[]; cwd?: string }> {
+function githubUsernameCommands(
+  cwd: string,
+): Array<{ file: string; args: string[]; cwd?: string }> {
   return [
     { file: "gh", args: ["api", "user", "-q", ".login"] },
     { file: "git", args: ["config", "--global", "github.user"] },

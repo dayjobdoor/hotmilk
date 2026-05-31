@@ -100,7 +100,7 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
   {
     id: "btw",
     package: { packageName: "pi-btw" },
-    module: "pi-btw/extensions/btw.ts",
+    module: "hotmilk/src/extensions/btw.ts",
     group: "Integrations",
   },
   {

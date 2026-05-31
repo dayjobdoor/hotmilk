@@ -1,6 +1,6 @@
 {
   "name": "hotmilk",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "hotmilk — Pi package bundling gentle-pi, context-mode, graphify, subagents, and bundled extension toggles via hotmilk.json",
   "keywords": [
     "hotmilk",
@@ -96,7 +96,6 @@
       "node_modules/pi-subagents/skills",
       "node_modules/pi-docparser/skills",
       "node_modules/@haispeed/pi-obsidian/skills",
-      "node_modules/pi-btw/skills",
       "node_modules/pi-ask-user/skills",
       "node_modules/pi-web-access/skills",
       "node_modules/@tomxprime/planning-with-files"

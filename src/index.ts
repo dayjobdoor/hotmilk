@@ -11,12 +11,14 @@ import { registerGraphHandlers } from "./bootstrap/graph.ts";
 import { registerSessionHandlers } from "./bootstrap/session.ts";
 import { registerInputCommands, routeInputCommand } from "./controller/input.ts";
 import { registerHotmilkSessionLogo } from "./ui/session-logo.ts";
+import { installHotmilkCtxSearchCapture } from "./bootstrap/btw.ts";
 
 export default async function registerHotmilk(pi: ExtensionAPI): Promise<void> {
   const runtime = createHotmilkRuntime();
 
   // Register before bundled imports so session_start handlers exist when bindExtensions emits.
   registerHotmilkSessionLogo(pi);
+  installHotmilkCtxSearchCapture(pi);
 
   prepareContextStack(runtime.extensionToggles);
 

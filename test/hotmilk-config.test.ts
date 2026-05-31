@@ -36,7 +36,7 @@ describe("resolveBundledExtensionToggles", () => {
     expect(toggles["ask-user"]).toBe(false);
     expect(toggles["skill-registry"]).toBe(true);
     expect(toggles.graphify).toBe(true);
-    expect(toggles.subagents).toBe(false);
+    expect(toggles.subagents).toBe(true);
     expect(toggles.goal).toBe(true);
     expect(toggles["mcp-adapter"]).toBe(false);
     expect(toggles["planning-with-files"]).toBe(false);
