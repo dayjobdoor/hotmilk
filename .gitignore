@@ -1,10 +1,11 @@
 # Local Pi runtime state
 .atl/
-.pi/
-.agents/
+
 graphify-out/
+
+openspec
 
 .env
 
 !bun.lock
-!package-lock.json
+

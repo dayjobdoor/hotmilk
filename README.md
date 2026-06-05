@@ -8,7 +8,7 @@ Use it when you want a practical engineering workstation without hand-picking a 
 
 | Layer                   | Packages / assets                                                                                                                                                                                                       |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) (SDD, skill registry, `sdd-init`)                                                                                                                                  |
+| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) **≥0.4.1** (el Gentleman, SDD/OpenSpec sync, skill registry, `/gentle-ai:doctor`)                                                                                  |
 | **Context**             | [context-mode](https://www.npmjs.com/package/context-mode)                                                                                                                                                              |
 | **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi)                                                                                                                                                                |
 | **Subagents**           | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user)                                                                                                    |
@@ -66,7 +66,7 @@ Heavy optional stacks (`agent-dashboard`, `pi-flows`) stay **off by default**; e
 | `/stop`                | Stop current running work                                    |
 | `/interrupt <message>` | Steer in-flight work with an interrupt prompt                |
 
-Upstream packages add their own commands (gentle-pi SDD, graphify, context-mode, planning-with-files `/plan-status`, and so on).
+Upstream packages add their own commands (gentle-pi `/gentle-ai:status`, `/gentle-ai:doctor`, SDD chains, graphify, context-mode, planning-with-files `/plan-status`, and so on).
 
 ### Planning with files
 
@@ -125,7 +125,8 @@ Or ask Pi to use the planning-with-files skill. The extension maintains `task_pl
 | Key / area                        | Behavior                                                                                                                                                                                               |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                              |
-| `extensions.subagents`            | Default `true`. Imports pi-subagents (~10s). Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools                                                                    |
+| `extensions.gentle-ai`            | Default `true`. gentle-pi **0.4.1+**: orchestration, lazy SDD preflight, OpenSpec sync/archive agents, `/gentle-ai:doctor` / `:status`. hotmilk keeps **startup-banner off** (figlet header instead)   |
+| `extensions.subagents`            | Default `true`. Imports pi-subagents **0.28+** (~10s): acceptance gates, `timeoutMs`, resource limits. Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools          |
 | `extensions.btw`                  | Default `true`. Side conversation via `/btw` while main runs. **Delegate implementation to subagents**; use BTW for quick human questions. See [pi-btw coexistence](#pi-btw-with-subagents-default-on) |
 | `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                                    |
 | `extensions.rtk-optimizer`        | Default `false`. Bash/read/grep output compaction; enable with `context-mode` for leftover shell output. Install [`rtk` CLI](https://github.com/rtk-ai/rtk) for command rewrite (`/rtk verify`)        |
@@ -196,19 +197,6 @@ pi install npm:@netandreus/pi-cursor-provider
 agent login
 # then in Pi: /model cursor/auto
 ```
-
-### Migrating from `pi-ninja`
-
-The npm package was renamed from **pi-ninja** to **hotmilk**. User config lives at **`~/.pi/agent/hotmilk.json`**.
-
-| Before                    | After                                  |
-| ------------------------- | -------------------------------------- |
-| `pi install npm:pi-ninja` | `pi install npm:hotmilk`               |
-| Project `pi-ninja.json`   | `~/.pi/agent/hotmilk.json` via `/mode` |
-
-Update `settings.json` packages from `npm:pi-ninja` to `npm:hotmilk`, then `/reload`.
-
-Older **tabako** users: replace `npm:tabako` with `npm:hotmilk`; let hotmilk seed `hotmilk.json` on first session.
 
 ## Development
 

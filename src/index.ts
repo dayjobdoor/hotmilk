@@ -12,6 +12,7 @@ import { registerSessionHandlers } from "./bootstrap/session.ts";
 import { registerInputCommands, routeInputCommand } from "./controller/input.ts";
 import { registerHotmilkSessionLogo } from "./ui/session-logo.ts";
 import { installHotmilkCtxSearchCapture } from "./bootstrap/btw.ts";
+import { registerSubagentsDoctorCommand } from "./bootstrap/subagents-doctor.ts";
 
 export default async function registerHotmilk(pi: ExtensionAPI): Promise<void> {
   const runtime = createHotmilkRuntime();
@@ -25,6 +26,9 @@ export default async function registerHotmilk(pi: ExtensionAPI): Promise<void> {
   const bundled = await registerBundledExtensions(pi, runtime.extensionToggles, {
     cwd: process.cwd(),
   });
+  if (runtime.extensionToggles.subagents === true) {
+    await registerSubagentsDoctorCommand(pi);
+  }
   runtime.globalExtensionSkips = bundled.globalSkips;
   registerGraphHandlers(pi, runtime.graph);
   registerDefaultsHandlers(pi, runtime.defaults);

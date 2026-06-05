@@ -10,4 +10,4 @@ description: "Single entry for technology recommendations: judge scope, shortlis
 3. **Verify** — Official docs for contracts and usage; repository / local checkout when internals, edge cases, or performance matter.
 4. **Mechanics** — Web search and doc pages for reading; `ghq` or `git clone` when the tree must be local.
 
-Same repo still holds detailed playbooks under `.agents/skills/`; open them only when this flow is not enough.
+If the repo ships extra skills under `./skills/`, load those `SKILL.md` files only when this flow is not enough.
