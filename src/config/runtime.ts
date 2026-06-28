@@ -6,12 +6,14 @@ import {
   type ResolvedDefaults,
   type ResolvedGraphSettings,
   type ResolvedMcpSettings,
+  type ResolvedProjectTrust,
 } from "./hotmilk.ts";
 import {
   resolveBundledExtensionToggles,
   resolveDefaults,
   resolveGraphSettings,
   resolveMcpSettings,
+  resolveProjectTrust,
 } from "./resolve.ts";
 
 export type HotmilkRuntime = {
@@ -24,6 +26,7 @@ export type HotmilkRuntime = {
   defaults: ResolvedDefaults;
   graph: ResolvedGraphSettings;
   mcp: ResolvedMcpSettings;
+  projectTrust: ResolvedProjectTrust;
 };
 
 export function createHotmilkRuntime(configRoot?: string): HotmilkRuntime {
@@ -37,5 +40,6 @@ export function createHotmilkRuntime(configRoot?: string): HotmilkRuntime {
     defaults: resolveDefaults(loaded.config),
     graph: resolveGraphSettings(loaded.config),
     mcp: resolveMcpSettings(loaded.config),
+    projectTrust: resolveProjectTrust(loaded.config),
   };
 }

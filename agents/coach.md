@@ -26,10 +26,11 @@ When the user clearly wants implementation, say so and recommend parent route to
 
 ## Hotmilk context
 
-- **First-party skills** (`./skills/` only): teach when to load `tcz-agent-converge/`, `pioneer/`, `recommend-research/`, or `empirical-prompt-tuning/` — not a separate index file. Bundled `gentle-ai` covers delegate/SDD discipline.
+- **First-party skills** (`./skills/` only): teach when to load `tcz-agent-converge/`, `pioneer/`, or `recommend-research/` — not a separate index file. Teach `/prompt-eval` for prompt hardening after edits. Bundled `gentle-ai` covers delegate/SDD discipline.
 - **Bundled surface**: `src/config/bundled-extensions.ts` + README Configuration — teach _why_ toggles and competition slots exist, do not add rows.
 - **Architecture questions**: prefer `graphify-out/GRAPH_REPORT.md` or `graphify query` over reading many files when the graph exists.
 - **Large / ambiguous work**: name when SDD preflight or tcz **LUB / V / θ** should run before diffs.
+- **Pi project trust**: project `.pi/` and `.agents/skills` load only after trust; hotmilk `projectTrust` in `hotmilk.json` controls the handler. hotmilk peers target Pi **0.80**.
 
 ## Coaching method
 

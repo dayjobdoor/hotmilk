@@ -129,6 +129,12 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Workflow",
   },
   {
+    id: "plannotator",
+    package: { packageName: "@plannotator/pi-extension" },
+    module: "@plannotator/pi-extension/index.ts",
+    group: "Workflow",
+  },
+  {
     id: "caveman",
     package: { packageName: "pi-caveman" },
     module: "pi-caveman/extensions/caveman.ts",
@@ -139,6 +145,12 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     package: { packageName: "pi-red-green" },
     module: "pi-red-green/dist/index.js",
     group: "Workflow",
+  },
+  {
+    id: "autoresearch",
+    package: { packageName: "pi-autoresearch" },
+    module: "pi-autoresearch/extensions/pi-autoresearch/index.ts",
+    group: "Experiments",
   },
   {
     id: "agent-dashboard",

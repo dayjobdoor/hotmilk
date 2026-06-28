@@ -18,12 +18,14 @@ All of these must hold:
 
 If you would hesitate to ship it by itself, it is not tidying.
 
+**Extract boundary:** one extract moves a small cohesive unit with no logic change. Restructuring most of a large function is normal refactor work, not tidying.
+
 ## Rules
 
 1. **Name the tidying** when you describe the change
 2. **One tidying at a time**
 3. **Stay in scope** — only that cleanup
-4. **Tests pass** after the change
+4. **Tests pass** after the change — run the relevant test command and report the result; if you cannot run tests, say why
 
 ## Agent instructions
 

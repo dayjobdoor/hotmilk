@@ -4,9 +4,11 @@ import {
   type BundledExtensionId,
   type HotmilkConfig,
   type PersonaMode,
+  type ProjectTrustMode,
   type ResolvedDefaults,
   type ResolvedGraphSettings,
   type ResolvedMcpSettings,
+  type ResolvedProjectTrust,
 } from "./hotmilk.ts";
 
 function isPersonaMode(value: unknown): value is PersonaMode {
@@ -44,5 +46,19 @@ export function resolveDefaults(config: HotmilkConfig): ResolvedDefaults {
 export function resolveMcpSettings(config: HotmilkConfig): ResolvedMcpSettings {
   return {
     seedOnStart: config.mcp?.seedOnStart ?? DEFAULT_HOTMILK_CONFIG.mcp.seedOnStart,
+  };
+}
+
+function isProjectTrustMode(value: unknown): value is ProjectTrustMode {
+  return value === "delegate" || value === "prompt" || value === "always" || value === "never";
+}
+
+export function resolveProjectTrust(config: HotmilkConfig): ResolvedProjectTrust {
+  const mode = config.projectTrust?.mode;
+  const remember = config.projectTrust?.remember;
+  return {
+    mode: isProjectTrustMode(mode) ? mode : DEFAULT_HOTMILK_CONFIG.projectTrust.mode,
+    remember:
+      typeof remember === "boolean" ? remember : DEFAULT_HOTMILK_CONFIG.projectTrust.remember,
   };
 }

@@ -1,8 +1,8 @@
-# agents/ (reference copies)
+# agents/ (package canonical)
 
 Targets **pi-subagents 0.28+** (acceptance gates, foreground `timeoutMs`, per-agent resource limits).
 
-Markdown here mirrors the hotmilk subagent prompts shipped for optional project install. Discovery and install steps follow `node_modules/pi-subagents/skills/pi-subagents/SKILL.md`.
+Markdown here is the **source of truth** in git and the npm tarball. Pi does not discover this folder directly — copy or symlink into **`.pi/agents/`** (project scope) or add overrides under **`~/.pi/agent/agents/`** (user scope). Scope rules and precedence: [README § Agents, skills, and scope](../README.md#agents-skills-and-scope).
 
 | Agent     | Role                                                                |
 | --------- | ------------------------------------------------------------------- |
@@ -13,4 +13,4 @@ Markdown here mirrors the hotmilk subagent prompts shipped for optional project 
 | assistant | General routing parent                                              |
 | designer  | UI / frontend specialist                                            |
 
-Shipped first-party skills: `./skills/` (`tcz-agent-converge`, `pioneer`, `recommend-research`, `empirical-prompt-tuning`). Other skills come from bundled deps via `package.json` → `pi.skills`.
+Shipped first-party skills: `./skills/` (`tcz-agent-converge`, `pioneer`, `recommend-research`). Shipped prompts: invoke as `/prompt-eval`, `/tidy`, `/translate` — not relative `prompts/` paths. Other skills come from bundled deps via `package.json` → `pi.skills`.

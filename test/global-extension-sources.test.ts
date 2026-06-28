@@ -1,14 +1,12 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   collectInstalledPackageNamesFromPiSettings,
   detectGlobalBundledExtensionSkips,
   parseNpmPackageName,
 } from "../src/bootstrap/global-extension-sources.ts";
-import { BUNDLED_EXTENSION_PACKAGES } from "../src/config/bundled-package-registry.ts";
-import { BUNDLED_EXTENSION_IDS } from "../src/config/hotmilk.ts";
 
 describe("parseNpmPackageName", () => {
   it("parses scoped and unscoped npm specs", () => {
@@ -19,7 +17,11 @@ describe("parseNpmPackageName", () => {
 });
 
 describe("collectInstalledPackageNamesFromPiSettings", () => {
-  const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "hotmilk-global-ext-"));
+  let tmpHome: string;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "hotmilk-global-ext-"));
+  });
 
   afterEach(() => {
     fs.rmSync(tmpHome, { recursive: true, force: true });
@@ -34,6 +36,20 @@ describe("collectInstalledPackageNamesFromPiSettings", () => {
       "utf-8",
     );
   }
+
+  it("ignores project settings when includeProjectSettings is false", () => {
+    writeSettings(".pi/agent", { packages: ["npm:graphify-pi"] });
+    writeSettings("project/.pi", { packages: ["npm:pi-ask-user"] });
+
+    const names = collectInstalledPackageNamesFromPiSettings({
+      homedir: tmpHome,
+      cwd: path.join(tmpHome, "project"),
+      includeProjectSettings: false,
+    });
+
+    expect(names.has("graphify-pi")).toBe(true);
+    expect(names.has("pi-ask-user")).toBe(false);
+  });
 
   it("collects npm package names from global and project settings", () => {
     writeSettings(".pi/agent", { packages: ["npm:hotmilk", "npm:graphify-pi"] });
@@ -81,7 +97,11 @@ describe("collectInstalledPackageNamesFromPiSettings", () => {
 });
 
 describe("detectGlobalBundledExtensionSkips", () => {
-  const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "hotmilk-global-skip-"));
+  let tmpHome: string;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "hotmilk-global-skip-"));
+  });
 
   afterEach(() => {
     fs.rmSync(tmpHome, { recursive: true, force: true });
@@ -105,6 +125,30 @@ describe("detectGlobalBundledExtensionSkips", () => {
     expect(skippedIds.has("graphify")).toBe(false);
   });
 
+  it("ignores project-only bundled packages when includeProjectSettings is false", () => {
+    const projectDir = path.join(tmpHome, "project");
+    fs.mkdirSync(path.join(tmpHome, ".pi", "agent"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpHome, ".pi", "agent", "settings.json"),
+      `${JSON.stringify({ packages: ["npm:hotmilk"] }, null, 2)}\n`,
+      "utf-8",
+    );
+    fs.mkdirSync(path.join(projectDir, ".pi"), { recursive: true });
+    fs.writeFileSync(
+      path.join(projectDir, ".pi", "settings.json"),
+      `${JSON.stringify({ packages: ["npm:graphify-pi"] }, null, 2)}\n`,
+      "utf-8",
+    );
+
+    const skips = detectGlobalBundledExtensionSkips({
+      homedir: tmpHome,
+      cwd: projectDir,
+      includeProjectSettings: false,
+    });
+
+    expect(skips.some((skip) => skip.id === "graphify")).toBe(false);
+  });
+
   it("detects dashboard bridge alias package", () => {
     const dashboardExt = path.join(tmpHome, "pi-dashboard-extension");
     fs.mkdirSync(dashboardExt, { recursive: true });
@@ -124,14 +168,6 @@ describe("detectGlobalBundledExtensionSkips", () => {
 
     const skips = detectGlobalBundledExtensionSkips({ homedir: tmpHome, cwd: tmpHome });
     expect(skips.some((skip) => skip.id === "agent-dashboard")).toBe(true);
-  });
-});
-
-describe("bundled package registry", () => {
-  it("covers every bundled extension id", () => {
-    for (const id of BUNDLED_EXTENSION_IDS) {
-      expect(BUNDLED_EXTENSION_PACKAGES[id]?.packageName).toBeTypeOf("string");
-    }
   });
 });
 

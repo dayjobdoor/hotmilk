@@ -15,8 +15,10 @@
     "rtk-optimizer": false,
     "mcp-adapter": false,
     "planning-with-files": false,
+    "plannotator": false,
     "caveman": false,
     "red-green": false,
+    "autoresearch": false,
     "agent-dashboard": false,
     "web-access": false,
     "pi-flows": false,
@@ -32,5 +34,9 @@
   },
   "mcp": {
     "seedOnStart": false
+  },
+  "projectTrust": {
+    "mode": "delegate",
+    "remember": false
   }
 }

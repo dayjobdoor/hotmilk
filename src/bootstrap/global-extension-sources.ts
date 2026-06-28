@@ -17,6 +17,8 @@ export type GlobalBundledExtensionSkip = {
 export type CollectGlobalExtensionSourcesOptions = {
   cwd?: string;
   homedir?: string;
+  /** When false, skip project `.pi/settings.json` (Pi project trust gate). */
+  includeProjectSettings?: boolean;
 };
 
 function isLocalPackageEntry(entry: string): boolean {
@@ -105,6 +107,7 @@ export function collectInstalledPackageNamesFromPiSettings(
 ): Set<string> {
   const home = options.homedir ?? process.env.HOME ?? process.env.USERPROFILE ?? os.homedir();
   const cwd = options.cwd ?? process.cwd();
+  const includeProjectSettings = options.includeProjectSettings ?? true;
   const names = new Set<string>();
 
   const sources: Array<{ settingsPath: string; baseDir: string }> = [
@@ -112,8 +115,14 @@ export function collectInstalledPackageNamesFromPiSettings(
       settingsPath: path.join(home, ".pi", "agent", "settings.json"),
       baseDir: path.join(home, ".pi", "agent"),
     },
-    { settingsPath: path.join(cwd, PI_PROJECT_CONFIG_DIR, "settings.json"), baseDir: cwd },
   ];
+
+  if (includeProjectSettings) {
+    sources.push({
+      settingsPath: path.join(cwd, PI_PROJECT_CONFIG_DIR, "settings.json"),
+      baseDir: cwd,
+    });
+  }
 
   for (const { settingsPath, baseDir } of sources) {
     for (const entry of readSettingsEntries(settingsPath)) {

@@ -7,7 +7,10 @@ import {
   resolveBundledModule,
 } from "../src/bootstrap/resolve-bundled.ts";
 
-describe("resolveBundledModule", () => {
+const HOISTED_BOOTSTRAP =
+  "/Users/hotmilk/.local/share/chezmoi/.pi/npm/node_modules/hotmilk/src/bootstrap/extensions.ts";
+
+describe("parseBundledModulePath", () => {
   it("parses scoped package paths", () => {
     expect(parseBundledModulePath("@haispeed/pi-obsidian/extensions/obsidian-cli.ts")).toEqual({
       pkgName: "@haispeed/pi-obsidian",
@@ -28,7 +31,9 @@ describe("resolveBundledModule", () => {
       subpath: "src/extensions/btw.ts",
     });
   });
+});
 
+describe("resolveBundledModule", () => {
   it("resolves hotmilk wrapper modules from the package tree", () => {
     const resolved = resolveBundledModule("hotmilk/src/extensions/btw.ts", import.meta.url);
     expect(resolved).toMatch(/src[/\\]extensions[/\\]btw\.ts$/);
@@ -45,25 +50,24 @@ describe("resolveBundledModule", () => {
     expect(existsSync(resolved)).toBe(true);
   });
 
-  it("resolves hoisted sibling packages next to hotmilk", () => {
-    const hoistedBootstrap =
-      "/Users/hotmilk/.local/share/chezmoi/.pi/npm/node_modules/hotmilk/src/bootstrap/extensions.ts";
-    if (!existsSync(hoistedBootstrap)) {
-      return;
-    }
+  it.skipIf(!existsSync(HOISTED_BOOTSTRAP))(
+    "resolves hoisted sibling packages next to hotmilk",
+    () => {
+      const resolved = resolveBundledModule(
+        "context-mode/build/adapters/pi/extension.js",
+        pathToFileURL(HOISTED_BOOTSTRAP).href,
+      );
+      expect(resolved).toMatch(
+        /node_modules[/\\]context-mode[/\\]build[/\\]adapters[/\\]pi[/\\]extension\.js$/,
+      );
+      expect(existsSync(resolved)).toBe(true);
+    },
+  );
 
-    const resolved = resolveBundledModule(
-      "context-mode/build/adapters/pi/extension.js",
-      pathToFileURL(hoistedBootstrap).href,
-    );
-    expect(resolved).toMatch(
-      /node_modules[/\\]context-mode[/\\]build[/\\]adapters[/\\]pi[/\\]extension\.js$/,
-    );
-    expect(existsSync(resolved)).toBe(true);
-  });
-
-  it("returns a file URL suitable for dynamic import", () => {
-    const url = bundledImportUrl("gentle-pi/extensions/gentle-ai.ts");
+  it("returns a file URL that resolves to an existing module", () => {
+    const modulePath = "gentle-pi/extensions/gentle-ai.ts";
+    const url = bundledImportUrl(modulePath);
     expect(url.startsWith("file://")).toBe(true);
+    expect(existsSync(resolveBundledModule(modulePath, import.meta.url))).toBe(true);
   });
 });

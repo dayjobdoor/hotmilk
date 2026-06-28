@@ -16,11 +16,16 @@ function readBundledHotmilkTemplate(): HotmilkConfig {
   return JSON.parse(readFileSync(BUNDLED_TEMPLATE_PATH, "utf8")) as HotmilkConfig;
 }
 
+function isProjectTrustMode(value: unknown): value is ProjectTrustMode {
+  return value === "delegate" || value === "prompt" || value === "always" || value === "never";
+}
+
 function buildDefaultConfigFromTemplate(template: HotmilkConfig): {
   extensions: Record<BundledExtensionId, boolean>;
   graph: ResolvedGraphSettings;
   defaults: ResolvedDefaults;
   mcp: ResolvedMcpSettings;
+  projectTrust: ResolvedProjectTrust;
 } {
   const extensions = {} as Record<BundledExtensionId, boolean>;
   for (const id of BUNDLED_EXTENSION_IDS) {
@@ -33,6 +38,7 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): {
 
   const language = template.defaults?.language?.trim();
   const persona = template.defaults?.persona;
+  const projectTrustMode = template.projectTrust?.mode;
 
   return {
     extensions,
@@ -47,6 +53,10 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): {
     mcp: {
       seedOnStart: template.mcp?.seedOnStart ?? false,
     },
+    projectTrust: {
+      mode: isProjectTrustMode(projectTrustMode) ? projectTrustMode : "delegate",
+      remember: template.projectTrust?.remember ?? false,
+    },
   };
 }
 
@@ -56,6 +66,13 @@ export const AGENT_HOTMILK_CONFIG_LABEL = "~/.pi/agent/hotmilk.json";
 export { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "./bundled-extensions.ts";
 
 export type PersonaMode = "gentleman" | "neutral";
+
+export type ProjectTrustMode = "delegate" | "prompt" | "always" | "never";
+
+export type ResolvedProjectTrust = {
+  mode: ProjectTrustMode;
+  remember: boolean;
+};
 
 export type HotmilkConfig = {
   extensions?: Partial<Record<BundledExtensionId, boolean>>;
@@ -69,6 +86,10 @@ export type HotmilkConfig = {
   };
   mcp?: {
     seedOnStart?: boolean;
+  };
+  projectTrust?: {
+    mode?: ProjectTrustMode;
+    remember?: boolean;
   };
 };
 
@@ -174,4 +195,5 @@ export {
   resolveDefaults,
   resolveGraphSettings,
   resolveMcpSettings,
+  resolveProjectTrust,
 } from "./resolve.ts";

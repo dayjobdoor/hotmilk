@@ -13,7 +13,9 @@ import {
 import type { BundledExtensionId } from "../src/config/bundled-extensions.ts";
 import { createExtensionRuntime, type ResourceLoader } from "@earendil-works/pi-coding-agent";
 
-function toggles(overrides: Partial<Record<BundledExtensionId, boolean>> = {}): HotmilkBtwConfig {
+function hotmilkBtwConfig(
+  overrides: Partial<Record<BundledExtensionId, boolean>> = {},
+): HotmilkBtwConfig {
   const base = Object.fromEntries(
     (["btw", "subagents", "graphify", "gentle-ai"] as BundledExtensionId[]).map((id) => [
       id,
@@ -75,7 +77,7 @@ describe("hotmilk btw prompt", () => {
     const loader = mockPiBtwLoader([
       "You are having an aside conversation with the user, separate from their main working session.",
     ]);
-    const adapted = adaptBtwResourceLoaderForHotmilk(loader, toggles());
+    const adapted = adaptBtwResourceLoaderForHotmilk(loader, hotmilkBtwConfig());
     expect(adapted.getSystemPrompt()).toBe("Project rules stay.");
     expect(adapted.getAppendSystemPrompt().join("\n")).toContain("hotmilk routing");
   });
@@ -87,14 +89,14 @@ describe("hotmilk btw prompt", () => {
     const upstreamExtensions = loader.getExtensions();
     upstreamExtensions.extensions.push({ id: "context-mode" } as never);
 
-    const adapted = adaptBtwResourceLoaderForHotmilk(loader, toggles());
+    const adapted = adaptBtwResourceLoaderForHotmilk(loader, hotmilkBtwConfig());
     expect(adapted.getExtensions().extensions).toEqual([]);
   });
 });
 
 describe("hotmilk btw tools", () => {
   it("uses read-biased tools when subagents are on", () => {
-    expect(resolveHotmilkBtwTools(toggles({ subagents: true }))).toEqual([
+    expect(resolveHotmilkBtwTools(hotmilkBtwConfig({ subagents: true }))).toEqual([
       "read",
       "grep",
       "find",
@@ -104,7 +106,7 @@ describe("hotmilk btw tools", () => {
   });
 
   it("keeps upstream coding tools when subagents are off", () => {
-    expect(resolveHotmilkBtwTools(toggles({ subagents: false }))).toEqual([
+    expect(resolveHotmilkBtwTools(hotmilkBtwConfig({ subagents: false }))).toEqual([
       "read",
       "bash",
       "edit",
@@ -114,12 +116,14 @@ describe("hotmilk btw tools", () => {
 
   it("skips graphify_query custom tool when graphify toggle is off", () => {
     expect(
-      createHotmilkBtwCustomTools(toggles({ graphify: false, "context-mode": false })),
+      createHotmilkBtwCustomTools(hotmilkBtwConfig({ graphify: false, "context-mode": false })),
     ).toEqual([]);
   });
 
   it("adds ctx_search proxy when context-mode is on", () => {
-    const tools = createHotmilkBtwCustomTools(toggles({ "context-mode": true, graphify: false }));
+    const tools = createHotmilkBtwCustomTools(
+      hotmilkBtwConfig({ "context-mode": true, graphify: false }),
+    );
     expect(tools.map((t) => t.name)).toEqual(["ctx_search"]);
   });
 
@@ -134,7 +138,9 @@ describe("hotmilk btw tools", () => {
       }),
     });
 
-    const [proxy] = createHotmilkBtwCustomTools(toggles({ "context-mode": true, graphify: false }));
+    const [proxy] = createHotmilkBtwCustomTools(
+      hotmilkBtwConfig({ "context-mode": true, graphify: false }),
+    );
     const result = await proxy.execute("call-1", { queries: ["decision"] }, undefined, undefined, {
       cwd: process.cwd(),
     } as never);
@@ -164,7 +170,7 @@ describe("hotmilk btw tools", () => {
     });
     expect(registered).toEqual(["ctx_search"]);
     expect(
-      createHotmilkBtwCustomTools(toggles({ "context-mode": true, graphify: false }))[0]
+      createHotmilkBtwCustomTools(hotmilkBtwConfig({ "context-mode": true, graphify: false }))[0]
         ?.description,
     ).toBe("captured");
   });

@@ -1,11 +1,15 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { pruneRedundantDashboardPackage } from "../src/bootstrap/dashboard-settings.ts";
 
 describe("pruneRedundantDashboardPackage", () => {
-  const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "hotmilk-dashboard-settings-"));
+  let tmpHome: string;
+
+  beforeEach(() => {
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "hotmilk-dashboard-settings-"));
+  });
 
   afterEach(() => {
     fs.rmSync(tmpHome, { recursive: true, force: true });

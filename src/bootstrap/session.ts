@@ -1,5 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { applyContextStackOnSessionStart } from "./context-stack.ts";
+import { detectGlobalBundledExtensionSkips } from "./global-extension-sources.ts";
 import { seedAgentMcpJsonIfMissing } from "../config/mcp.ts";
 import { AGENT_HOTMILK_CONFIG_LABEL, seedHotmilkConfigIfMissing } from "../config/hotmilk.ts";
 import type { HotmilkRuntime } from "../config/runtime.ts";
@@ -15,6 +16,23 @@ const HOTMILK_PARSE_ERROR_MESSAGE = (path: string, error: string): string =>
   `Failed to parse ${path}: ${error}. Using default extension toggles.`;
 const MCP_SEEDED_MESSAGE = (path: string): string =>
   `Created ${path} from hotmilk MCP template (add servers for pi-mcp-adapter; context-mode uses the extension bridge).`;
+
+function formatProjectTrustSkipMessage(
+  skips: HotmilkRuntime["globalExtensionSkips"],
+): string | undefined {
+  if (skips.length === 0) {
+    return undefined;
+  }
+  const rows = skips.map((skip) => `${skip.id}: project ${skip.packageName}`).join("\n");
+  return `Project settings also provide bundled packages (run /reload to dedupe):\n${rows}`;
+}
+
+function detectProjectOnlyBundledSkips(cwd: string): HotmilkRuntime["globalExtensionSkips"] {
+  const globalOnly = detectGlobalBundledExtensionSkips({ cwd, includeProjectSettings: false });
+  const withProject = detectGlobalBundledExtensionSkips({ cwd, includeProjectSettings: true });
+  const globalIds = new Set(globalOnly.map((skip) => skip.id));
+  return withProject.filter((skip) => !globalIds.has(skip.id));
+}
 
 function formatGlobalExtensionSkipsMessage(
   skips: HotmilkRuntime["globalExtensionSkips"],
@@ -43,7 +61,7 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
       uiNotify(HOTMILK_PARSE_ERROR_MESSAGE(runtime.configPath, runtime.configError), "warning");
     }
 
-    if (runtime.extensionToggles["gentle-ai"]) {
+    if (runtime.extensionToggles["gentle-ai"] && ctx.isProjectTrusted()) {
       seedPersonaFromDefaults(ctx.cwd, runtime.defaults);
     }
 
@@ -52,6 +70,15 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
     const globalSkipMessage = formatGlobalExtensionSkipsMessage(runtime.globalExtensionSkips);
     if (globalSkipMessage) {
       uiNotify(globalSkipMessage, "info");
+    }
+
+    if (ctx.isProjectTrusted()) {
+      const projectSkipMessage = formatProjectTrustSkipMessage(
+        detectProjectOnlyBundledSkips(ctx.cwd),
+      );
+      if (projectSkipMessage) {
+        uiNotify(projectSkipMessage, "warning");
+      }
     }
 
     if (shouldWarnCavemanJaConflict(runtime.extensionToggles.caveman, runtime.defaults.language)) {

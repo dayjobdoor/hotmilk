@@ -11,75 +11,40 @@ import {
   resolveDefaults,
   resolveGraphSettings,
   resolveMcpSettings,
+  resolveProjectTrust,
   seedHotmilkConfigIfMissing,
 } from "../src/config/hotmilk.ts";
-
-const BUNDLED_TEMPLATE = JSON.parse(
-  readFileSync(join(import.meta.dirname, "../hotmilk.json"), "utf8"),
-) as {
-  extensions: Record<string, boolean>;
-  graph: { warnOnStale: boolean; autoSuggestUpdate: boolean };
-  defaults: { persona: string };
-  mcp: { seedOnStart: boolean };
-};
+import { HOTMILK_JSON_TEMPLATE } from "./fixtures/manifest.ts";
 
 function tempConfigDir(): string {
   return mkdtempSync(join(tmpdir(), "hotmilk-test-"));
 }
 
 describe("resolveBundledExtensionToggles", () => {
-  it("fills missing extension toggles with defaults", () => {
+  it("falls back to hotmilk.json template defaults for every bundled id", () => {
     const toggles = resolveBundledExtensionToggles({
       extensions: { "ask-user": false },
     });
 
-    expect(toggles["ask-user"]).toBe(false);
-    expect(toggles["skill-registry"]).toBe(true);
-    expect(toggles.graphify).toBe(true);
-    expect(toggles.subagents).toBe(true);
-    expect(toggles.goal).toBe(true);
-    expect(toggles["mcp-adapter"]).toBe(false);
-    expect(toggles["planning-with-files"]).toBe(false);
-    expect(toggles.caveman).toBe(false);
-    expect(toggles["red-green"]).toBe(false);
-    expect(toggles["agent-dashboard"]).toBe(false);
-    expect(toggles["web-access"]).toBe(false);
-    expect(toggles["pi-flows"]).toBe(false);
+    for (const id of BUNDLED_EXTENSION_IDS) {
+      const expected = id === "ask-user" ? false : DEFAULT_HOTMILK_CONFIG.extensions[id];
+      expect(toggles[id]).toBe(expected);
+    }
   });
 
-  it("honors explicit agent-dashboard toggle", () => {
-    const toggles = resolveBundledExtensionToggles({
-      extensions: { "agent-dashboard": false },
-    });
-
-    expect(toggles["agent-dashboard"]).toBe(false);
-  });
-
-  it("honors explicit web-access and pi-flows toggles", () => {
-    const toggles = resolveBundledExtensionToggles({
-      extensions: { "web-access": false, "pi-flows": false },
-    });
-
-    expect(toggles["web-access"]).toBe(false);
-    expect(toggles["pi-flows"]).toBe(false);
-  });
-
-  it("honors explicit red-green toggle", () => {
-    const toggles = resolveBundledExtensionToggles({
-      extensions: { "red-green": true },
-    });
-
-    expect(toggles["red-green"]).toBe(true);
-  });
-
-  it("honors explicit toggles for newly managed extensions", () => {
-    const toggles = resolveBundledExtensionToggles({
-      extensions: { graphify: false, subagents: false, "planning-with-files": true },
-    });
-
-    expect(toggles.graphify).toBe(false);
-    expect(toggles.subagents).toBe(false);
-    expect(toggles["planning-with-files"]).toBe(true);
+  it.each([
+    ["agent-dashboard", false],
+    ["web-access", false],
+    ["pi-flows", false],
+    ["red-green", true],
+    ["autoresearch", true],
+    ["plannotator", true],
+    ["graphify", false],
+    ["subagents", false],
+    ["planning-with-files", true],
+  ] as const)("honors explicit override for %s", (id, value) => {
+    const toggles = resolveBundledExtensionToggles({ extensions: { [id]: value } });
+    expect(toggles[id]).toBe(value);
   });
 });
 
@@ -95,6 +60,13 @@ describe("resolveGraphSettings", () => {
     expect(resolveGraphSettings({ graph: { warnOnStale: false } })).toEqual({
       warnOnStale: false,
       autoSuggestUpdate: true,
+    });
+  });
+
+  it("allows disabling auto-suggest update", () => {
+    expect(resolveGraphSettings({ graph: { autoSuggestUpdate: false } })).toEqual({
+      warnOnStale: true,
+      autoSuggestUpdate: false,
     });
   });
 });
@@ -117,23 +89,49 @@ describe("resolveMcpSettings", () => {
     expect(resolveMcpSettings({})).toEqual({ seedOnStart: false });
   });
 
-  it("allows disabling MCP seed on session start", () => {
-    expect(resolveMcpSettings({ mcp: { seedOnStart: false } })).toEqual({ seedOnStart: false });
+  it("allows enabling MCP seed on session start", () => {
+    expect(resolveMcpSettings({ mcp: { seedOnStart: true } })).toEqual({ seedOnStart: true });
+  });
+});
+
+describe("resolveProjectTrust", () => {
+  it("defaults to delegate without remember", () => {
+    expect(resolveProjectTrust({})).toEqual({ mode: "delegate", remember: false });
+  });
+
+  it("honors explicit projectTrust settings", () => {
+    expect(resolveProjectTrust({ projectTrust: { mode: "always", remember: true } })).toEqual({
+      mode: "always",
+      remember: true,
+    });
+  });
+
+  it("falls back to delegate for invalid projectTrust mode", () => {
+    expect(
+      resolveProjectTrust({ projectTrust: { mode: "bogus" as never, remember: true } }),
+    ).toEqual({ mode: "delegate", remember: true });
+  });
+
+  it("falls back to default remember for non-boolean remember", () => {
+    expect(
+      resolveProjectTrust({ projectTrust: { mode: "prompt", remember: "yes" as never } }),
+    ).toEqual({ mode: "prompt", remember: false });
   });
 });
 
 describe("bundled hotmilk.json template", () => {
-  it("lists every bundled extension id", () => {
+  it("is the single source of truth for DEFAULT_HOTMILK_CONFIG", () => {
+    expect(Object.keys(HOTMILK_JSON_TEMPLATE.extensions).sort()).toEqual(
+      [...BUNDLED_EXTENSION_IDS].sort(),
+    );
     for (const id of BUNDLED_EXTENSION_IDS) {
-      expect(typeof BUNDLED_TEMPLATE.extensions[id]).toBe("boolean");
+      expect(typeof HOTMILK_JSON_TEMPLATE.extensions[id]).toBe("boolean");
     }
-  });
-
-  it("matches DEFAULT_HOTMILK_CONFIG", () => {
-    expect(DEFAULT_HOTMILK_CONFIG.extensions).toEqual(BUNDLED_TEMPLATE.extensions);
-    expect(DEFAULT_HOTMILK_CONFIG.graph).toEqual(BUNDLED_TEMPLATE.graph);
-    expect(DEFAULT_HOTMILK_CONFIG.defaults).toEqual(BUNDLED_TEMPLATE.defaults);
-    expect(DEFAULT_HOTMILK_CONFIG.mcp).toEqual(BUNDLED_TEMPLATE.mcp);
+    expect(DEFAULT_HOTMILK_CONFIG.extensions).toEqual(HOTMILK_JSON_TEMPLATE.extensions);
+    expect(DEFAULT_HOTMILK_CONFIG.graph).toEqual(HOTMILK_JSON_TEMPLATE.graph);
+    expect(DEFAULT_HOTMILK_CONFIG.defaults).toEqual(HOTMILK_JSON_TEMPLATE.defaults);
+    expect(DEFAULT_HOTMILK_CONFIG.mcp).toEqual(HOTMILK_JSON_TEMPLATE.mcp);
+    expect(DEFAULT_HOTMILK_CONFIG.projectTrust).toEqual(HOTMILK_JSON_TEMPLATE.projectTrust);
   });
 });
 
@@ -145,7 +143,7 @@ describe("seedHotmilkConfigIfMissing", () => {
 
     expect(result.seeded).toBe(true);
     const written = JSON.parse(readFileSync(getHotmilkConfigPath(configRoot), "utf8"));
-    expect(written).toEqual(BUNDLED_TEMPLATE);
+    expect(written).toEqual(HOTMILK_JSON_TEMPLATE);
   });
 
   it("does not overwrite an existing hotmilk.json", () => {
@@ -177,14 +175,12 @@ describe("loadHotmilkConfig", () => {
     expect(loaded.path).toBe(getHotmilkConfigPath(configRoot));
   });
 
-  it("uses defaults when no config file exists", () => {
+  it("uses in-memory defaults when no config file exists", () => {
     const configRoot = tempConfigDir();
 
     const loaded = loadHotmilkConfig(configRoot);
 
-    expect(loaded.config.extensions?.["ask-user"]).toBe(true);
-    expect(loaded.config.extensions?.graphify).toBe(true);
-    expect(loaded.config.extensions?.["red-green"]).toBe(false);
+    expect(loaded.config.extensions).toEqual(DEFAULT_HOTMILK_CONFIG.extensions);
     expect(existsSync(getHotmilkConfigPath(configRoot))).toBe(false);
   });
 });

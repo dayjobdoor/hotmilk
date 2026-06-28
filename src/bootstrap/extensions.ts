@@ -36,6 +36,8 @@ export type RegisterBundledExtensionsOptions = {
   cwd?: string;
   /** Precomputed skips (tests); defaults to scanning Pi settings. */
   globalSkips?: GlobalBundledExtensionSkip[];
+  /** When false, only global Pi settings are scanned (trust-safe startup). */
+  includeProjectSettings?: boolean;
 };
 
 export type RegisterBundledExtensionsResult = {
@@ -48,7 +50,11 @@ export async function registerBundledExtensions(
   options: RegisterBundledExtensionsOptions = {},
 ): Promise<RegisterBundledExtensionsResult> {
   const globalSkips =
-    options.globalSkips ?? detectGlobalBundledExtensionSkips({ cwd: options.cwd });
+    options.globalSkips ??
+    detectGlobalBundledExtensionSkips({
+      cwd: options.cwd,
+      includeProjectSettings: options.includeProjectSettings ?? true,
+    });
   const skipById = new Map(globalSkips.map((skip) => [skip.id, skip] as const));
 
   const enabledIds = new Set<BundledExtensionId>();

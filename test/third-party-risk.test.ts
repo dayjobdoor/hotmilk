@@ -2,34 +2,56 @@ import { execSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
-import { resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
-import { BUNDLED_EXTENSION_DEFINITIONS } from "../src/config/bundled-extensions.ts";
+import {
+  installedPackageJson,
+  installedPackageVersion,
+  PACKAGE_JSON,
+  REPO_ROOT,
+  semverAtLeast,
+} from "./fixtures/manifest.ts";
 
-const ROOT = join(import.meta.dirname, "..");
-const PACKAGE_JSON = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as {
-  dependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
+/** Pi 0.80 floor for nested @earendil-works supply-chain drift checks. */
+const PI_080_FLOOR = "0.80.0";
+
+type BundledPeerRangeExclusion = {
+  packageName: string;
+  /** Substring expected in the blocking peer range (remove row when upstream widens peers). */
+  excludedVersionPrefix: string;
 };
 
-/** Critical bundled entrypoints — wrong resolution breaks Pi sessions at runtime. */
-const BUNDLED_ENTRYPOINTS = [
-  "pi-subagents/src/extension/index.ts",
-  "pi-subagents/src/extension/doctor.ts",
-  "gentle-pi/extensions/gentle-ai.ts",
-  "context-mode/build/adapters/pi/extension.js",
-  "graphify-pi/extensions/graphify.ts",
-] as const;
+/**
+ * Bundled deps whose published peer ranges still exclude Pi 0.80.x.
+ * Drop a row when npm publishes 0.80-compatible peers and refresh README peer notes.
+ */
+const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly BundledPeerRangeExclusion[] = [
+  { packageName: "pi-simplify", excludedVersionPrefix: "<0.76.0" },
+  { packageName: "pi-rtk-optimizer", excludedVersionPrefix: "^0.79.0" },
+  { packageName: "pi-docparser", excludedVersionPrefix: "^0.74.0" },
+  { packageName: "pi-red-green", excludedVersionPrefix: "^0.74.0" },
+  { packageName: "@blackbelt-technology/pi-flows", excludedVersionPrefix: "^0.74.0" },
+];
 
-function parseMajor(version: string): number | null {
-  const match = version.match(/(\d+)\./);
-  return match ? Number.parseInt(match[1], 10) : null;
+/**
+ * Nested @earendil-works copies still below Pi 0.80 — remove rows when upstream dedupes to 0.80.x.
+ * pi-subagents / pi-mcp-adapter / agent-dashboard server are the usual sources.
+ */
+const KNOWN_NESTED_DRIFT_BELOW_080: readonly { name: string; below: string }[] = [
+  { name: "@earendil-works/pi-tui", below: "0.80.0" },
+  { name: "@earendil-works/pi-ai", below: "0.80.0" },
+];
+
+function bundledPiPeerRanges(packageName: string): string[] {
+  const peers = installedPackageJson(packageName).peerDependencies ?? {};
+  return Object.entries(peers)
+    .filter(([name]) => name.startsWith("@earendil-works/") || name.startsWith("@mariozechner/"))
+    .map(([, range]) => range);
 }
 
 function collectNestedEarendilInstalls(): Array<{ path: string; name: string; version: string }> {
   const found: Array<{ path: string; name: string; version: string }> = [];
-  const nodeModules = join(ROOT, "node_modules");
+  const nodeModules = join(REPO_ROOT, "node_modules");
 
-  function walkScoped(dir: string, pkgDirName: string): void {
+  function collectPackagesInScopeDir(dir: string, pkgDirName: string): void {
     const scopePath = join(dir, pkgDirName);
     if (!existsSync(scopePath)) return;
     for (const pkg of readdirSync(scopePath)) {
@@ -55,15 +77,15 @@ function collectNestedEarendilInstalls(): Array<{ path: string; name: string; ve
 
   for (const top of readdirSync(nodeModules)) {
     if (top.startsWith("@")) {
-      walkScoped(nodeModules, top);
+      collectPackagesInScopeDir(nodeModules, top);
       continue;
     }
     const topPath = join(nodeModules, top);
-    const nested = join(topPath, "node_modules");
-    if (!existsSync(nested)) continue;
-    for (const nestedTop of readdirSync(nested)) {
+    const nestedNodeModulesDir = join(topPath, "node_modules");
+    if (!existsSync(nestedNodeModulesDir)) continue;
+    for (const nestedTop of readdirSync(nestedNodeModulesDir)) {
       if (nestedTop.startsWith("@")) {
-        walkScoped(nested, nestedTop);
+        collectPackagesInScopeDir(nestedNodeModulesDir, nestedTop);
       }
     }
   }
@@ -72,46 +94,71 @@ function collectNestedEarendilInstalls(): Array<{ path: string; name: string; ve
 }
 
 describe("third-party risk (hotmilk meta-package)", () => {
-  it("lists every bundled primary package in package.json dependencies", () => {
-    const deps = new Set(Object.keys(PACKAGE_JSON.dependencies ?? {}));
-    for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
-      expect(deps.has(definition.package.packageName)).toBe(true);
-    }
+  it("resolves gentle-pi at or above the package.json semver floor", () => {
+    const floor = PACKAGE_JSON.dependencies?.["gentle-pi"];
+    expect(floor).toBeDefined();
+    const resolved = installedPackageVersion("gentle-pi");
+    expect(semverAtLeast(resolved, floor!)).toBe(true);
   });
 
-  it("declares Pi 0.78 peers on hotmilk itself", () => {
+  it("installs Pi 0.80 coding-agent at the top level", () => {
+    const version = installedPackageVersion("@earendil-works/pi-coding-agent");
+    expect(semverAtLeast(version, PI_080_FLOOR)).toBe(true);
+  });
+
+  it("declares Pi 0.80 peers on hotmilk itself", () => {
     for (const [name, range] of Object.entries(PACKAGE_JSON.peerDependencies ?? {})) {
       if (name.startsWith("@earendil-works/")) {
-        expect(range).toMatch(/0\.78/);
+        expect(range).toMatch(/0\.80/);
       }
     }
   });
 
-  it("resolves critical bundled entrypoints from the install layout", () => {
-    for (const modulePath of BUNDLED_ENTRYPOINTS) {
-      expect(existsSync(resolveBundledModule(modulePath, import.meta.url))).toBe(true);
+  it("tracks bundled deps whose peer ranges still exclude Pi 0.80", () => {
+    for (const exclusion of BUNDLED_PEER_RANGES_EXCLUDING_PI_080) {
+      const ranges = bundledPiPeerRanges(exclusion.packageName);
+      expect(ranges.length).toBeGreaterThan(0);
+      expect(ranges.some((range) => range.includes(exclusion.excludedVersionPrefix))).toBe(true);
     }
   });
 
-  it("records nested @earendil-works copies below major 78 as supply-chain drift", () => {
-    const nested = collectNestedEarendilInstalls().filter(
-      (entry) => !entry.path.startsWith(join(ROOT, "node_modules", "@earendil-works")),
-    );
-    const stale = nested.filter((entry) => {
-      const major = parseMajor(entry.version);
-      return major !== null && major < 78;
-    });
+  it(
+    "records known nested @earendil-works copies below Pi 0.80 as supply-chain drift",
+    { timeout: 15_000 },
+    () => {
+      const topLevelScope = join(REPO_ROOT, "node_modules", "@earendil-works");
+      const nestedInstalls = collectNestedEarendilInstalls().filter(
+        (entry) => !entry.path.startsWith(topLevelScope),
+      );
+      const installsBelowPi080Floor = nestedInstalls.filter(
+        (entry) => !semverAtLeast(entry.version, PI_080_FLOOR),
+      );
+      const knownNames = new Set(KNOWN_NESTED_DRIFT_BELOW_080.map((known) => known.name));
+      const unexpected = installsBelowPi080Floor.filter((entry) => !knownNames.has(entry.name));
 
-    // Known: pi-subagents pins pi-tui ^0.74 as a direct dependency (nested copy).
-    expect(stale.length).toBeGreaterThan(0);
-    expect(stale.some((entry) => entry.name === "@earendil-works/pi-tui")).toBe(true);
-  });
+      expect(
+        unexpected.map((entry) => `${entry.name}@${entry.version} (${entry.path})`),
+        "unexpected nested @earendil-works below 0.80 — add to KNOWN_NESTED_DRIFT_BELOW_080 or fix upstream",
+      ).toEqual([]);
+
+      for (const known of KNOWN_NESTED_DRIFT_BELOW_080) {
+        const matches = installsBelowPi080Floor.filter((entry) => entry.name === known.name);
+        expect(
+          matches.length,
+          `expected nested ${known.name} below ${known.below}`,
+        ).toBeGreaterThan(0);
+        for (const match of matches) {
+          expect(semverAtLeast(match.version, known.below)).toBe(false);
+        }
+      }
+    },
+  );
 
   it("has no critical npm audit findings in production dependencies", { timeout: 60_000 }, () => {
     let output = "";
     try {
       output = execSync("npm audit --audit-level=critical --omit=dev --json", {
-        cwd: ROOT,
+        cwd: REPO_ROOT,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
       });

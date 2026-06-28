@@ -3,8 +3,6 @@ import {
   applyHotmilkDashboardDefaultsToRaw,
   buildWarmStartLaunchArgs,
   HOTMILK_DASHBOARD_PORT,
-  isZrokOnPath,
-  resetDashboardWarmStartForTests,
   resolveAvailablePiPort,
   resolveDashboardServerCliPath,
   resolveDashboardWarmStartDecision,
@@ -59,6 +57,12 @@ describe("dashboard bootstrap", () => {
     expect(raw.port).toBe(9000);
   });
 
+  it("applyHotmilkDashboardDefaultsToRaw disables zrok tunnel when zrok is unavailable", () => {
+    const raw: Record<string, unknown> = { port: 9000, tunnel: { enabled: true } };
+    expect(applyHotmilkDashboardDefaultsToRaw(raw, { zrokAvailable: false })).toBe(true);
+    expect((raw.tunnel as { enabled: boolean }).enabled).toBe(false);
+  });
+
   it("resolveDashboardWarmStartDecision skips when dashboard is already running", async () => {
     const decision = await resolveDashboardWarmStartDecision(
       8000,
@@ -109,14 +113,5 @@ describe("dashboard bootstrap", () => {
       { occupiedWaitMs: 0 },
     );
     expect(decision).toBe("skip-conflict");
-  });
-
-  it("isZrokOnPath returns boolean", () => {
-    expect(typeof isZrokOnPath()).toBe("boolean");
-  });
-
-  it("resetDashboardWarmStartForTests clears in-flight dedupe", () => {
-    resetDashboardWarmStartForTests();
-    expect(resetDashboardWarmStartForTests).toBeTypeOf("function");
   });
 });

@@ -8,8 +8,6 @@ import {
   seedRtkConfigIfMissing,
   syncRtkConfigForContextStack,
 } from "../src/bootstrap/context-stack.ts";
-import { CONTEXT_STACK_EXTENSION_IDS } from "../src/config/bundled-extensions.ts";
-import { BUNDLED_EXTENSION_IDS } from "../src/config/hotmilk.ts";
 
 describe("context-stack", () => {
   const tempDirs: string[] = [];
@@ -20,18 +18,11 @@ describe("context-stack", () => {
     }
   });
 
-  it("CONTEXT_STACK_EXTENSION_IDS are bundled extension ids", () => {
-    for (const id of CONTEXT_STACK_EXTENSION_IDS) {
-      expect(BUNDLED_EXTENSION_IDS).toContain(id);
-    }
-  });
-
-  it("buildHotmilkRtkConfig uses suggest mode when context-mode is enabled", () => {
-    const withCtx = buildHotmilkRtkConfig(true) as { mode: string };
-    const withoutCtx = buildHotmilkRtkConfig(false) as { mode: string };
-
-    expect(withCtx.mode).toBe("suggest");
-    expect(withoutCtx.mode).toBe("rewrite");
+  it("maps context-mode toggle to suggest mode and rewrite when off", () => {
+    expect(expectedRtkMode(true)).toBe("suggest");
+    expect(expectedRtkMode(false)).toBe("rewrite");
+    expect((buildHotmilkRtkConfig(true) as { mode: string }).mode).toBe("suggest");
+    expect((buildHotmilkRtkConfig(false) as { mode: string }).mode).toBe("rewrite");
   });
 
   it("seedRtkConfigIfMissing writes config once", () => {
@@ -76,8 +67,40 @@ describe("context-stack", () => {
     expect(written.outputCompaction.readCompaction.enabled).toBe(false);
   });
 
-  it("expectedRtkMode prefers suggest when context-mode is enabled", () => {
-    expect(expectedRtkMode(true)).toBe("suggest");
-    expect(expectedRtkMode(false)).toBe("rewrite");
+  it("syncRtkConfigForContextStack leaves rewrite mode when context-mode is off", () => {
+    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-off-"));
+    tempDirs.push(agentDir);
+    const configPath = join(agentDir, "config.json");
+
+    writeFileSync(
+      configPath,
+      `${JSON.stringify({ mode: "rewrite", outputCompaction: { readCompaction: { enabled: true } } }, null, 2)}\n`,
+      "utf8",
+    );
+
+    const result = syncRtkConfigForContextStack(false, true, configPath);
+    const written = JSON.parse(readFileSync(configPath, "utf8")) as {
+      mode: string;
+      outputCompaction: { readCompaction: { enabled: boolean } };
+    };
+
+    expect(result.updated).toBe(false);
+    expect(result.seeded).toBe(false);
+    expect(written.mode).toBe("rewrite");
+    expect(written.outputCompaction.readCompaction.enabled).toBe(true);
+  });
+
+  it("syncRtkConfigForContextStack no-ops when rtk toggle is off", () => {
+    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-disabled-"));
+    tempDirs.push(agentDir);
+    const configPath = join(agentDir, "config.json");
+
+    writeFileSync(configPath, `${JSON.stringify({ mode: "rewrite" }, null, 2)}\n`, "utf8");
+
+    const result = syncRtkConfigForContextStack(true, false, configPath);
+
+    expect(result.updated).toBe(false);
+    expect(result.seeded).toBe(false);
+    expect(JSON.parse(readFileSync(configPath, "utf8"))).toEqual({ mode: "rewrite" });
   });
 });

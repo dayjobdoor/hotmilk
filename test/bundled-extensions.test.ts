@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
+import { resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
 import {
   BUNDLED_EXTENSION_DEFINITIONS,
   BUNDLED_EXTENSION_GROUP_ORDER,
@@ -13,21 +13,22 @@ import {
   detectGlobalProviderForBundledExtension,
   packageNamesForBundledExtension,
 } from "../src/config/bundled-package-registry.ts";
-
-const PACKAGE_JSON = JSON.parse(
-  readFileSync(join(import.meta.dirname, "../package.json"), "utf8"),
-) as { dependencies?: Record<string, string> };
+import { PACKAGE_JSON } from "./fixtures/manifest.ts";
 
 describe("bundled extension manifest", () => {
   it("keeps ids aligned with derived tables", () => {
     expect(BUNDLED_EXTENSION_IDS).toHaveLength(BUNDLED_EXTENSION_DEFINITIONS.length);
+    expect(BUNDLED_EXTENSION_DEFINITIONS.map((definition) => definition.id)).toEqual([
+      ...BUNDLED_EXTENSION_IDS,
+    ]);
     for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
       expect(BUNDLED_EXTENSION_PACKAGES[definition.id]).toEqual(definition.package);
     }
   });
 
-  it("covers every id in /mode groups", () => {
+  it("covers every id in /mode groups exactly once", () => {
     const grouped = new Set(BUNDLED_EXTENSION_GROUPS.flatMap((group) => group.ids));
+    expect(grouped.size).toBe(BUNDLED_EXTENSION_IDS.length);
     for (const id of BUNDLED_EXTENSION_IDS) {
       expect(grouped.has(id)).toBe(true);
     }
@@ -47,8 +48,27 @@ describe("bundled extension manifest", () => {
     }
   });
 
+  it("resolves every bundled module path on disk", () => {
+    for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
+      const resolved = resolveBundledModule(definition.module, import.meta.url);
+      expect(existsSync(resolved), `${definition.id}: ${definition.module}`).toBe(true);
+    }
+  });
+
   it("orders context stack from loadPhase", () => {
     expect(CONTEXT_STACK_EXTENSION_IDS).toEqual(["context-mode", "rtk-optimizer"]);
+  });
+
+  it("groups experiment extensions separately from workflow plan tools", () => {
+    const experiments = BUNDLED_EXTENSION_GROUPS.find(
+      (group) => group.label === "Experiments",
+    )!.ids;
+    const workflow = BUNDLED_EXTENSION_GROUPS.find((group) => group.label === "Workflow")!.ids;
+
+    expect(experiments).toEqual(["autoresearch", "tetris"]);
+    expect(workflow).toContain("plannotator");
+    expect(workflow).toContain("red-green");
+    expect(experiments).not.toContain("plannotator");
   });
 
   it("resolves global provider via aliases", () => {
