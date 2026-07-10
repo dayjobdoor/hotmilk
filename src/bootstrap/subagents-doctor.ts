@@ -1,3 +1,10 @@
+/**
+ * Direct `/subagents-doctor` command registration.
+ *
+ * Bypasses the upstream slash-event bridge so the doctor report works even
+ * when `state.lastUiContext` is unset after `/reload`.
+ */
+
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -76,6 +83,11 @@ function buildDirectDoctorReport(
  * pi-subagents registers `/subagents-doctor` through the slash event bridge, which
  * reads `state.lastUiContext` instead of the command handler's `ctx`. After `/reload`
  * that context can be unset while the command still runs — override with a direct report.
+ */
+/**
+ * Register the `/subagents-doctor` Pi command with a direct report builder.
+ *
+ * @param pi - Pi extension API
  */
 export async function registerSubagentsDoctorCommand(pi: ExtensionAPI): Promise<void> {
   await ensureChainRunsDir();

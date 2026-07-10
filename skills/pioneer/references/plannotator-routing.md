@@ -4,6 +4,8 @@
 
 **Do NOT load when:** Chat Plan, OpenSpec SDD, or planning-with-files is the chosen plan authority — use the matching reference instead.
 
+**Canonical matrix:** [README § Workflow routing](../../../README.md#workflow-routing).
+
 ## When to use
 
 | Signal                                                                 | Route here                  |

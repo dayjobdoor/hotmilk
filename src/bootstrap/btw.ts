@@ -1,3 +1,11 @@
+/**
+ * BTW (side-thread) injection for hotmilk.
+ *
+ * Strips main-session harness sections, replaces append prompts, and proxies
+ * context-mode/graphify tools into pi-btw sub-sessions without loading bundled
+ * extensions there.
+ */
+
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -17,16 +25,22 @@ import { bundledImportUrl } from "./resolve-bundled.ts";
 
 // --- Session config (injected before btw extension loads) ---
 
+/** Per-session config injected into the BTW extension before it loads. */
 export type HotmilkBtwConfig = {
   extensionToggles: Readonly<Record<BundledExtensionId, boolean>>;
 };
 
 let activeConfig: HotmilkBtwConfig | null = null;
 
+/** Inject the active hotmilk config for the upcoming BTW session. */
 export function setHotmilkBtwConfig(config: HotmilkBtwConfig): void {
   activeConfig = config;
 }
 
+/**
+ * Return the config injected by {@link setHotmilkBtwConfig}.
+ * @throws when called before registration.
+ */
 export function getHotmilkBtwConfig(): HotmilkBtwConfig {
   if (!activeConfig) {
     throw new Error(
@@ -36,12 +50,14 @@ export function getHotmilkBtwConfig(): HotmilkBtwConfig {
   return activeConfig;
 }
 
+/** Clear the active config so tests start from a clean state. */
 export function resetHotmilkBtwConfigForTests(): void {
   activeConfig = null;
 }
 
 // --- Prompt shaping ---
 
+/** Remove dynamically appended date/time/cwd footer lines from a system prompt. */
 export function stripDynamicSystemPromptFooter(systemPrompt: string): string {
   return systemPrompt
     .replace(/\nCurrent date and time:[^\n]*(?:\nCurrent working directory:[^\n]*)?$/u, "")
@@ -59,6 +75,7 @@ const MAIN_SESSION_SECTION_MARKERS = [
   /^<behavioral_directive>/im,
 ] as const;
 
+/** Strip hotmilk-specific harness sections from the main session prompt. */
 export function stripHotmilkMainSessionHarness(systemPrompt: string): string {
   let next = systemPrompt;
   for (const marker of MAIN_SESSION_SECTION_MARKERS) {
@@ -69,6 +86,7 @@ export function stripHotmilkMainSessionHarness(systemPrompt: string): string {
   return next.trim();
 }
 
+/** Base system prompt used for BTW side threads. */
 export const HOTMILK_BTW_SYSTEM_PROMPT = [
   "You are having an aside conversation with the user, separate from their main working session.",
   "If main session messages are provided, they are for context only — that work is being handled by another agent.",
@@ -80,6 +98,11 @@ export const HOTMILK_BTW_SYSTEM_PROMPT = [
   "ctx_search is available as a read-only proxy to the main session knowledge base — use it for timeline recall, prior decisions, and indexed content. Do not use ctx_execute, ctx_batch_execute, or ctx_purge from BTW; loading context-mode here would spawn a second MCP child.",
 ].join(" ");
 
+/**
+ * Build the extra instructions appended to BTW sessions.
+ * @param options - toggles that determine which routing hints to include
+ * @returns ordered instruction lines
+ */
 export function buildHotmilkBtwAppendPrompt(options: {
   graphifyEnabled: boolean;
   subagentsEnabled: boolean;
@@ -126,6 +149,13 @@ function isBtwSummarizeSession(loader: ResourceLoader): boolean {
   return text.includes("Summarize the side conversation");
 }
 
+/**
+ * Wrap a Pi resource loader so BTW gets a neutral loader: no bundled extensions,
+ * a stripped system prompt, and hotmilk-tailored append instructions.
+ *
+ * @param loader - upstream pi-btw loader
+ * @param config - hotmilk toggle config
+ */
 export function adaptBtwResourceLoaderForHotmilk(
   loader: ResourceLoader,
   config: HotmilkBtwConfig,
@@ -175,6 +205,10 @@ type MainCtxSearchTool = {
 let mainCtxSearchTool: MainCtxSearchTool | null = null;
 let ctxSearchCaptureInstalled = false;
 
+/**
+ * Store the main-session `ctx_search` tool definition so BTW can proxy it.
+ * Ignores tools whose name is not `ctx_search`.
+ */
 export function captureMainCtxSearchTool(tool: {
   name: string;
   description: string;
@@ -190,10 +224,12 @@ export function captureMainCtxSearchTool(tool: {
   };
 }
 
+/** @returns the captured tool, or null if none has been registered. */
 export function getMainCtxSearchToolForTests(): MainCtxSearchTool | null {
   return mainCtxSearchTool;
 }
 
+/** Reset captured tool and installation guard for tests. */
 export function resetMainCtxSearchCaptureForTests(): void {
   mainCtxSearchTool = null;
   ctxSearchCaptureInstalled = false;
@@ -254,10 +290,18 @@ const CTX_SEARCH_FALLBACK_PARAMS = Type.Object({
   ),
 });
 
+/** Check whether a graphify graph exists in the working directory. */
 export function graphifyGraphExists(cwd = process.cwd()): boolean {
   return existsSync(join(cwd, GRAPH_JSON));
 }
 
+/**
+ * Choose the base tool set exposed in BTW.
+ *
+ * Read-biased when subagents are enabled; otherwise keeps edit/write tools.
+ *
+ * @param config - hotmilk toggle config
+ */
 export function resolveHotmilkBtwTools(config: HotmilkBtwConfig): string[] {
   if (config.extensionToggles.subagents === true) {
     return ["read", "grep", "find", "ls", "bash"];
@@ -293,6 +337,11 @@ function createCtxSearchProxyTool(mainTool: MainCtxSearchTool | null): ToolDefin
   });
 }
 
+/**
+ * Build BTW custom tools (`ctx_search` proxy, `graphify_query`) based on toggles.
+ *
+ * @param config - hotmilk toggle config
+ */
 export function createHotmilkBtwCustomTools(config: HotmilkBtwConfig): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
 

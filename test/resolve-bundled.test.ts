@@ -1,14 +1,22 @@
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { describe, expect, it } from "vite-plus/test";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 import {
   bundledImportUrl,
   parseBundledModulePath,
   resolveBundledModule,
 } from "../src/bootstrap/resolve-bundled.ts";
 
-const HOISTED_BOOTSTRAP =
-  "/Users/hotmilk/.local/share/chezmoi/.pi/npm/node_modules/hotmilk/src/bootstrap/extensions.ts";
+let tempDir: string | undefined;
+
+afterEach(() => {
+  if (tempDir) {
+    rmSync(tempDir, { recursive: true, force: true });
+    tempDir = undefined;
+  }
+});
 
 describe("parseBundledModulePath", () => {
   it("parses scoped package paths", () => {
@@ -50,19 +58,29 @@ describe("resolveBundledModule", () => {
     expect(existsSync(resolved)).toBe(true);
   });
 
-  it.skipIf(!existsSync(HOISTED_BOOTSTRAP))(
-    "resolves hoisted sibling packages next to hotmilk",
-    () => {
-      const resolved = resolveBundledModule(
-        "context-mode/build/adapters/pi/extension.js",
-        pathToFileURL(HOISTED_BOOTSTRAP).href,
-      );
-      expect(resolved).toMatch(
-        /node_modules[/\\]context-mode[/\\]build[/\\]adapters[/\\]pi[/\\]extension\.js$/,
-      );
-      expect(existsSync(resolved)).toBe(true);
-    },
-  );
+  it("resolves hoisted sibling packages next to hotmilk", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "hotmilk-resolve-bundled-"));
+
+    const hotmilkRoot = join(tempDir, "node_modules", "hotmilk");
+    const bootstrapDir = join(hotmilkRoot, "src", "bootstrap");
+    mkdirSync(bootstrapDir, { recursive: true });
+    writeFileSync(join(hotmilkRoot, "package.json"), JSON.stringify({ name: "hotmilk" }));
+    writeFileSync(join(bootstrapDir, "extensions.ts"), "");
+
+    const modulePath = "context-mode/build/adapters/pi/extension.js";
+    const siblingFile = join(tempDir, "node_modules", modulePath);
+    mkdirSync(dirname(siblingFile), { recursive: true });
+    writeFileSync(siblingFile, "");
+
+    const resolved = resolveBundledModule(
+      modulePath,
+      pathToFileURL(join(bootstrapDir, "extensions.ts")).href,
+    );
+    expect(resolved).toMatch(
+      /node_modules[/\\]context-mode[/\\]build[/\\]adapters[/\\]pi[/\\]extension\.js$/,
+    );
+    expect(existsSync(resolved)).toBe(true);
+  });
 
   it("returns a file URL that resolves to an existing module", () => {
     const modulePath = "gentle-pi/extensions/gentle-ai.ts";

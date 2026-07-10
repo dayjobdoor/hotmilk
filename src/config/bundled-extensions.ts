@@ -74,9 +74,27 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Agent tools",
   },
   {
+    id: "shazam",
+    package: { packageName: "pi-shazam" },
+    module: "pi-shazam/dist/index.js",
+    group: "Agent tools",
+  },
+  {
+    id: "prompt-template-model",
+    package: { packageName: "pi-prompt-template-model" },
+    module: "pi-prompt-template-model/index.ts",
+    group: "Agent tools",
+  },
+  {
     id: "subagents",
     package: { packageName: "pi-subagents" },
     module: "pi-subagents/src/extension/index.ts",
+    group: "Agent tools",
+  },
+  {
+    id: "pi-actors",
+    package: { packageName: "@llblab/pi-actors" },
+    module: "@llblab/pi-actors/index.ts",
     group: "Agent tools",
   },
   {
@@ -115,6 +133,18 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     module: "pi-rtk-optimizer/index.ts",
     group: "Context & performance",
     loadPhase: "context-stack",
+  },
+  {
+    id: "observational-memory",
+    package: { packageName: "pi-observational-memory" },
+    module: "pi-observational-memory/src/index.ts",
+    group: "Context & performance",
+  },
+  {
+    id: "supi-context",
+    package: { packageName: "@mrclrchtr/supi-context" },
+    module: "@mrclrchtr/supi-context/src/extension.ts",
+    group: "Context & performance",
   },
   {
     id: "mcp-adapter",

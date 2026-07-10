@@ -20,7 +20,10 @@ describe("pruneContextModeFromMcpJsonAt", () => {
       },
     });
 
-    expect(pruneContextModeFromMcpJsonAt(path)).toBe(true);
+    const result = pruneContextModeFromMcpJsonAt(path);
+    expect(result.pruned).toBe(true);
+    expect(result.path).toBe(path);
+    expect(result.error).toBeUndefined();
     const parsed = JSON.parse(readFileSync(path, "utf8"));
     expect(parsed.mcpServers["context-mode"]).toBeUndefined();
     expect(parsed.mcpServers.other).toEqual({ command: "other" });
@@ -28,6 +31,19 @@ describe("pruneContextModeFromMcpJsonAt", () => {
 
   it("returns false when context-mode is absent", () => {
     const path = tempMcpJson({ mcpServers: {} });
-    expect(pruneContextModeFromMcpJsonAt(path)).toBe(false);
+    const result = pruneContextModeFromMcpJsonAt(path);
+    expect(result.pruned).toBe(false);
+    expect(result.path).toBe(path);
+    expect(result.error).toBeUndefined();
+  });
+
+  it("returns error for invalid JSON instead of throwing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "hotmilk-mcp-bad-"));
+    const path = join(dir, "mcp.json");
+    writeFileSync(path, "not json", "utf8");
+
+    const result = pruneContextModeFromMcpJsonAt(path);
+    expect(result.pruned).toBe(false);
+    expect(result.error).toBeDefined();
   });
 });

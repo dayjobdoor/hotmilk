@@ -28,7 +28,6 @@ const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly BundledPeerRangeExclusion[]
   { packageName: "pi-rtk-optimizer", excludedVersionPrefix: "^0.79.0" },
   { packageName: "pi-docparser", excludedVersionPrefix: "^0.74.0" },
   { packageName: "pi-red-green", excludedVersionPrefix: "^0.74.0" },
-  { packageName: "@blackbelt-technology/pi-flows", excludedVersionPrefix: "^0.74.0" },
 ];
 
 /**

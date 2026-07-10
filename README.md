@@ -4,14 +4,21 @@
 
 Use it when you want a practical engineering workstation without hand-picking a dozen `pi-*` packages and wiring `settings.json` yourself.
 
+## Contents
+
+- [What you get](#what-you-get)
+- [Quick start](#quick-start)
+- [Configuration](#configuration) — toggles, `/mode` groups, [workflow routing](#workflow-routing)
+- [Development](#development)
+
 ## What you get
 
 | Layer                   | Packages / assets                                                                                                                                                                                                       |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) **≥0.4.1** (el Gentleman, SDD/OpenSpec sync, skill registry, `/gentle-ai:doctor`)                                                                                  |
-| **Context**             | [context-mode](https://www.npmjs.com/package/context-mode)                                                                                                                                                              |
+| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) **^0.10.x** (el Gentleman, SDD/OpenSpec sync, skill registry, `/gentle-ai:doctor`)                                                                                 |
+| **Context**             | [context-mode](https://www.npmjs.com/package/context-mode), [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory) (compaction continuity, default off)                                       |
 | **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi)                                                                                                                                                                |
-| **Subagents**           | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user)                                                                                                    |
+| **Subagents / actors**  | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user), [pi-actors](https://www.npmjs.com/package/@llblab/pi-actors) (off by default)                     |
 | **Goals & docs**        | [pi-goal](https://www.npmjs.com/package/pi-goal), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                            |
 | **File-based planning** | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files), [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension) (browser plan approval)            |
 | **Integrations**        | [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), [pi-btw](https://www.npmjs.com/package/pi-btw) (side channel — see below), [@haispeed/pi-obsidian](https://www.npmjs.com/package/@haispeed/pi-obsidian) |
@@ -93,19 +100,7 @@ On startup, hotmilk scans only **global** Pi settings for bundled-extension dedu
 
 Upstream packages add their own commands (gentle-pi `/gentle-ai:status`, `/gentle-ai:doctor`, SDD chains, graphify, context-mode, planning-with-files `/plan-status`, plannotator `/plannotator`, and so on).
 
-### Planning with files
-
-Invoke when you want Manus-style on-disk planning:
-
-```text
-/skill:planning-with-files
-```
-
-Or ask Pi to use the planning-with-files skill. The extension maintains `task_plan.md`, `findings.md`, and `progress.md`. Optional: `PWF_MODE=cache-safe` or `planningWithFiles.mode` in settings (see upstream README).
-
-### Plannotator (plan approval)
-
-Enable `extensions.plannotator` in `/mode`, then `/reload`. Start plan mode with `/plannotator plans/<name>.md` or `pi --plan plans/<name>.md`. The agent drafts a checklist plan; you approve or annotate in the browser before execution. See upstream README for `plannotator.json` phase tuning. Default toggle is **off** (~37MB unpacked UI).
+For **which plan, memory, or optimize path to use**, see [Workflow routing](#workflow-routing) (canonical matrix) and the bundled [`pioneer`](skills/pioneer/SKILL.md) skill.
 
 ## Configuration
 
@@ -120,13 +115,16 @@ Enable `extensions.plannotator` in `/mode`, then `/reload`. Start plan mode with
     "context-mode": true,
     "ask-user": true,
     "graphify": true,
+    "shazam": false,
     "subagents": true,
+    "pi-actors": false,
     "goal": true,
     "docparser": true,
     "obsidian": true,
     "btw": true,
     "simplify": true,
     "rtk-optimizer": false,
+    "observational-memory": false,
     "mcp-adapter": false,
     "planning-with-files": false,
     "plannotator": false,
@@ -144,7 +142,6 @@ Enable `extensions.plannotator` in `/mode`, then `/reload`. Start plan mode with
     "autoSuggestUpdate": true
   },
   "defaults": {
-    "language": "ja",
     "persona": "gentleman"
   },
   "mcp": {
@@ -157,29 +154,79 @@ Enable `extensions.plannotator` in `/mode`, then `/reload`. Start plan mode with
 }
 ```
 
-| Key / area                        | Behavior                                                                                                                                                                                               |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                              |
-| `extensions.gentle-ai`            | Default `true`. gentle-pi **0.4.1+**: orchestration, lazy SDD preflight, OpenSpec sync/archive agents, `/gentle-ai:doctor` / `:status`. hotmilk keeps **startup-banner off** (figlet header instead)   |
-| `extensions.subagents`            | Default `true`. Imports pi-subagents **0.28+** (~10s): acceptance gates, `timeoutMs`, resource limits. Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools          |
-| `extensions.btw`                  | Default `true`. Side conversation via `/btw` while main runs. **Delegate implementation to subagents**; use BTW for quick human questions. See [pi-btw coexistence](#pi-btw-with-subagents-default-on) |
-| `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                                    |
-| `extensions.rtk-optimizer`        | Default `false`. Bash/read/grep output compaction; enable with `context-mode` for leftover shell output. Install [`rtk` CLI](https://github.com/rtk-ai/rtk) for command rewrite (`/rtk verify`)        |
-| `extensions.planning-with-files`  | Default `false`. Manus-style on-disk planning (`task_plan.md`, `findings.md`, `progress.md`)                                                                                                           |
-| `extensions.plannotator`          | Default `false`. Browser plan approval gate (`/plannotator`, `--plan`); enable when human sign-off before execution                                                                                    |
-| `extensions.autoresearch`         | Default `false`. Autonomous optimize loop (`/autoresearch`, `.auto/`). See [pi-autoresearch coexistence](#pi-autoresearch-with-gentle-ai-default-off)                                                  |
-| `extensions.goal` … `mcp-adapter` | Integration / perf extensions (formerly always loaded via `pi.extensions`; now toggled like other bundled deps)                                                                                        |
-| Enabled extensions                | Loaded **in parallel** on session start (faster than sequential import when many toggles are on)                                                                                                       |
-| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                                                                                                         |
-| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                                                                                                        |
-| `defaults.persona`                | Seeds `.pi/gentle-ai/persona.json` when missing (`gentleman` \| `neutral`)                                                                                                                             |
-| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                                                                                                         |
-| `mcp.seedOnStart`                 | Copy `mcp.json` template into `~/.pi/agent/mcp.json` when missing (empty template; for pi-mcp-adapter)                                                                                                 |
-| `projectTrust.mode`               | Pi project trust: `delegate` (default), `prompt`, `always`, or `never`                                                                                                                                 |
-| `projectTrust.remember`           | When `mode` is `always` or `never`, persist the decision in Pi `trust.json`                                                                                                                            |
-| `extensions.mcp-adapter`          | Default `false`. Enable only when you want MCP servers from `~/.pi/agent/mcp.json` (do not duplicate context-mode)                                                                                     |
+| Key / area                        | Behavior                                                                                                                                                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                                                |
+| `extensions.gentle-ai`            | Default `true`. gentle-pi **0.10.x** (bundled `^0.10.2`): orchestration, lazy SDD preflight, OpenSpec sync/archive agents, `/gentle-ai:doctor` / `:status`. hotmilk keeps **startup-banner off** (figlet header instead) |
+| `extensions.subagents`            | Default `true`. Imports pi-subagents **0.28+** (~10s): acceptance gates, `timeoutMs`, resource limits. Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools                            |
+| `extensions.btw`                  | Default `true`. Side conversation via `/btw` while main runs. **Delegate implementation to subagents**; use BTW for quick human questions. See [pi-btw coexistence](#pi-btw-with-subagents-default-on)                   |
+| `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                                                      |
+| `extensions.observational-memory` | Default `false`. Compaction continuity; pairs with `context-mode`. See [Workflow routing](#workflow-routing)                                                                                                             |
+| `extensions.shazam`               | Default `false`. Tree-sitter + LSP execute guards (`shazam_impact`, `shazam_verify`); complements graphify — see [Workflow routing](#workflow-routing)                                                                   |
+| `extensions.rtk-optimizer`        | Default `false`. Bash/read/grep output compaction; enable with `context-mode` for leftover shell output. Install [`rtk` CLI](https://github.com/rtk-ai/rtk) for command rewrite (`/rtk verify`)                          |
+| `extensions.planning-with-files`  | Default `false`. On-disk planning — see [Workflow routing](#workflow-routing)                                                                                                                                            |
+| `extensions.plannotator`          | Default `false`. Browser plan approval — see [Workflow routing](#workflow-routing)                                                                                                                                       |
+| `extensions.autoresearch`         | Default `false`. Optimize loop — see [Workflow routing](#workflow-routing)                                                                                                                                               |
+| `extensions.goal` … `mcp-adapter` | Integration / perf extensions (formerly always loaded via `pi.extensions`; now toggled like other bundled deps)                                                                                                          |
+| Enabled extensions                | Loaded **in parallel** on session start (faster than sequential import when many toggles are on)                                                                                                                         |
+| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                                                                                                                           |
+| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                                                                                                                          |
+| `defaults.persona`                | Seeds `.pi/gentle-ai/persona.json` when missing (`gentleman` \| `neutral`)                                                                                                                                               |
+| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                                                                                                                           |
+| `mcp.seedOnStart`                 | Copy `mcp.json` template into `~/.pi/agent/mcp.json` when missing (empty template; for pi-mcp-adapter)                                                                                                                   |
+| `projectTrust.mode`               | Pi project trust: `delegate` (default), `prompt`, `always`, or `never`                                                                                                                                                   |
+| `projectTrust.remember`           | When `mode` is `always` or `never`, persist the decision in Pi `trust.json`                                                                                                                                              |
+| `extensions.mcp-adapter`          | Default `false`. Enable only when you want MCP servers from `~/.pi/agent/mcp.json` (do not duplicate context-mode)                                                                                                       |
 
 **MCP (default):** `context-mode` extension registers `ctx_*` via its built-in bridge (same module as [upstream `.pi/extensions/context-mode`](https://github.com/mksglu/context-mode/tree/main/.pi/extensions/context-mode), loaded from `build/adapters/pi/extension.js`). Hotmilk removes any `context-mode` server from `~/.pi/agent/mcp.json` when the extension is on. Enable `mcp-adapter` only for **other** MCP servers—not a second context-mode entry.
+
+### `/mode` groups
+
+`/mode` sections follow `BUNDLED_EXTENSION_GROUP_ORDER` in `src/config/bundled-extensions.ts`:
+
+| Group                     | Extensions (toggle ids)                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Harness**               | `skill-registry`, `sdd-init`, `gentle-ai`                                                               |
+| **Agent tools**           | `ask-user`, `graphify`, `shazam`, `subagents`, `pi-actors`, `agent-dashboard`, `web-access`, `pi-flows` |
+| **Context & performance** | `context-mode`, `simplify`, `rtk-optimizer`, `observational-memory`                                     |
+| **Integrations**          | `goal`, `docparser`, `obsidian`, `btw`, `mcp-adapter`                                                   |
+| **Workflow**              | `planning-with-files`, `plannotator`, `red-green`                                                       |
+| **Output**                | `caveman`, `kanagawa`                                                                                   |
+| **Experiments**           | `autoresearch`, `tetris`                                                                                |
+
+### Workflow routing
+
+Pick **one plan authority per task**. Memory and optimize loops are **not** plan paths — they layer beside execution. Full tie-breakers and anti-patterns: bundled [`pioneer`](skills/pioneer/SKILL.md) skill.
+
+**Plan paths** (enable toggle → `/reload` when default off):
+
+| When                              | Toggle / command                                     | Artifact                                     | Pioneer reference                                                            |
+| --------------------------------- | ---------------------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------- |
+| Small, bounded fix                | (none) — chat `Plan:`                                | chat only                                    | [`chat-plan.md`](skills/pioneer/references/chat-plan.md)                     |
+| Medium scope + browser approval   | `plannotator` → `/plannotator plans/<name>.md`       | `plans/*.md`                                 | [`plannotator-routing.md`](skills/pioneer/references/plannotator-routing.md) |
+| Heavy research, `/clear` recovery | `planning-with-files` → `/skill:planning-with-files` | `task_plan.md`, `findings.md`, `progress.md` | upstream PWF skill                                                           |
+| Cross-cutting, spec, >400L review | `gentle-ai` → OpenSpec SDD                           | `openspec/changes/<change>/`                 | [`openspec-routing.md`](skills/pioneer/references/openspec-routing.md)       |
+
+**Memory layers** (supplementary — never replace plan/spec authority):
+
+| Need                          | Prefer                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| Large logs, docs, test output | `context-mode` → `ctx_*`                                                        |
+| Rationale across compactions  | `observational-memory` (extra model cost; V3 needs clean session after upgrade) |
+| User-readable plan files      | `planning-with-files`                                                           |
+| Execute-time impact / LSP     | `shazam` (after graphify recon; not a graph replacement)                        |
+
+Details: [`observational-memory-routing.md`](skills/pioneer/references/observational-memory-routing.md), [`shazam-routing.md`](skills/pioneer/references/shazam-routing.md).
+
+**Optimize loops** (mutually exclusive with SDD/Plannotator on the same task):
+
+| Need                                       | Prefer                                                       |
+| ------------------------------------------ | ------------------------------------------------------------ |
+| Metric optimize (bench, bundle size, loss) | `autoresearch` → `/skill:autoresearch-create`                |
+| Feature delivery, spec, approval gates     | `gentle-ai` SDD or `plannotator` — keep autoresearch **off** |
+| Correctness-first TDD                      | `red-green` (`/tdd`)                                         |
+
+Stop active loops (`/autoresearch off`) before switching plan paths. Details: [`autoresearch-routing.md`](skills/pioneer/references/autoresearch-routing.md). Default shortcut `Ctrl+Shift+F` — override in `~/.pi/agent/extensions/pi-autoresearch.json`.
 
 ### Agents, skills, and scope
 
@@ -284,46 +331,38 @@ Set `"btw": false` in `/mode` if you want delegation only with no side channel.
 
 ### Optional extensions (off by default)
 
-Enable in `/mode` or set the key to `true` in `hotmilk.json`, then `/reload`.
+Enable in `/mode` or set the key to `true` in `hotmilk.json`, then `/reload`. Workflow-oriented toggles are summarized in [Workflow routing](#workflow-routing).
 
-| Toggle            | Package                                                                                                            | Notes                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `caveman`         | [pi-caveman](https://www.npmjs.com/package/pi-caveman)                                                             | Terse English (`/caveman`). Conflicts with `defaults.language: ja`                                                                                                                                                                                                                                                                                                                                            |
-| `red-green`       | [pi-red-green](https://www.npmjs.com/package/pi-red-green)                                                         | TDD via `/tdd`, `/tdd-status`. Config: `~/.pi/red-green/config.json`                                                                                                                                                                                                                                                                                                                                          |
-| `plannotator`     | [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension)                               | Browser plan approval (`/plannotator`, `pi --plan`). Planning phase restricts writes to the plan file; Approve/Deny in browser before execution. Default off (~37MB UI). Phase tuning: `~/.pi/agent/plannotator.json`. See [Plannotator (plan approval)](#plannotator-plan-approval); pioneer routing: [`skills/pioneer/references/plannotator-routing.md`](skills/pioneer/references/plannotator-routing.md) |
-| `autoresearch`    | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                   | Autonomous optimize loop (`/autoresearch`, `.auto/` session files). Skills: `autoresearch-create`, `autoresearch-finalize`, `autoresearch-hooks`. Default shortcut `Ctrl+Shift+F` — override in `~/.pi/agent/extensions/pi-autoresearch.json`. Off by default (dashboard widget + shortcuts). See [coexistence](#pi-autoresearch-with-gentle-ai-default-off)                                                  |
-| `agent-dashboard` | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-starts before the bridge loads (cold boot up to ~60s). Peers **0.74**; test on 0.80 before relying on it. Node.js ≥ 22.18                                                                                                                                                                                                                                                                                |
-| `web-access`      | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                       | `web_search`, fetch, GitHub clone, PDF/video. Optional keys: `~/.pi/web-search.json`                                                                                                                                                                                                                                                                                                                          |
-| `pi-flows`        | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | YAML DAG workflows (`/flows`). Peers **0.74** + `@sinclair/typebox`; off by default on 0.80 stacks                                                                                                                                                                                                                                                                                                            |
-| `kanagawa`        | [pi-kanagawa](https://www.npmjs.com/package/pi-kanagawa)                                                           | Kanagawa theme (also in `/theme` via shipped assets), wave animation, `/thinking`. **Replaces hotmilk footer** when on                                                                                                                                                                                                                                                                                        |
-| `tetris`          | [pi-tetris](https://www.npmjs.com/package/pi-tetris)                                                               | Play Tetris with `/tetris`. Lightweight; default off                                                                                                                                                                                                                                                                                                                                                          |
+| Toggle                  | Package                                                                                                            | Notes                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `planning-with-files`   | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files)                     | On-disk planning; `/skill:planning-with-files`                         |
+| `plannotator`           | [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension)                               | `/plannotator`, `pi --plan`; ~37MB UI; `plannotator.json`              |
+| `observational-memory`  | [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory)                                   | Compaction continuity; V3 = clean session after upgrade                |
+| `supi-context`          | [@mrclrchtr/supi-context](https://www.npmjs.com/package/@mrclrchtr/supi-context)                                   | Context analysis & formatting; default off                             |
+| `shazam`                | [pi-shazam](https://www.npmjs.com/package/pi-shazam)                                                               | `shazam_*` tools; LSP-backed verify; complements graphify              |
+| `autoresearch`          | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                   | `/autoresearch`, `.auto/`; shortcut override in `pi-autoresearch.json` |
+| `caveman`               | [pi-caveman](https://www.npmjs.com/package/pi-caveman)                                                             | Terse English; conflicts with `defaults.language: ja`                  |
+| `red-green`             | [pi-red-green](https://www.npmjs.com/package/pi-red-green)                                                         | `/tdd`, `/tdd-status`; `~/.pi/red-green/config.json`                   |
+| `agent-dashboard`       | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-start; peers **0.74** — test on 0.80                              |
+| `web-access`            | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                       | `web_search`, fetch; `~/.pi/web-search.json`                           |
+| `pi-flows`              | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | `/flows`; peers **0.74**                                               |
+| `pi-actors`             | [@llblab/pi-actors](https://www.npmjs.com/package/@llblab/pi-actors)                                               | Local actor kernel (`spawn`, `message`, `inspect`)                     |
+| `prompt-template-model` | [pi-prompt-template-model](https://www.npmjs.com/package/pi-prompt-template-model)                                 | Prompt template model selector; default off                            |
+| `kanagawa`              | [pi-kanagawa](https://www.npmjs.com/package/pi-kanagawa)                                                           | Theme; **replaces hotmilk footer** when on                             |
+| `tetris`                | [pi-tetris](https://www.npmjs.com/package/pi-tetris)                                                               | `/tetris`                                                              |
+| `latchkey`              | [latchkey](https://www.npmjs.com/package/latchkey)                                                                 | **Skill-only** — API credential injection via `/skill:latchkey`        |
 
-### pi-autoresearch with gentle-ai (default off)
+### Alternative skill stacks (not bundled)
 
-`autoresearch` lives under the **Experiments** group in `/mode` (with `tetris`). Enable when the task is a **measure → edit → benchmark → keep/discard** loop, not feature delivery.
+hotmilk does **not** bundle [bigpowers](https://github.com/danielvm-git/bigpowers) — a separate spec-driven skill stack (70+ skills, prompts, MCP). It has no `pi.extensions` entry, runs `postinstall` global symlinks, and **conflicts with gentle-pi / pioneer plan routing**. Install separately if you want that workflow instead of hotmilk's defaults:
 
-| Task shape                                                 | Prefer                                                                     |
-| ---------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Optimize metric (test time, bundle size, loss, Lighthouse) | `autoresearch: true` → `/skill:autoresearch-create` or `/autoresearch`     |
-| Feature, spec, cross-cutting, review >400 lines            | `gentle-ai` + OpenSpec/SDD — keep `autoresearch` off                       |
-| Human plan approval before writes                          | `plannotator` — not autoresearch as plan authority                         |
-| Strict correctness-first test cycle                        | `red-green` (`/tdd`) — autoresearch only when optimizing the metric itself |
-
-**Do not run SDD phases and an active autoresearch loop on the same task.** Stop the loop (`/autoresearch off`) before `/sdd-continue` or Plannotator approval work. Pioneer routing: [`skills/pioneer/references/autoresearch-routing.md`](skills/pioneer/references/autoresearch-routing.md).
-
-**Shortcut conflicts:** default fullscreen dashboard is `Ctrl+Shift+F`. Override or disable in `~/.pi/agent/extensions/pi-autoresearch.json`:
-
-```json
-{
-  "shortcuts": {
-    "fullscreenDashboard": "ctrl+shift+y"
-  }
-}
+```bash
+pi install npm:bigpowers
 ```
 
-Use `null` for a shortcut key to skip registration.
+Do not enable bigpowers alongside pioneer OpenSpec/Plannotator on the same task. See [`.agents/plans/EXTENSIONS.md`](.agents/plans/EXTENSIONS.md) §L8.
 
-**Agent dashboard troubleshooting**
+### Agent dashboard troubleshooting
 
 - Run **one** dashboard process: either hotmilk warm-start (`agent-dashboard: true`) **or** manual `npm run dashboard:start`, not both.
 - Keep only `"hotmilk"` in `~/.pi/agent/settings.json` `packages[]` (not a standalone dashboard extension path). Hotmilk prunes duplicate dashboard paths on session start when `agent-dashboard` is enabled.
@@ -388,14 +427,14 @@ npm publish --access public
 
 ### Layout
 
-| Path                             | Role                                                                                              |
-| -------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `src/index.ts`                   | Extension entry: config, bundled extensions, session UI, input routing                            |
-| `src/config/hotmilk.ts`          | `hotmilk.json` load / seed / save                                                                 |
-| `agents/`                        | Package-canonical subagent prompts (`package: hotmilk`); install into `.pi/agents/` for discovery |
-| `prompts/`, `skills/`, `themes/` | Shipped with the package (`pi.prompts`, `pi.skills`, `pi.themes`)                                 |
-| `mcp.json`                       | MCP server template for local projects                                                            |
-| `hotmilk.json`                   | Default toggle template (published in the npm package)                                            |
+| Path                             | Role                                                                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`                   | Extension entry: config, bundled extensions, session UI, input routing                                                              |
+| `src/config/hotmilk.ts`          | `hotmilk.json` load / seed / save                                                                                                   |
+| `agents/`                        | Package-canonical subagent prompts (`package: hotmilk`); install into `.pi/agents/` for discovery                                   |
+| `prompts/`, `skills/`, `themes/` | Shipped with the package (`pi.prompts`, `pi.skills`, `pi.themes`); workflow routing in [`skills/pioneer/`](skills/pioneer/SKILL.md) |
+| `mcp.json`                       | MCP server template for local projects                                                                                              |
+| `hotmilk.json`                   | Default toggle template (published in the npm package)                                                                              |
 
 ## License
 

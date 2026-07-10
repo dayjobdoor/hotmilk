@@ -16,6 +16,7 @@ import {
   resolveProjectTrust,
 } from "./resolve.ts";
 
+/** Aggregated hotmilk configuration and resolved runtime settings. */
 export type HotmilkRuntime = {
   config: HotmilkConfig;
   configPath: string;
@@ -29,6 +30,7 @@ export type HotmilkRuntime = {
   projectTrust: ResolvedProjectTrust;
 };
 
+/** Load hotmilk config and resolve all runtime settings into a single object. */
 export function createHotmilkRuntime(configRoot?: string): HotmilkRuntime {
   const loaded = loadHotmilkConfig(configRoot);
   return {

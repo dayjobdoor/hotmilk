@@ -2,7 +2,7 @@
 name: assistant
 description: General-purpose coding assistant for reading, writing, and reviewing code
 tools: read, grep, find, ls, bash, edit, write, todo, subagent
-model: cursor/auto
+# model: cursor/auto
 thinking: low
 systemPromptMode: replace
 inheritProjectContext: true

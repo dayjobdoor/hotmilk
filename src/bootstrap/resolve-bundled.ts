@@ -1,3 +1,10 @@
+/**
+ * Resolution helpers for bundled extension modules.
+ *
+ * Bundled deps may be nested under hotmilk or hoisted next to it; these helpers
+ * walk the package tree to find them without depending on npm internals.
+ */
+
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -30,7 +37,13 @@ function findHotmilkPackageRoot(fromModuleUrl: string): string {
   throw new Error("Cannot locate hotmilk package root");
 }
 
-/** Split `pkg/subpath` — supports scoped packages (`@scope/name/...`). */
+/**
+ * Split a bundled module specifier into package name and subpath.
+ *
+ * Supports scoped packages (`@scope/name/...`) and the `hotmilk/` prefix.
+ *
+ * @param relativePath - specifier like `pkg/subpath` or `@scope/pkg/subpath`
+ */
 export function parseBundledModulePath(relativePath: string): { pkgName: string; subpath: string } {
   if (relativePath.startsWith(HOTMILK_MODULE_PREFIX)) {
     return {
@@ -50,8 +63,15 @@ export function parseBundledModulePath(relativePath: string): { pkgName: string;
 }
 
 /**
- * Resolve a bundled dependency file whether npm nested it under hotmilk or hoisted
- * it next to hotmilk (e.g. `~/.pi/npm/node_modules/context-mode`).
+ * Resolve a bundled dependency file on disk.
+ *
+ * Handles both npm-nested (`.../hotmilk/node_modules/pkg/...`) and hoisted
+ * (`.../node_modules/pkg/...`) layouts.
+ *
+ * @param relativePath - bundled module specifier
+ * @param fromModuleUrl - module URL to start the search from (default: `import.meta.url`)
+ * @returns absolute path to the resolved file
+ * @throws when the module cannot be located
  */
 export function resolveBundledModule(
   relativePath: string,
@@ -100,7 +120,11 @@ export function resolveBundledModule(
   throw new Error(`Cannot resolve bundled module "${relativePath}" from hotmilk`);
 }
 
-/** Dynamic import URL for a bundled extension entry (works with nested and hoisted installs). */
+/**
+ * Build a `file://` URL for a bundled module suitable for dynamic `import()`.
+ *
+ * @param relativePath - bundled module specifier
+ */
 export function bundledImportUrl(relativePath: string): string {
   return pathToFileURL(resolveBundledModule(relativePath)).href;
 }

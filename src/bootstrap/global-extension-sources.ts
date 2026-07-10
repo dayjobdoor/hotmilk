@@ -1,3 +1,9 @@
+/**
+ * Detect bundled extensions that the user already installed globally or locally.
+ *
+ * Skips registering those extensions a second time through hotmilk.
+ */
+
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -9,13 +15,17 @@ import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmil
 
 const PI_PROJECT_CONFIG_DIR = ".pi";
 
+/** A bundled extension that should be skipped because it is already installed. */
 export type GlobalBundledExtensionSkip = {
   id: BundledExtensionId;
   packageName: string;
 };
 
+/** Options for reading Pi settings files. */
 export type CollectGlobalExtensionSourcesOptions = {
+  /** Project root for resolving local package paths. */
   cwd?: string;
+  /** Override `$HOME` resolution. */
   homedir?: string;
   /** When false, skip project `.pi/settings.json` (Pi project trust gate). */
   includeProjectSettings?: boolean;
@@ -64,7 +74,14 @@ function resolvePackageNameFromLocalPath(entry: string, baseDir: string): string
   }
 }
 
-/** Parse `npm:@scope/pkg@1.2.3` → `@scope/pkg`, or `npm:pkg` → `pkg`. */
+/**
+ * Extract the package name from a Pi `npm:` settings entry.
+ *
+ * @example `npm:@scope/pkg@1.2.3` → `@scope/pkg`
+ * @example `npm:pkg` → `pkg`
+ *
+ * @param entry - raw settings entry
+ */
 export function parseNpmPackageName(entry: string): string | null {
   const trimmed = entry.trim();
   if (!trimmed.startsWith("npm:")) {
@@ -101,7 +118,14 @@ function readSettingsEntries(settingsPath: string): string[] {
   }
 }
 
-/** Collect npm package names referenced by Pi settings (global + project). */
+/**
+ * Collect npm package names referenced by Pi settings (global + project).
+ *
+ * Resolves local package paths to their `package.json` `name`.
+ *
+ * @param options - settings search options
+ * @returns set of installed package names, excluding hotmilk itself
+ */
 export function collectInstalledPackageNamesFromPiSettings(
   options: CollectGlobalExtensionSourcesOptions = {},
 ): Set<string> {
@@ -145,7 +169,13 @@ export function collectInstalledPackageNamesFromPiSettings(
   return names;
 }
 
-/** Bundled ids that should not register because Pi settings already provide the package. */
+/**
+ * Find bundled ids that should not register because Pi settings already
+ * provide the same package.
+ *
+ * @param options - settings search options
+ * @returns list of bundled ids to skip and the package that replaces them
+ */
 export function detectGlobalBundledExtensionSkips(
   options: CollectGlobalExtensionSourcesOptions = {},
 ): GlobalBundledExtensionSkip[] {

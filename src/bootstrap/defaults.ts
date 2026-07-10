@@ -1,11 +1,25 @@
+/**
+ * Persona / language defaults bootstrap.
+ *
+ * Seeds a project-level Gentle AI persona file from hotmilk config and injects
+ * a language hint into the system prompt when `defaults.language` is set.
+ */
+
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { ResolvedDefaults } from "../config/hotmilk.ts";
 
+/** Warning shown when caveman terse-mode clashes with Japanese language default. */
 export const CAVEMAN_JA_CONFLICT_MESSAGE =
   "caveman is on while defaults.language is ja — caveman adds English terse rules that fight the Japanese language hint. Turn off caveman (/mode), clear defaults.language, or use /caveman off.";
 
+/**
+ * Detect the caveman + Japanese language conflict.
+ *
+ * @param cavemanEnabled - whether caveman toggle is on
+ * @param language - configured language hint
+ */
 export function shouldWarnCavemanJaConflict(
   cavemanEnabled: boolean,
   language: string | undefined,
@@ -13,6 +27,12 @@ export function shouldWarnCavemanJaConflict(
   return cavemanEnabled && language?.trim().toLowerCase() === "ja";
 }
 
+/**
+ * Write `.pi/gentle-ai/persona.json` from resolved defaults when absent.
+ *
+ * @param cwd - project root
+ * @param defaults - resolved defaults containing persona mode
+ */
 export function seedPersonaFromDefaults(cwd: string, defaults: ResolvedDefaults): void {
   const path = join(cwd, ".pi", "gentle-ai", "persona.json");
   if (existsSync(path)) {
@@ -22,6 +42,12 @@ export function seedPersonaFromDefaults(cwd: string, defaults: ResolvedDefaults)
   writeFileSync(path, `${JSON.stringify({ mode: defaults.persona }, null, 2)}\n`, "utf8");
 }
 
+/**
+ * Register handlers that inject the configured language into system prompts.
+ *
+ * @param pi - Pi extension API
+ * @param defaults - resolved defaults
+ */
 export function registerDefaultsHandlers(pi: ExtensionAPI, defaults: ResolvedDefaults): void {
   if (!defaults.language) {
     return;

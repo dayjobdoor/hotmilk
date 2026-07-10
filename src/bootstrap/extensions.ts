@@ -32,6 +32,7 @@ async function registerOne(pi: ExtensionAPI, id: BundledExtensionId): Promise<vo
   await (mod.default as ExtensionFactory)(pi);
 }
 
+/** Options controlling how bundled extensions are registered. */
 export type RegisterBundledExtensionsOptions = {
   cwd?: string;
   /** Precomputed skips (tests); defaults to scanning Pi settings. */
@@ -40,10 +41,12 @@ export type RegisterBundledExtensionsOptions = {
   includeProjectSettings?: boolean;
 };
 
+/** Result of bundled-extension registration, including skipped ids. */
 export type RegisterBundledExtensionsResult = {
   globalSkips: GlobalBundledExtensionSkip[];
 };
 
+/** Register all enabled bundled extensions with the Pi extension API. */
 export async function registerBundledExtensions(
   pi: ExtensionAPI,
   enabled: Record<BundledExtensionId, boolean>,

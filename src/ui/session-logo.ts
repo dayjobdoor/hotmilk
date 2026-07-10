@@ -13,10 +13,18 @@ const LOGO_LINES = HOTMILK_LOGO.split("\n");
 /** Same lead time as gentle-pi `startup-banner.ts`. */
 const LOGO_SHOW_DELAY_MS = 50;
 
+/** Timeout handle for delayed logo display. */
 let showTimeout: ReturnType<typeof setTimeout> | undefined;
+/** Active TUI instance for logo rendering. */
 let activeTui: TUI | undefined;
 
-/** Center fixed-width ASCII lines within the terminal width. */
+/**
+ * Center fixed-width ASCII lines within the terminal width.
+ *
+ * @param lines - ASCII lines to center
+ * @param width - terminal width
+ * @returns centered lines
+ */
 export function centerAsciiLines(lines: readonly string[], width: number): string[] {
   const contentWidth = Math.max(...lines.map((line) => line.length), 1);
   const pad = Math.max(0, Math.floor((width - contentWidth) / 2));
@@ -24,11 +32,17 @@ export function centerAsciiLines(lines: readonly string[], width: number): strin
   return lines.map((line) => prefix + line.padEnd(contentWidth));
 }
 
-/** Skip only `/reload`; show on fresh launch and session resume (gentle-pi shows every session_start). */
+/**
+ * Skip only `/reload`; show on fresh launch and session resume (gentle-pi shows every session_start).
+ *
+ * @param reason - session start reason
+ * @returns true if logo should be shown
+ */
 export function shouldShowSessionLogo(reason: string): boolean {
   return reason !== "reload";
 }
 
+/** Clear any pending logo display timers. */
 function clearLogoTimers(): void {
   if (showTimeout) {
     clearTimeout(showTimeout);
@@ -36,6 +50,11 @@ function clearLogoTimers(): void {
   }
 }
 
+/**
+ * Dismiss the hotmilk logo from the header.
+ *
+ * @param ctx - extension context
+ */
 function dismissHotmilkLogo(ctx: ExtensionContext): void {
   if (!ctx.hasUI) return;
   ctx.ui.setHeader(undefined);
@@ -43,6 +62,11 @@ function dismissHotmilkLogo(ctx: ExtensionContext): void {
   activeTui = undefined;
 }
 
+/**
+ * Show the hotmilk session logo with a delay.
+ *
+ * @param ctx - extension context
+ */
 function showHotmilkSessionLogo(ctx: ExtensionContext): void {
   if (!ctx.hasUI) return;
 
@@ -65,7 +89,11 @@ function showHotmilkSessionLogo(ctx: ExtensionContext): void {
   }, LOGO_SHOW_DELAY_MS);
 }
 
-/** Register persistent header logo on session start; clear on shutdown only. */
+/**
+ * Register persistent header logo on session start; clear on shutdown only.
+ *
+ * @param pi - Pi extension API
+ */
 export function registerHotmilkSessionLogo(pi: ExtensionAPI): void {
   pi.on("session_start", (event, ctx) => {
     if (!shouldShowSessionLogo(event.reason)) return;

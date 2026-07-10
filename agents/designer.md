@@ -2,7 +2,7 @@
 name: designer
 description: Frontend design specialist for HTML/CSS/JSX/TSX/MDX with UI styling and UX focus
 tools: read, grep, find, ls, bash, edit, write, todo, subagent
-model: cursor/auto
+# model: cursor/auto
 thinking: medium
 systemPromptMode: replace
 inheritProjectContext: true

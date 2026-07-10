@@ -33,12 +33,11 @@ describe("resolveBundledExtensionToggles", () => {
   });
 
   it.each([
-    ["agent-dashboard", false],
-    ["web-access", false],
-    ["pi-flows", false],
     ["red-green", true],
     ["autoresearch", true],
     ["plannotator", true],
+    ["observational-memory", true],
+    ["shazam", true],
     ["graphify", false],
     ["subagents", false],
     ["planning-with-files", true],

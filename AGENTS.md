@@ -25,14 +25,14 @@ Requires **Node.js 22+**. Targets **Pi 0.80** (`@earendil-works/pi-coding-agent`
 
 ## Code layout
 
-| Path                             | Role                                                                                                       |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`                   | Extension entry: runtime, register handlers                                                                |
-| `src/config/`                    | `hotmilk.json` I/O, resolve, `createHotmilkRuntime()`                                                      |
-| `src/bootstrap/`                 | Bundled extension registration, session, graph, defaults                                                   |
-| `src/controller/`                | `/mode`, `/stop`, `/interrupt`                                                                             |
-| `src/ui/`                        | Footer, session logo                                                                                       |
-| `prompts/`, `skills/`, `themes/` | Shipped Pi assets (`pi.prompts`, `pi.skills`, `pi.themes`); first-party skills live under `./skills/` only |
+| Path                             | Role                                                                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `src/index.ts`                   | Extension entry: runtime, register handlers                                                                                    |
+| `src/config/`                    | `hotmilk.json` I/O, resolve, `createHotmilkRuntime()`                                                                          |
+| `src/bootstrap/`                 | Bundled extension registration, session, graph, defaults                                                                       |
+| `src/controller/`                | `/mode`, `/stop`, `/interrupt`                                                                                                 |
+| `src/ui/`                        | Footer, session logo                                                                                                           |
+| `prompts/`, `skills/`, `themes/` | Shipped Pi assets (`pi.prompts`, `pi.skills`, `pi.themes`); first-party skills under `./skills/` (`pioneer`, `update-docs`, …) |
 
 ## Agent behavior
 
@@ -42,6 +42,7 @@ Merge with your global agent guidelines when present. For this repo:
 2. **Simplicity** — No speculative features; keep lazy loading (`extensions.ts`) intact.
 3. **Verify** — Run `bun test` (and `bun run lint` when changing TS or config).
 4. **Docs** — User-facing changes in `README.md`; update `hotmilk.json` when changing defaults (code reads it as the template).
+5. **Workflow** — Plan/memory/optimize routing: [README § Workflow routing](README.md#workflow-routing) and [`skills/pioneer/SKILL.md`](skills/pioneer/SKILL.md).
 
 ## More
 

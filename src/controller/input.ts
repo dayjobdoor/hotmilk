@@ -1,8 +1,14 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { openModeSettingsModal } from "./mode.ts";
 
+/** Prefix for interrupt commands. */
 const INTERRUPT_PREFIX = "/interrupt ";
 
+/**
+ * Handle /stop command input.
+ *
+ * @param ctx - extension context
+ */
 function handleStopInput(ctx: ExtensionContext): void {
   if (!ctx.isIdle()) {
     ctx.abort();
@@ -12,6 +18,13 @@ function handleStopInput(ctx: ExtensionContext): void {
   ctx.ui.notify("No running work to stop.", "info");
 }
 
+/**
+ * Handle /interrupt command input.
+ *
+ * @param interruptPrompt - interrupt prompt text
+ * @param pi - Pi extension API
+ * @param ctx - extension context
+ */
 function handleInterruptInput(
   interruptPrompt: string,
   pi: ExtensionAPI,
@@ -28,6 +41,7 @@ function handleInterruptInput(
   ctx.ui.notify("Interrupt prompt sent.", "info");
 }
 
+/** Route typed slash commands (`/stop`, `/interrupt`, `/mode`) to their handlers. */
 export function routeInputCommand(text: string, pi: ExtensionAPI, ctx: ExtensionContext): void {
   const normalizedText = text.trim();
   if (normalizedText === "/stop") {
@@ -41,6 +55,7 @@ export function routeInputCommand(text: string, pi: ExtensionAPI, ctx: Extension
   }
 }
 
+/** Register `/stop`, `/interrupt`, and `/mode` as Pi commands. */
 export function registerInputCommands(pi: ExtensionAPI): void {
   pi.registerCommand("stop", {
     description: "Stop current running work.",

@@ -59,6 +59,28 @@ describe("bundled extension manifest", () => {
     expect(CONTEXT_STACK_EXTENSION_IDS).toEqual(["context-mode", "rtk-optimizer"]);
   });
 
+  it("groups context performance extensions including observational memory", () => {
+    const contextPerf = BUNDLED_EXTENSION_GROUPS.find(
+      (group) => group.label === "Context & performance",
+    )!.ids;
+
+    expect(contextPerf).toContain("context-mode");
+    expect(contextPerf).toContain("simplify");
+    expect(contextPerf).toContain("rtk-optimizer");
+    expect(contextPerf).toContain("observational-memory");
+    expect(contextPerf).toContain("supi-context");
+  });
+
+  it("groups agent tools including shazam and pi-actors alongside graphify", () => {
+    const agentTools = BUNDLED_EXTENSION_GROUPS.find((group) => group.label === "Agent tools")!.ids;
+
+    expect(agentTools).toContain("graphify");
+    expect(agentTools).toContain("shazam");
+    expect(agentTools).toContain("pi-actors");
+    expect(agentTools).toContain("prompt-template-model");
+    expect(agentTools.indexOf("graphify")).toBeLessThan(agentTools.indexOf("shazam"));
+  });
+
   it("groups experiment extensions separately from workflow plan tools", () => {
     const experiments = BUNDLED_EXTENSION_GROUPS.find(
       (group) => group.label === "Experiments",

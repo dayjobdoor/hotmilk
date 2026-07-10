@@ -9,10 +9,22 @@ import {
   saveHotmilkConfig,
 } from "../config/hotmilk.ts";
 
+/**
+ * Format toggle state as "on" or "off".
+ *
+ * @param enabled - toggle state
+ * @returns formatted state
+ */
 function formatToggleState(enabled: boolean): "on" | "off" {
   return enabled ? "on" : "off";
 }
 
+/**
+ * Format toggle rows for notification display.
+ *
+ * @param toggles - extension toggle states
+ * @returns formatted toggle rows
+ */
 function formatToggleRows(toggles: Record<BundledExtensionId, boolean>): string {
   return BUNDLED_EXTENSION_GROUPS.map((group) => {
     const rows = group.ids.map((id) => `  ${id}: ${formatToggleState(toggles[id])}`);
@@ -20,6 +32,12 @@ function formatToggleRows(toggles: Record<BundledExtensionId, boolean>): string 
   }).join("\n\n");
 }
 
+/**
+ * Create setting items for the mode settings modal.
+ *
+ * @param toggles - extension toggle states
+ * @returns setting items
+ */
 function createModeSettingItems(toggles: Record<BundledExtensionId, boolean>): SettingItem[] {
   return BUNDLED_EXTENSION_GROUPS.flatMap((group) => [
     {
@@ -36,6 +54,12 @@ function createModeSettingItems(toggles: Record<BundledExtensionId, boolean>): S
   ]);
 }
 
+/**
+ * Notify current config state.
+ *
+ * @param ctx - extension context
+ * @param toggles - extension toggle states
+ */
 function notifyCurrentConfig(
   ctx: ExtensionContext,
   toggles: Record<BundledExtensionId, boolean>,
@@ -43,6 +67,13 @@ function notifyCurrentConfig(
   ctx.ui.notify(`${AGENT_HOTMILK_CONFIG_LABEL}\n${formatToggleRows(toggles)}`, "info");
 }
 
+/**
+ * Save extension toggle state to config.
+ *
+ * @param ctx - extension context
+ * @param extensionId - extension ID
+ * @param enabled - toggle state
+ */
 function saveExtensionToggle(
   ctx: ExtensionContext,
   extensionId: BundledExtensionId,
@@ -58,6 +89,7 @@ function saveExtensionToggle(
   }
 }
 
+/** Open the interactive TUI modal for toggling bundled extensions. */
 export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void> {
   const toggles = loadBundledExtensionToggles();
   const items = createModeSettingItems(toggles);

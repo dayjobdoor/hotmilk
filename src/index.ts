@@ -15,6 +15,7 @@ import { installHotmilkCtxSearchCapture } from "./bootstrap/btw.ts";
 import { registerProjectTrustHandlers } from "./bootstrap/project-trust.ts";
 import { registerSubagentsDoctorCommand } from "./bootstrap/subagents-doctor.ts";
 
+/** Main Pi extension entry point: register all hotmilk handlers and bundled extensions. */
 export default async function registerHotmilk(pi: ExtensionAPI): Promise<void> {
   const runtime = createHotmilkRuntime();
 

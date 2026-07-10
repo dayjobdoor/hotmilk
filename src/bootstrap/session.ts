@@ -11,12 +11,32 @@ import {
   shouldWarnCavemanJaConflict,
 } from "./defaults.ts";
 
+/** Message shown when hotmilk config is seeded. */
 const HOTMILK_SEEDED_MESSAGE = `Created ${AGENT_HOTMILK_CONFIG_LABEL} (toggle bundled extensions with /mode, then /reload).`;
+/**
+ * Format error message for hotmilk config parse failures.
+ *
+ * @param path - config file path
+ * @param error - error message
+ * @returns formatted error message
+ */
 const HOTMILK_PARSE_ERROR_MESSAGE = (path: string, error: string): string =>
   `Failed to parse ${path}: ${error}. Using default extension toggles.`;
+/**
+ * Message shown when MCP config is seeded.
+ *
+ * @param path - seeded MCP config path
+ * @returns formatted message
+ */
 const MCP_SEEDED_MESSAGE = (path: string): string =>
   `Created ${path} from hotmilk MCP template (add servers for pi-mcp-adapter; context-mode uses the extension bridge).`;
 
+/**
+ * Format message for project trust skips.
+ *
+ * @param skips - global extension skips
+ * @returns formatted message or undefined if no skips
+ */
 function formatProjectTrustSkipMessage(
   skips: HotmilkRuntime["globalExtensionSkips"],
 ): string | undefined {
@@ -27,6 +47,12 @@ function formatProjectTrustSkipMessage(
   return `Project settings also provide bundled packages (run /reload to dedupe):\n${rows}`;
 }
 
+/**
+ * Detect bundled extensions that are provided only by project settings.
+ *
+ * @param cwd - current working directory
+ * @returns project-only bundled extension skips
+ */
 function detectProjectOnlyBundledSkips(cwd: string): HotmilkRuntime["globalExtensionSkips"] {
   const globalOnly = detectGlobalBundledExtensionSkips({ cwd, includeProjectSettings: false });
   const withProject = detectGlobalBundledExtensionSkips({ cwd, includeProjectSettings: true });
@@ -34,6 +60,12 @@ function detectProjectOnlyBundledSkips(cwd: string): HotmilkRuntime["globalExten
   return withProject.filter((skip) => !globalIds.has(skip.id));
 }
 
+/**
+ * Format message for global extension skips.
+ *
+ * @param skips - global extension skips
+ * @returns formatted message or undefined if no skips
+ */
 function formatGlobalExtensionSkipsMessage(
   skips: HotmilkRuntime["globalExtensionSkips"],
 ): string | undefined {
@@ -44,6 +76,7 @@ function formatGlobalExtensionSkipsMessage(
   return `Bundled extensions skipped (Pi settings already provide the package):\n${rows}`;
 }
 
+/** Register hotmilk session-start handlers (seed config, footer, context stack, MCP). */
 export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntime): void {
   const termProgram = process.env.TERM_PROGRAM ?? "none";
 

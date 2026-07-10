@@ -1,3 +1,10 @@
+/**
+ * Dashboard bridge settings cleanup.
+ *
+ * Removes redundant standalone dashboard bridge entries from Pi agent settings
+ * when hotmilk already bundles the agent-dashboard extension.
+ */
+
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -37,13 +44,20 @@ function isBundledDashboardExtensionEntry(entry: string): boolean {
   return readPackageName(entry) === DASHBOARD_EXTENSION_NAME;
 }
 
+/** Options for {@link pruneRedundantDashboardPackage}. */
 export interface PruneDashboardSettingsOptions {
+  /** Override `$HOME` resolution. */
   homedir?: string;
 }
 
 /**
- * When hotmilk bundles agent-dashboard, drop standalone bridge paths from
- * ~/.pi/agent/settings.json that pi-dashboard start auto-registers.
+ * Drop standalone dashboard-bridge paths from `~/.pi/agent/settings.json`.
+ *
+ * The bundled agent-dashboard extension already provides the bridge, so the
+ * legacy standalone package entry is redundant.
+ *
+ * @param opts - optional overrides
+ * @returns whether any entries were removed
  */
 export function pruneRedundantDashboardPackage(opts: PruneDashboardSettingsOptions = {}): boolean {
   const home = opts.homedir ?? process.env.HOME ?? process.env.USERPROFILE ?? os.homedir();

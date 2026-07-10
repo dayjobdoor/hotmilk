@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vite-plus/test";
+import { beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   adaptBtwResourceLoaderForHotmilk,
   buildHotmilkBtwAppendPrompt,
@@ -48,6 +48,10 @@ function mockPiBtwLoader(append: string[]): ResourceLoader {
     reload: async () => {},
   };
 }
+
+beforeEach(() => {
+  resetMainCtxSearchCaptureForTests();
+});
 
 describe("hotmilk btw prompt", () => {
   it("strips harness sections inherited from the main session", () => {

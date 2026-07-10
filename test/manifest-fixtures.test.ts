@@ -21,7 +21,7 @@ describe("manifest fixtures — semver helpers", () => {
       ["0.80.2", "0.80.0", true],
       ["0.74.5", ">=0.80.0", false],
       ["1.0.0-rc.1", "^1.0.0", true],
-    ])("%s satisfies floor %s → %s", (version, floor, expected) => {
+    ])("naive semverAtLeast compares %s against floor %s → %s", (version, floor, expected) => {
       expect(semverAtLeast(version, floor)).toBe(expected);
     });
   });

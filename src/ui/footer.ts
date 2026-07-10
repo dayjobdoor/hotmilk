@@ -13,7 +13,12 @@ import {
   resolveGithubFooterContextAsync,
 } from "./github-user.ts";
 
-/** Pure footer clock formatting (no pi-coding-agent imports — safe for unit tests). */
+/**
+ * Pure footer clock formatting (no pi-coding-agent imports — safe for unit tests).
+ *
+ * @param date - Date to format
+ * @returns formatted time string in HH:mm:ss format
+ */
 export function formatFooterTime(date: Date): string {
   return new Intl.DateTimeFormat(undefined, {
     hour: "2-digit",
@@ -23,6 +28,12 @@ export function formatFooterTime(date: Date): string {
   }).format(date);
 }
 
+/**
+ * Sanitize footer status text by removing newlines, tabs, and extra spaces.
+ *
+ * @param text - raw status text
+ * @returns sanitized text
+ */
 function sanitizeStatusText(text: string): string {
   return text
     .replace(/[\r\n\t]/g, " ")
@@ -30,6 +41,15 @@ function sanitizeStatusText(text: string): string {
     .trim();
 }
 
+/**
+ * Format extension status lines for the footer.
+ *
+ * @param footerData - footer data provider
+ * @param width - terminal width
+ * @param dim - dimming function
+ * @param ellipsis - ellipsis string
+ * @returns formatted status lines
+ */
 function extensionStatusLines(
   footerData: ReadonlyFooterDataProvider,
   width: number,
@@ -48,10 +68,24 @@ function extensionStatusLines(
     .map((text) => truncateToWidth(dim(text), width, ellipsis));
 }
 
+/**
+ * Check if a footer line has visible content.
+ *
+ * @param line - line to check
+ * @returns true if line has visible content
+ */
 function isVisibleFooterLine(line: string): boolean {
   return visibleWidth(line) > 0;
 }
 
+/**
+ * Append metadata (time, term program) to the last footer line if it fits.
+ *
+ * @param lines - existing footer lines
+ * @param meta - metadata to append
+ * @param width - terminal width
+ * @returns updated lines
+ */
 function appendMetaToLastLine(lines: string[], meta: string, width: number): string[] {
   const visibleLines = lines.filter(isVisibleFooterLine);
   if (visibleLines.length === 0) {
@@ -75,6 +109,12 @@ function appendMetaToLastLine(lines: string[], meta: string, width: number): str
 
 const FOOTER_TIME_REFRESH_MS = 30_000;
 
+/**
+ * Get the latest thinking level from session manager entries.
+ *
+ * @param sessionManager - Pi session manager
+ * @returns latest thinking level
+ */
 function latestThinkingLevel(sessionManager: ExtensionContext["sessionManager"]): ThinkingLevel {
   const entries = sessionManager.getEntries();
   for (let i = entries.length - 1; i >= 0; i--) {
@@ -86,6 +126,12 @@ function latestThinkingLevel(sessionManager: ExtensionContext["sessionManager"])
   return "off";
 }
 
+/**
+ * Create a footer-compatible session object from extension context.
+ *
+ * @param ctx - extension context
+ * @returns agent session for footer
+ */
 function footerSessionFromContext(ctx: ExtensionContext): AgentSession {
   return {
     get state() {
@@ -100,6 +146,16 @@ function footerSessionFromContext(ctx: ExtensionContext): AgentSession {
   } as AgentSession;
 }
 
+/**
+ * Decorate the pwd line with GitHub user handle if available.
+ *
+ * @param pwdLine - current working directory line
+ * @param githubUser - resolved GitHub user
+ * @param repoOwner - repo owner
+ * @param width - terminal width
+ * @param theme - Pi theme
+ * @returns decorated pwd line
+ */
 function decoratePwdLine(
   pwdLine: string,
   githubUser: string | undefined,
@@ -118,6 +174,12 @@ function decoratePwdLine(
   return truncateToWidth(decorated, width, theme.fg("dim", "..."));
 }
 
+/**
+ * Install the hotmilk footer with GitHub user, clock, and extension status lines.
+ *
+ * @param ctx - extension context
+ * @param termProgram - terminal program identifier
+ */
 export function setupHotmilkFooter(ctx: ExtensionContext, termProgram: string): void {
   if (!ctx.hasUI) {
     return;

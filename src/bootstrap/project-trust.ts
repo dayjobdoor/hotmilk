@@ -8,6 +8,14 @@ import type { ResolvedProjectTrust } from "../config/hotmilk.ts";
 const HOTMILK_TRUST_PROMPT = (cwd: string): string =>
   `Trust this project for hotmilk?\n\n${cwd}\n\nEnables: .pi/settings.json, project extensions, .agents/skills, gentle-ai files under .pi/. Decline keeps global hotmilk bundles only.`;
 
+/**
+ * Resolve the trust decision for a project based on hotmilk project-trust settings.
+ *
+ * @param settings - resolved project trust settings
+ * @param ctx - project trust context
+ * @param cwd - current working directory
+ * @returns promise resolving to trust decision result
+ */
 export function resolveProjectTrustDecision(
   settings: ResolvedProjectTrust,
   ctx: ProjectTrustContext,
@@ -31,6 +39,12 @@ export function resolveProjectTrustDecision(
   }
 }
 
+/**
+ * Register the Pi project-trust event handler.
+ *
+ * @param pi - Pi extension API
+ * @param settings - resolved project trust settings
+ */
 export function registerProjectTrustHandlers(
   pi: ExtensionAPI,
   settings: ResolvedProjectTrust,

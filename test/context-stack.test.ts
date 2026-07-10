@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vite-plus/test";
@@ -102,5 +102,37 @@ describe("context-stack", () => {
     expect(result.updated).toBe(false);
     expect(result.seeded).toBe(false);
     expect(JSON.parse(readFileSync(configPath, "utf8"))).toEqual({ mode: "rewrite" });
+  });
+
+  it("syncRtkConfigForContextStack reports error for corrupted JSON instead of throwing", () => {
+    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-corrupt-"));
+    tempDirs.push(agentDir);
+    const configPath = join(agentDir, "config.json");
+
+    writeFileSync(configPath, "not json", "utf8");
+
+    const result = syncRtkConfigForContextStack(true, true, configPath);
+
+    expect(result.updated).toBe(false);
+    expect(result.seeded).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it("seedRtkConfigIfMissing reports error when config dir is not writable", () => {
+    // Skip on Windows where chmod semantics differ.
+    if (process.platform === "win32") {
+      return;
+    }
+
+    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-ro-"));
+    tempDirs.push(agentDir);
+    const configPath = join(agentDir, "nested", "config.json");
+
+    chmodSync(agentDir, 0o555);
+
+    const result = seedRtkConfigIfMissing(true, configPath);
+
+    expect(result.seeded).toBe(false);
+    expect(result.error).toBeDefined();
   });
 });

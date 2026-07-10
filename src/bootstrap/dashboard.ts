@@ -1,3 +1,11 @@
+/**
+ * Dashboard warm-start and config migration.
+ *
+ * Prepares the bundled agent-dashboard extension by migrating the upstream
+ * default port, disabling zrok when unavailable, and launching the server so
+ * the bridge extension sees a healthy dashboard on session start.
+ */
+
 import { execSync } from "node:child_process";
 import { createRequire } from "node:module";
 import fs from "node:fs";
@@ -35,28 +43,49 @@ const WARM_START_PROBE_OPTS = {
 
 const WARM_START_HEALTH_TIMEOUT_MS = 60_000;
 
+/** @returns the path to the dashboard server log file under `~/.pi/dashboard`. */
 export function dashboardServerLogPath(): string {
   return path.join(os.homedir(), ".pi", "dashboard", "server.log");
 }
 
-/** Bridge auto-start only waits 2s; warm-start uses 30s readiness. */
+/**
+ * Resolve the bundled `@blackbelt-technology/pi-agent-dashboard` server CLI.
+ *
+ * @returns absolute path to `pi-dashboard.mjs`.
+ */
 export function resolvePiDashboardCli(): string {
   const pkgJson = require.resolve("@blackbelt-technology/pi-agent-dashboard/package.json");
   return path.join(path.dirname(pkgJson), "packages/server/bin/pi-dashboard.mjs");
 }
 
-/** Entry script for {@link launchDashboardServer} (server CLI, not the mjs wrapper). */
+/**
+ * Resolve the dashboard server entry script used by {@link launchDashboardServer}.
+ *
+ * @returns absolute path to the server CLI source.
+ */
 export function resolveDashboardServerCliPath(): string {
   const pkgJson = require.resolve("@blackbelt-technology/pi-dashboard-server/package.json");
   return path.join(path.dirname(pkgJson), "src", "cli.ts");
 }
 
+/**
+ * Build command-line args for a warm-start launch.
+ *
+ * @param config - dashboard config (port + pi gateway port)
+ * @returns CLI args like `["--port", "8102", "--pi-port", "9999"]`
+ */
 export function buildWarmStartLaunchArgs(
   config: Pick<DashboardConfig, "port" | "piPort">,
 ): string[] {
   return ["--port", String(config.port), "--pi-port", String(config.piPort)];
 }
 
+/**
+ * Probe whether a TCP port is currently free.
+ *
+ * @param port - port to test
+ * @param host - interface to bind (default: 127.0.0.1)
+ */
 export function isTcpPortFree(port: number, host = "127.0.0.1"): Promise<boolean> {
   return new Promise((resolve) => {
     const server = net.createServer();
@@ -68,7 +97,14 @@ export function isTcpPortFree(port: number, host = "127.0.0.1"): Promise<boolean
   });
 }
 
-/** Pick a free pi gateway port when the configured default is already taken. */
+/**
+ * Pick a free pi gateway port descending from a preferred value.
+ *
+ * @param preferred - starting port
+ * @param isFree - port probe function (default: {@link isTcpPortFree})
+ * @param maxAttempts - how many ports to try
+ * @returns the first free port, or `preferred` if none are found
+ */
 export async function resolveAvailablePiPort(
   preferred: number,
   isFree: (port: number) => Promise<boolean> = isTcpPortFree,
@@ -86,6 +122,12 @@ export async function resolveAvailablePiPort(
   return preferred;
 }
 
+/**
+ * Persist the chosen pi gateway port to dashboard config.
+ *
+ * @param piPort - port to save
+ * @returns whether the file was actually changed
+ */
 export function persistDashboardPiPort(piPort: number): boolean {
   ensureConfig();
   const raw = readDashboardConfigRaw();
@@ -97,6 +139,7 @@ export function persistDashboardPiPort(piPort: number): boolean {
   return true;
 }
 
+/** Decision made by {@link resolveDashboardWarmStartDecision}. */
 export type DashboardWarmStartDecision = "skip-running" | "skip-conflict" | "launch";
 
 /** When TCP is bound but /api/health is not ready yet (cold boot). */
@@ -112,6 +155,17 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Decide whether the dashboard needs a warm-start launch.
+ *
+ * Skips when already running, waits briefly for a cold boot to become ready,
+ * and treats persistent occupancy as a conflict.
+ *
+ * @param port - dashboard HTTP port
+ * @param probe - running-state probe (default: `isDashboardRunning`)
+ * @param isFree - TCP port probe (default: {@link isTcpPortFree})
+ * @param opts - wait/poll timing overrides
+ */
 export async function resolveDashboardWarmStartDecision(
   port: number,
   probe: typeof isDashboardRunning = isDashboardRunning,
@@ -153,6 +207,7 @@ export async function resolveDashboardWarmStartDecision(
   return "launch";
 }
 
+/** @returns whether the `zrok` binary is available on `$PATH`. */
 export function isZrokOnPath(): boolean {
   try {
     execSync("command -v zrok", { stdio: "ignore" });
@@ -174,6 +229,7 @@ function writeDashboardConfigRaw(raw: Record<string, unknown>): void {
   fs.writeFileSync(CONFIG_FILE, `${JSON.stringify(raw, null, 2)}\n`, "utf-8");
 }
 
+/** Result of {@link applyHotmilkDashboardDefaults}. */
 export type ApplyHotmilkDashboardDefaultsResult = {
   updated: boolean;
   path: string;
@@ -181,7 +237,13 @@ export type ApplyHotmilkDashboardDefaultsResult = {
 
 /**
  * Apply hotmilk-specific dashboard defaults to a parsed config object.
- * Preserves custom ports; only migrates upstream default 8000 → {@link HOTMILK_DASHBOARD_PORT}.
+ *
+ * Preserves custom ports; only migrates upstream default `8000` to
+ * {@link HOTMILK_DASHBOARD_PORT}. Disables the zrok tunnel when zrok is missing.
+ *
+ * @param raw - parsed dashboard config
+ * @param opts - optional zrok availability override
+ * @returns whether any changes were made
  */
 export function applyHotmilkDashboardDefaultsToRaw(
   raw: Record<string, unknown>,
@@ -209,8 +271,9 @@ export function applyHotmilkDashboardDefaultsToRaw(
 }
 
 /**
- * Seed hotmilk dashboard defaults into ~/.pi/dashboard/config.json:
- * port 8102 (when still on upstream 8000) and disable zrok when the binary is missing.
+ * Seed hotmilk dashboard defaults into `~/.pi/dashboard/config.json`.
+ *
+ * @returns whether the file was updated
  */
 export function applyHotmilkDashboardDefaults(): ApplyHotmilkDashboardDefaultsResult {
   ensureConfig();
@@ -227,11 +290,12 @@ export function applyHotmilkDashboardDefaults(): ApplyHotmilkDashboardDefaultsRe
 /** Dedupes concurrent warm-start only; each session_start/reload re-probes. */
 let warmStartInFlight: Promise<DashboardWarmStartResult> | undefined;
 
-/** @internal Clears in-flight warm-start dedupe (tests). */
+/** Reset the in-flight warm-start promise so tests can re-launch. */
 export function resetDashboardWarmStartForTests(): void {
   warmStartInFlight = undefined;
 }
 
+/** Result returned by {@link ensureDashboardWarmStarted}. */
 export type DashboardWarmStartResult = {
   status: "running" | "started" | "skipped-conflict" | "failed";
   port: number;
@@ -249,8 +313,12 @@ function warmStartResult(
 }
 
 /**
- * Start the dashboard via shared launcher (60s readiness) and wait until
- * the bridge extension loads so its 2s auto-start sees a healthy server.
+ * Start the dashboard via shared launcher and wait until it is ready.
+ *
+ * Concurrent calls are deduplicated. The bridge extension then sees a healthy
+ * server during its short auto-start probe.
+ *
+ * @returns warm-start outcome
  */
 export async function ensureDashboardWarmStarted(): Promise<DashboardWarmStartResult> {
   if (warmStartInFlight) {
@@ -318,7 +386,14 @@ async function runDashboardWarmStart(): Promise<DashboardWarmStartResult> {
   }
 }
 
-/** Doctor checks ~/.pi-dashboard; hotmilk warm-start uses bundled jiti instead. */
+/**
+ * Warn when the dashboard doctor may flag hotmilk-managed warm-start.
+ *
+ * Hotmilk uses bundled jiti, so legacy `~/.pi-dashboard` warnings can be ignored
+ * when `/api/health` is healthy.
+ *
+ * @param result - warm-start result
+ */
 export function logHotmilkDashboardDoctorHint(result: DashboardWarmStartResult): void {
   if (result.status !== "running" && result.status !== "started") {
     return;
