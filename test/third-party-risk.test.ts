@@ -34,10 +34,7 @@ const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly BundledPeerRangeExclusion[]
  * Nested @earendil-works copies still below Pi 0.80 — remove rows when upstream dedupes to 0.80.x.
  * pi-subagents / pi-mcp-adapter / agent-dashboard server are the usual sources.
  */
-const KNOWN_NESTED_DRIFT_BELOW_080: readonly { name: string; below: string }[] = [
-  { name: "@earendil-works/pi-tui", below: "0.80.0" },
-  { name: "@earendil-works/pi-ai", below: "0.80.0" },
-];
+const KNOWN_NESTED_DRIFT_BELOW_080: readonly { name: string; below: string }[] = [];
 
 function bundledPiPeerRanges(packageName: string): string[] {
   const peers = installedPackageJson(packageName).peerDependencies ?? {};

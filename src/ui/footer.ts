@@ -127,6 +127,29 @@ function latestThinkingLevel(sessionManager: ExtensionContext["sessionManager"])
 }
 
 /**
+ * Minimal ModelRuntime facade for FooterComponent.
+ * ExtensionContext exposes ModelRegistry, while FooterComponent calls
+ * `session.modelRuntime.isUsingOAuth(providerId)`.
+ *
+ * @param ctx - model + modelRegistry from extension context
+ * @returns object with isUsingOAuth(providerId)
+ */
+export function footerModelRuntimeFromContext(
+  ctx: Pick<ExtensionContext, "model" | "modelRegistry">,
+): { isUsingOAuth(providerId: string): boolean } {
+  return {
+    isUsingOAuth(providerId: string): boolean {
+      const { model, modelRegistry } = ctx;
+      if (model?.provider === providerId) {
+        return modelRegistry.isUsingOAuth(model);
+      }
+      const match = modelRegistry.getAll().find((candidate) => candidate.provider === providerId);
+      return match ? modelRegistry.isUsingOAuth(match) : false;
+    },
+  };
+}
+
+/**
  * Create a footer-compatible session object from extension context.
  *
  * @param ctx - extension context
@@ -143,7 +166,8 @@ function footerSessionFromContext(ctx: ExtensionContext): AgentSession {
     sessionManager: ctx.sessionManager,
     getContextUsage: () => ctx.getContextUsage(),
     modelRegistry: ctx.modelRegistry,
-  } as AgentSession;
+    modelRuntime: footerModelRuntimeFromContext(ctx),
+  } as unknown as AgentSession;
 }
 
 /**
