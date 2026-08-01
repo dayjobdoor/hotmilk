@@ -13,7 +13,7 @@ User-facing setup: [README.md](README.md).
 | `bun run lint`  | `vp lint`                 |
 | `bun run check` | lint + format + test      |
 
-Requires **Node.js 22+**. Targets **Pi 0.80** (`@earendil-works/pi-coding-agent` peers).
+Requires **Node.js 22+**. Targets **Pi 0.83** (`@earendil-works/pi-coding-agent` peers).
 
 ## Pi essentials
 

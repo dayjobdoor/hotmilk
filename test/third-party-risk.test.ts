@@ -10,8 +10,12 @@ import {
   semverAtLeast,
 } from "./fixtures/manifest.ts";
 
-/** Pi 0.80 floor for nested @earendil-works supply-chain drift checks. */
+/** Minimum Pi floor for nested @earendil-works supply-chain drift checks. */
 const PI_080_FLOOR = "0.80.0";
+
+/** Declared hotmilk peer target (dev/peer/overrides). */
+const PI_PEER_TARGET = /0\.83/;
+const PI_TOP_FLOOR = "0.83.0";
 
 type BundledPeerRangeExclusion = {
   packageName: string;
@@ -96,15 +100,15 @@ describe("third-party risk (hotmilk meta-package)", () => {
     expect(semverAtLeast(resolved, floor!)).toBe(true);
   });
 
-  it("installs Pi 0.80 coding-agent at the top level", () => {
+  it("installs Pi 0.83 coding-agent at the top level", () => {
     const version = installedPackageVersion("@earendil-works/pi-coding-agent");
-    expect(semverAtLeast(version, PI_080_FLOOR)).toBe(true);
+    expect(semverAtLeast(version, PI_TOP_FLOOR)).toBe(true);
   });
 
-  it("declares Pi 0.80 peers on hotmilk itself", () => {
+  it("declares Pi 0.83 peers on hotmilk itself", () => {
     for (const [name, range] of Object.entries(PACKAGE_JSON.peerDependencies ?? {})) {
       if (name.startsWith("@earendil-works/")) {
-        expect(range).toMatch(/0\.80/);
+        expect(range).toMatch(PI_PEER_TARGET);
       }
     }
   });

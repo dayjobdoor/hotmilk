@@ -43,7 +43,9 @@ function mockPiBtwLoader(append: string[]): ResourceLoader {
     getThemes: () => ({ themes: [], diagnostics: [] }),
     getAgentsFiles: () => ({ agentsFiles: [] }),
     getSystemPrompt: () => "Project rules stay.\n## graphify\nDelegate.",
+    getSystemPromptSource: () => ({ path: "/tmp/mock-system-prompt.md" }),
     getAppendSystemPrompt: () => append,
+    getAppendSystemPromptSources: () => append.map((_, i) => ({ path: `/tmp/mock-append-${i}.md` })),
     extendResources: () => {},
     reload: async () => {},
   };

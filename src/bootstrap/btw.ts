@@ -175,19 +175,24 @@ export function adaptBtwResourceLoaderForHotmilk(
     return {
       ...sharedLoader,
       getSystemPrompt: () => stripHotmilkMainSessionHarness(loader.getSystemPrompt() ?? ""),
+      getSystemPromptSource: () => loader.getSystemPromptSource(),
       getAppendSystemPrompt: () => loader.getAppendSystemPrompt(),
+      getAppendSystemPromptSources: () => loader.getAppendSystemPromptSources(),
     };
   }
 
   return {
     ...sharedLoader,
     getSystemPrompt: () => stripHotmilkMainSessionHarness(loader.getSystemPrompt() ?? ""),
+    getSystemPromptSource: () => loader.getSystemPromptSource(),
     getAppendSystemPrompt: () =>
       buildHotmilkBtwAppendPrompt({
         graphifyEnabled: config.extensionToggles.graphify === true,
         subagentsEnabled: config.extensionToggles.subagents === true,
         contextModeEnabled: config.extensionToggles["context-mode"] === true,
       }),
+    // Hotmilk synthesizes the BTW append prompt; upstream path metadata no longer applies.
+    getAppendSystemPromptSources: () => [],
   };
 }
 

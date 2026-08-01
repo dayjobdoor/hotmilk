@@ -58,11 +58,11 @@ pi install -l npm:hotmilk
 2. On first session, hotmilk creates `~/.pi/agent/hotmilk.json` if missing (defaults match the bundled template).
 3. After config changes, run `/reload`.
 
-### Pi 0.80 and npm peers
+### Pi 0.83 and npm peers
 
-hotmilk targets **Pi 0.80** (`@earendil-works/pi-coding-agent` and peers). Several bundled dependencies still declare **0.74.x** peer ranges (`pi-btw`, `pi-docparser`, `@blackbelt-technology/pi-flows`, and others). npm may report `ERESOLVE` until those packages publish 0.80-compatible peers.
+hotmilk targets **Pi 0.83** (`@earendil-works/pi-coding-agent` and peers). Several bundled dependencies still declare **0.74.x** peer ranges (`pi-btw`, `pi-docparser`, `@blackbelt-technology/pi-flows`, and others). npm may report `ERESOLVE` until those packages publish 0.83-compatible peers.
 
-This repo ships **`.npmrc`** with `legacy-peer-deps=true` so `npm install` and `npm ci` succeed. Copy from `.npmrc.example` if you clone without `.npmrc`. Treat upstream extensions as **best-effort on 0.80** until their maintainers widen peer ranges.
+This repo ships **`.npmrc`** with `legacy-peer-deps=true` so `npm install` and `npm ci` succeed. Copy from `.npmrc.example` if you clone without `.npmrc`. Treat upstream extensions as **best-effort on 0.83** until their maintainers widen peer ranges.
 
 Heavy optional stacks (`agent-dashboard`, `pi-flows`) stay **off by default**; enable in `/mode` only when you need them and accept extra peer / startup cost.
 
@@ -347,7 +347,7 @@ Enable in `/mode` or set the key to `true` in `hotmilk.json`, then `/reload`. Wo
 | `autoresearch`          | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                   | `/autoresearch`, `.auto/`; shortcut override in `pi-autoresearch.json` |
 | `caveman`               | [pi-caveman](https://www.npmjs.com/package/pi-caveman)                                                             | Terse English; conflicts with `defaults.language: ja`                  |
 | `red-green`             | [pi-red-green](https://www.npmjs.com/package/pi-red-green)                                                         | `/tdd`, `/tdd-status`; `~/.pi/red-green/config.json`                   |
-| `agent-dashboard`       | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-start; peers **0.74** — test on 0.80                              |
+| `agent-dashboard`       | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-start; peers **0.74** — test on 0.83                              |
 | `web-access`            | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                       | `web_search`, fetch; `~/.pi/web-search.json`                           |
 | `pi-flows`              | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | `/flows`; peers **0.74**                                               |
 | `pi-actors`             | [@llblab/pi-actors](https://www.npmjs.com/package/@llblab/pi-actors)                                               | Local actor kernel (`spawn`, `message`, `inspect`)                     |
@@ -389,7 +389,7 @@ agent login
 
 ## Development
 
-Requires **Node.js 22+** (or **Bun 1.3+**), **Bun** for installs in this repo, and Pi **0.80** peers in the environment.
+Requires **Node.js 22+** (or **Bun 1.3+**), **Bun** for installs in this repo, and Pi **0.83** peers in the environment.
 
 ```bash
 bun install       # commit bun.lock; peers resolved by Bun
