@@ -9,6 +9,7 @@
     "shazam": false,
     "subagents": true,
     "pi-actors": false,
+    "herdr-squad": false,
     "goal": true,
     "docparser": true,
     "obsidian": true,

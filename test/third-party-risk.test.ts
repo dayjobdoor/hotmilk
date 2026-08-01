@@ -24,7 +24,6 @@ type BundledPeerRangeExclusion = {
  * Drop a row when npm publishes 0.80-compatible peers and refresh README peer notes.
  */
 const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly BundledPeerRangeExclusion[] = [
-  { packageName: "pi-simplify", excludedVersionPrefix: "<0.76.0" },
   { packageName: "pi-rtk-optimizer", excludedVersionPrefix: "^0.79.0" },
   { packageName: "pi-docparser", excludedVersionPrefix: "^0.74.0" },
   { packageName: "pi-red-green", excludedVersionPrefix: "^0.74.0" },

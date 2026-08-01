@@ -3,6 +3,10 @@
  *
  * Bypasses the upstream slash-event bridge so the doctor report works even
  * when `state.lastUiContext` is unset after `/reload`.
+ *
+ * Types are local (not `import("pi-subagents/src/...")`) because pi-subagents
+ * package `exports` only expose `.`, `./background-work`, and `./delegation`.
+ * Runtime still loads deep modules via {@link bundledImportUrl}.
  */
 
 import * as fs from "node:fs";
@@ -16,18 +20,38 @@ function ensureAccessibleDir(dirPath: string): void {
   fs.accessSync(dirPath, fs.constants.R_OK | fs.constants.W_OK);
 }
 
+type SharedTypesModule = {
+  CHAIN_RUNS_DIR: string;
+};
+
+type DoctorModule = {
+  buildDoctorReport: (input: {
+    cwd: string;
+    config: unknown;
+    state: { baseCwd: string; currentSessionId: string | null };
+    currentSessionFile: string | null;
+    currentSessionId: string | null;
+    orchestratorTarget: string | undefined;
+    sessionError: string | undefined;
+    expandTilde: (value: string) => string;
+  }) => string;
+};
+
+type ConfigModule = {
+  loadConfig: () => unknown;
+};
+
+type IntercomModule = {
+  resolveIntercomSessionTarget: (sessionName: string | undefined, sessionId: string) => string;
+};
+
 /** pi-subagents creates async/results on init but not chain-runs until the first /chain. */
 async function ensureChainRunsDir(): Promise<void> {
   const types = (await import(
     bundledImportUrl("pi-subagents/src/shared/types.ts")
-  )) as typeof import("pi-subagents/src/shared/types.ts");
+  )) as SharedTypesModule;
   ensureAccessibleDir(types.CHAIN_RUNS_DIR);
 }
-
-type DoctorModule = typeof import("pi-subagents/src/extension/doctor.ts");
-type ConfigModule = typeof import("pi-subagents/src/extension/config.ts");
-type IntercomModule = typeof import("pi-subagents/src/intercom/intercom-bridge.ts");
-type SubagentState = import("pi-subagents/src/shared/types.ts").SubagentState;
 
 function expandTilde(value: string): string {
   return value.startsWith("~/") ? path.join(os.homedir(), value.slice(2)) : value;
@@ -70,7 +94,7 @@ function buildDirectDoctorReport(
     state: {
       baseCwd: ctx.cwd,
       currentSessionId,
-    } as SubagentState,
+    },
     currentSessionFile,
     currentSessionId,
     orchestratorTarget,
@@ -79,11 +103,6 @@ function buildDirectDoctorReport(
   });
 }
 
-/**
- * pi-subagents registers `/subagents-doctor` through the slash event bridge, which
- * reads `state.lastUiContext` instead of the command handler's `ctx`. After `/reload`
- * that context can be unset while the command still runs — override with a direct report.
- */
 /**
  * Register the `/subagents-doctor` Pi command with a direct report builder.
  *

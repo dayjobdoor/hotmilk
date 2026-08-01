@@ -77,6 +77,7 @@ describe("bundled extension manifest", () => {
     expect(agentTools).toContain("graphify");
     expect(agentTools).toContain("shazam");
     expect(agentTools).toContain("pi-actors");
+    expect(agentTools).toContain("herdr-squad");
     expect(agentTools).toContain("prompt-template-model");
     expect(agentTools.indexOf("graphify")).toBeLessThan(agentTools.indexOf("shazam"));
   });

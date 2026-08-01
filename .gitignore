@@ -2,6 +2,7 @@
 .atl/
 
 graphify-out/
+.codegraph
 
 openspec
 

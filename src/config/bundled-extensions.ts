@@ -98,6 +98,12 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Agent tools",
   },
   {
+    id: "herdr-squad",
+    package: { packageName: "pi-herdr-squad" },
+    module: "pi-herdr-squad/index.ts",
+    group: "Agent tools",
+  },
+  {
     id: "goal",
     package: { packageName: "pi-goal" },
     module: "pi-goal/.pi/extensions/pi-goal/index.ts",

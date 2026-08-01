@@ -13,20 +13,20 @@ Use it when you want a practical engineering workstation without hand-picking a 
 
 ## What you get
 
-| Layer                   | Packages / assets                                                                                                                                                                                                       |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) **^0.10.x** (el Gentleman, SDD/OpenSpec sync, skill registry, `/gentle-ai:doctor`)                                                                                 |
-| **Context**             | [context-mode](https://www.npmjs.com/package/context-mode), [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory) (compaction continuity, default off)                                       |
-| **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi)                                                                                                                                                                |
-| **Subagents / actors**  | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user), [pi-actors](https://www.npmjs.com/package/@llblab/pi-actors) (off by default)                     |
-| **Goals & docs**        | [pi-goal](https://www.npmjs.com/package/pi-goal), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                            |
-| **File-based planning** | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files), [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension) (browser plan approval)            |
-| **Integrations**        | [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), [pi-btw](https://www.npmjs.com/package/pi-btw) (side channel — see below), [@haispeed/pi-obsidian](https://www.npmjs.com/package/@haispeed/pi-obsidian) |
-| **Dashboard**           | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard)                                                                                                      |
-| **Web tools**           | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                                            |
-| **Flows**               | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                                                                                                                          |
-| **Experiment loops**    | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                                                                                                                        |
-| **Local assets**        | `./prompts`, `./skills`, `./themes`, `mcp.json` template                                                                                                                                                                |
+| Layer                   | Packages / assets                                                                                                                                                                                                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) **^1.2.x** (el Gentleman, SDD/OpenSpec sync, skill registry, `/gentle-ai:doctor`)                                                                                                                                                                 |
+| **Context**             | [context-mode](https://www.npmjs.com/package/context-mode), [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory) (compaction continuity, default off)                                                                                                                      |
+| **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi)                                                                                                                                                                                                                                               |
+| **Subagents / actors**  | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user), [pi-actors](https://www.npmjs.com/package/@llblab/pi-actors) (off by default), [pi-herdr-squad](https://www.npmjs.com/package/pi-herdr-squad) (Herdr panes only, off by default) |
+| **Goals & docs**        | [pi-goal](https://www.npmjs.com/package/pi-goal), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                                                                                                           |
+| **File-based planning** | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files), [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension) (browser plan approval)                                                                                           |
+| **Integrations**        | [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), [pi-btw](https://www.npmjs.com/package/pi-btw) (side channel — see below), [@haispeed/pi-obsidian](https://www.npmjs.com/package/@haispeed/pi-obsidian)                                                                                |
+| **Dashboard**           | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard)                                                                                                                                                                                     |
+| **Web tools**           | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                                                                                                                           |
+| **Flows**               | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                                                                                                                                                                                                         |
+| **Experiment loops**    | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                                                                                                                                                                                                       |
+| **Local assets**        | `./prompts`, `./skills`, `./themes`, `mcp.json` template                                                                                                                                                                                                                                               |
 
 Bundled extension **on/off** is controlled in `hotmilk.json` (via `/mode`), then `/reload`. Only `src/index.ts` is listed in `package.json` → `pi.extensions`; every other bundled package is loaded dynamically when its toggle is `true`.
 
@@ -60,7 +60,7 @@ pi install -l npm:hotmilk
 
 ### Pi 0.80 and npm peers
 
-hotmilk targets **Pi 0.80** (`@earendil-works/pi-coding-agent` and peers). Several bundled dependencies still declare **0.74.x** peer ranges (`pi-simplify`, `pi-btw`, `pi-docparser`, `@blackbelt-technology/pi-flows`, and others). npm may report `ERESOLVE` until those packages publish 0.80-compatible peers.
+hotmilk targets **Pi 0.80** (`@earendil-works/pi-coding-agent` and peers). Several bundled dependencies still declare **0.74.x** peer ranges (`pi-btw`, `pi-docparser`, `@blackbelt-technology/pi-flows`, and others). npm may report `ERESOLVE` until those packages publish 0.80-compatible peers.
 
 This repo ships **`.npmrc`** with `legacy-peer-deps=true` so `npm install` and `npm ci` succeed. Copy from `.npmrc.example` if you clone without `.npmrc`. Treat upstream extensions as **best-effort on 0.80** until their maintainers widen peer ranges.
 
@@ -118,6 +118,7 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
     "shazam": false,
     "subagents": true,
     "pi-actors": false,
+    "herdr-squad": false,
     "goal": true,
     "docparser": true,
     "obsidian": true,
@@ -125,6 +126,7 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
     "simplify": true,
     "rtk-optimizer": false,
     "observational-memory": false,
+    "supi-context": false,
     "mcp-adapter": false,
     "planning-with-files": false,
     "plannotator": false,
@@ -135,6 +137,7 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
     "web-access": false,
     "pi-flows": false,
     "kanagawa": false,
+    "prompt-template-model": false,
     "tetris": false
   },
   "graph": {
@@ -154,29 +157,30 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
 }
 ```
 
-| Key / area                        | Behavior                                                                                                                                                                                                                 |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                                                |
-| `extensions.gentle-ai`            | Default `true`. gentle-pi **0.10.x** (bundled `^0.10.2`): orchestration, lazy SDD preflight, OpenSpec sync/archive agents, `/gentle-ai:doctor` / `:status`. hotmilk keeps **startup-banner off** (figlet header instead) |
-| `extensions.subagents`            | Default `true`. Imports pi-subagents **0.28+** (~10s): acceptance gates, `timeoutMs`, resource limits. Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools                            |
-| `extensions.btw`                  | Default `true`. Side conversation via `/btw` while main runs. **Delegate implementation to subagents**; use BTW for quick human questions. See [pi-btw coexistence](#pi-btw-with-subagents-default-on)                   |
-| `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                                                      |
-| `extensions.observational-memory` | Default `false`. Compaction continuity; pairs with `context-mode`. See [Workflow routing](#workflow-routing)                                                                                                             |
-| `extensions.shazam`               | Default `false`. Tree-sitter + LSP execute guards (`shazam_impact`, `shazam_verify`); complements graphify — see [Workflow routing](#workflow-routing)                                                                   |
-| `extensions.rtk-optimizer`        | Default `false`. Bash/read/grep output compaction; enable with `context-mode` for leftover shell output. Install [`rtk` CLI](https://github.com/rtk-ai/rtk) for command rewrite (`/rtk verify`)                          |
-| `extensions.planning-with-files`  | Default `false`. On-disk planning — see [Workflow routing](#workflow-routing)                                                                                                                                            |
-| `extensions.plannotator`          | Default `false`. Browser plan approval — see [Workflow routing](#workflow-routing)                                                                                                                                       |
-| `extensions.autoresearch`         | Default `false`. Optimize loop — see [Workflow routing](#workflow-routing)                                                                                                                                               |
-| `extensions.goal` … `mcp-adapter` | Integration / perf extensions (formerly always loaded via `pi.extensions`; now toggled like other bundled deps)                                                                                                          |
-| Enabled extensions                | Loaded **in parallel** on session start (faster than sequential import when many toggles are on)                                                                                                                         |
-| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                                                                                                                           |
-| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                                                                                                                          |
-| `defaults.persona`                | Seeds `.pi/gentle-ai/persona.json` when missing (`gentleman` \| `neutral`)                                                                                                                                               |
-| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                                                                                                                           |
-| `mcp.seedOnStart`                 | Copy `mcp.json` template into `~/.pi/agent/mcp.json` when missing (empty template; for pi-mcp-adapter)                                                                                                                   |
-| `projectTrust.mode`               | Pi project trust: `delegate` (default), `prompt`, `always`, or `never`                                                                                                                                                   |
-| `projectTrust.remember`           | When `mode` is `always` or `never`, persist the decision in Pi `trust.json`                                                                                                                                              |
-| `extensions.mcp-adapter`          | Default `false`. Enable only when you want MCP servers from `~/.pi/agent/mcp.json` (do not duplicate context-mode)                                                                                                       |
+| Key / area                        | Behavior                                                                                                                                                                                                               |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                                              |
+| `extensions.gentle-ai`            | Default `true`. gentle-pi **1.2.x** (bundled `^1.2.0`): orchestration, lazy SDD preflight, OpenSpec sync/archive agents, `/gentle-ai:doctor` / `:status`. hotmilk keeps **startup-banner off** (figlet header instead) |
+| `extensions.subagents`            | Default `true`. Imports pi-subagents **0.28+** (~10s): acceptance gates, `timeoutMs`, resource limits. Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools                          |
+| `extensions.btw`                  | Default `true`. Side conversation via `/btw` while main runs. **Delegate implementation to subagents**; use BTW for quick human questions. See [pi-btw coexistence](#pi-btw-with-subagents-default-on)                 |
+| `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                                                    |
+| `extensions.observational-memory` | Default `false`. Compaction continuity; pairs with `context-mode`. See [Workflow routing](#workflow-routing)                                                                                                           |
+| `extensions.shazam`               | Default `false`. Tree-sitter + LSP execute guards (`shazam_impact`, `shazam_verify`); complements graphify — see [Workflow routing](#workflow-routing)                                                                 |
+| `extensions.herdr-squad`          | Default `false`. Visible read-only Herdr investigation squads (`/herdr-squad`). Requires Pi inside a Herdr-managed pane (`HERDR_ENV=1`)                                                                                |
+| `extensions.rtk-optimizer`        | Default `false`. Bash/read/grep output compaction; enable with `context-mode` for leftover shell output. Install [`rtk` CLI](https://github.com/rtk-ai/rtk) for command rewrite (`/rtk verify`)                        |
+| `extensions.planning-with-files`  | Default `false`. On-disk planning — see [Workflow routing](#workflow-routing)                                                                                                                                          |
+| `extensions.plannotator`          | Default `false`. Browser plan approval — see [Workflow routing](#workflow-routing)                                                                                                                                     |
+| `extensions.autoresearch`         | Default `false`. Optimize loop — see [Workflow routing](#workflow-routing)                                                                                                                                             |
+| `extensions.goal` … `mcp-adapter` | Integration / perf extensions (formerly always loaded via `pi.extensions`; now toggled like other bundled deps)                                                                                                        |
+| Enabled extensions                | Loaded **in parallel** on session start (faster than sequential import when many toggles are on)                                                                                                                       |
+| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                                                                                                                         |
+| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                                                                                                                        |
+| `defaults.persona`                | Seeds `.pi/gentle-ai/persona.json` when missing (`gentleman` \| `neutral`)                                                                                                                                             |
+| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                                                                                                                         |
+| `mcp.seedOnStart`                 | Copy `mcp.json` template into `~/.pi/agent/mcp.json` when missing (empty template; for pi-mcp-adapter)                                                                                                                 |
+| `projectTrust.mode`               | Pi project trust: `delegate` (default), `prompt`, `always`, or `never`                                                                                                                                                 |
+| `projectTrust.remember`           | When `mode` is `always` or `never`, persist the decision in Pi `trust.json`                                                                                                                                            |
+| `extensions.mcp-adapter`          | Default `false`. Enable only when you want MCP servers from `~/.pi/agent/mcp.json` (do not duplicate context-mode)                                                                                                     |
 
 **MCP (default):** `context-mode` extension registers `ctx_*` via its built-in bridge (same module as [upstream `.pi/extensions/context-mode`](https://github.com/mksglu/context-mode/tree/main/.pi/extensions/context-mode), loaded from `build/adapters/pi/extension.js`). Hotmilk removes any `context-mode` server from `~/.pi/agent/mcp.json` when the extension is on. Enable `mcp-adapter` only for **other** MCP servers—not a second context-mode entry.
 
@@ -184,15 +188,15 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
 
 `/mode` sections follow `BUNDLED_EXTENSION_GROUP_ORDER` in `src/config/bundled-extensions.ts`:
 
-| Group                     | Extensions (toggle ids)                                                                                 |
-| ------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Harness**               | `skill-registry`, `sdd-init`, `gentle-ai`                                                               |
-| **Agent tools**           | `ask-user`, `graphify`, `shazam`, `subagents`, `pi-actors`, `agent-dashboard`, `web-access`, `pi-flows` |
-| **Context & performance** | `context-mode`, `simplify`, `rtk-optimizer`, `observational-memory`                                     |
-| **Integrations**          | `goal`, `docparser`, `obsidian`, `btw`, `mcp-adapter`                                                   |
-| **Workflow**              | `planning-with-files`, `plannotator`, `red-green`                                                       |
-| **Output**                | `caveman`, `kanagawa`                                                                                   |
-| **Experiments**           | `autoresearch`, `tetris`                                                                                |
+| Group                     | Extensions (toggle ids)                                                                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Harness**               | `skill-registry`, `sdd-init`, `gentle-ai`                                                                                                       |
+| **Agent tools**           | `ask-user`, `graphify`, `shazam`, `prompt-template-model`, `subagents`, `pi-actors`, `herdr-squad`, `agent-dashboard`, `web-access`, `pi-flows` |
+| **Context & performance** | `context-mode`, `simplify`, `rtk-optimizer`, `observational-memory`, `supi-context`                                                             |
+| **Integrations**          | `goal`, `docparser`, `obsidian`, `btw`, `mcp-adapter`                                                                                           |
+| **Workflow**              | `planning-with-files`, `plannotator`, `red-green`                                                                                               |
+| **Output**                | `caveman`, `kanagawa`                                                                                                                           |
+| **Experiments**           | `autoresearch`, `tetris`                                                                                                                        |
 
 ### Workflow routing
 
@@ -347,10 +351,10 @@ Enable in `/mode` or set the key to `true` in `hotmilk.json`, then `/reload`. Wo
 | `web-access`            | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                       | `web_search`, fetch; `~/.pi/web-search.json`                           |
 | `pi-flows`              | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | `/flows`; peers **0.74**                                               |
 | `pi-actors`             | [@llblab/pi-actors](https://www.npmjs.com/package/@llblab/pi-actors)                                               | Local actor kernel (`spawn`, `message`, `inspect`)                     |
+| `herdr-squad`           | [pi-herdr-squad](https://www.npmjs.com/package/pi-herdr-squad)                                                     | Visible read-only Herdr squads; requires `HERDR_ENV=1`                 |
 | `prompt-template-model` | [pi-prompt-template-model](https://www.npmjs.com/package/pi-prompt-template-model)                                 | Prompt template model selector; default off                            |
 | `kanagawa`              | [pi-kanagawa](https://www.npmjs.com/package/pi-kanagawa)                                                           | Theme; **replaces hotmilk footer** when on                             |
 | `tetris`                | [pi-tetris](https://www.npmjs.com/package/pi-tetris)                                                               | `/tetris`                                                              |
-| `latchkey`              | [latchkey](https://www.npmjs.com/package/latchkey)                                                                 | **Skill-only** — API credential injection via `/skill:latchkey`        |
 
 ### Alternative skill stacks (not bundled)
 
@@ -361,6 +365,8 @@ pi install npm:bigpowers
 ```
 
 Do not enable bigpowers alongside pioneer OpenSpec/Plannotator on the same task. See [`.agents/plans/EXTENSIONS.md`](.agents/plans/EXTENSIONS.md) §L8.
+
+[latchkey](https://www.npmjs.com/package/latchkey) (API credential injection via `/skill:latchkey`) is also **not** bundled — install with `pi install npm:latchkey` if needed.
 
 ### Agent dashboard troubleshooting
 
