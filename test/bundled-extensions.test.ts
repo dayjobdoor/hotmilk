@@ -75,11 +75,13 @@ describe("bundled extension manifest", () => {
     const agentTools = BUNDLED_EXTENSION_GROUPS.find((group) => group.label === "Agent tools")!.ids;
 
     expect(agentTools).toContain("graphify");
+    expect(agentTools).toContain("codegraph");
     expect(agentTools).toContain("shazam");
     expect(agentTools).toContain("pi-actors");
     expect(agentTools).toContain("herdr-squad");
     expect(agentTools).toContain("prompt-template-model");
-    expect(agentTools.indexOf("graphify")).toBeLessThan(agentTools.indexOf("shazam"));
+    expect(agentTools.indexOf("graphify")).toBeLessThan(agentTools.indexOf("codegraph"));
+    expect(agentTools.indexOf("codegraph")).toBeLessThan(agentTools.indexOf("shazam"));
   });
 
   it("groups experiment extensions separately from workflow plan tools", () => {

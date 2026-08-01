@@ -3,6 +3,7 @@
 
 graphify-out/
 .codegraph
+.agents/
 
 openspec
 

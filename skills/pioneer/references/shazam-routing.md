@@ -10,17 +10,20 @@ Canonical user doc: [README § Workflow routing](../../../README.md#workflow-rou
 | Layer             | Tool                       | When                                                           |
 | ----------------- | -------------------------- | -------------------------------------------------------------- |
 | **Recon map**     | graphify (`graphify-out/`) | Phase 0 — persistent architecture, cross-module queries        |
+| **Alt recon**     | codegraph (default off)    | Worktree-aware index / MCP tools — pick **one** recon map      |
 | **Execute guard** | pi-shazam (`shazam_*`)     | Phase 4 — impact before edit, verify after edit, symbol lookup |
 | **Corpus / logs** | context-mode (`ctx_*`)     | Large outputs — not code structure                             |
 | **TDD loop**      | pi-red-green (`/tdd`)      | Test-first workflow — pairs with `shazam_verify` after edits   |
 
-**Do not treat shazam as graphify replacement.** graphify answers "how does the system relate?"; shazam answers "what breaks if I change this symbol?" and "did LSP pass after the edit?".
+**Do not treat shazam as graphify replacement.** graphify answers "how does the system relate?"; shazam answers "what breaks if I change this symbol?" and "did LSP pass after the edit?". Prefer **graphify or codegraph** for recon — not both in the same session.
 
 ## Coexistence matrix
 
 | Pair                            | Relationship                                                                              |
 | ------------------------------- | ----------------------------------------------------------------------------------------- |
 | graphify + shazam               | **Recommended** — graphify recon first; shazam during execute                             |
+| codegraph + shazam              | **OK** — codegraph for recon; shazam for execute guards                                   |
+| graphify + codegraph            | **Overlap** — two indexes; enable only one recon map per session                          |
 | shazam + red-green              | **Complementary** — TDD drives tests; `shazam_verify` catches type/lint/format            |
 | shazam + context-mode           | **Non-conflicting** — different tool channels                                             |
 | shazam + pi-lens (if installed) | **Overlap** on LSP/lint — pick one primary verify path per task                           |

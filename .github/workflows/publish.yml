@@ -36,20 +36,22 @@ jobs:
         id: should_publish
         run: |
           LOCAL=$(node -p "require('./package.json').version")
-          REMOTE=$(npm view hotmilk version 2>/dev/null || true)
-          if [ "$LOCAL" = "$REMOTE" ]; then
+          # Exact-version check: latest-only compare can mis-skip or collide on re-runs.
+          if npm view "hotmilk@$LOCAL" version >/dev/null 2>&1; then
             echo "need=false" >> "$GITHUB_OUTPUT"
             echo "npm already has hotmilk@$LOCAL — skipping publish"
           else
             echo "need=true" >> "$GITHUB_OUTPUT"
-            echo "will publish hotmilk@$LOCAL (npm latest: ${REMOTE:-none})"
+            echo "will publish hotmilk@$LOCAL (npm latest: $(npm view hotmilk version 2>/dev/null || echo none))"
           fi
 
       - run: bun install --frozen-lockfile
         if: steps.should_publish.outputs.need == 'true'
 
-      - run: bun run test
+      # Rely on the `test` job (`needs: test`) for lint/test; pack only here.
+      - name: Pack dry-run
         if: steps.should_publish.outputs.need == 'true'
+        run: npm pack --dry-run
 
       - uses: actions/setup-node@v6
         if: steps.should_publish.outputs.need == 'true'
@@ -66,5 +68,9 @@ jobs:
           TAG="v$(node -p "require('./package.json').version")"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f "$TAG"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists on origin — refusing to move it"
+            exit 1
+          fi
+          git tag "$TAG"
           git push origin "refs/tags/${TAG}"

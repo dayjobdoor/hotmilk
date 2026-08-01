@@ -5,8 +5,11 @@
  * when `state.lastUiContext` is unset after `/reload`.
  *
  * Types are local (not `import("pi-subagents/src/...")`) because pi-subagents
- * package `exports` only expose `.`, `./background-work`, and `./delegation`.
- * Runtime still loads deep modules via {@link bundledImportUrl}.
+ * `exports` only expose `.`, `./background-work`, `./delegation`,
+ * `./capability-ceiling`, and `./preflight`. Doctor/config/intercom stay
+ * deep paths — {@link bundledImportUrl} loads them as `file://` URLs so Node
+ * package exports do not block runtime import. If upstream moves these files,
+ * update {@link PI_SUBAGENTS_DOCTOR_MODULES} and the matching tests.
  */
 
 import * as fs from "node:fs";
@@ -14,6 +17,13 @@ import * as os from "node:os";
 import * as path from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { bundledImportUrl } from "./resolve-bundled.ts";
+
+/** Deep modules used by `/subagents-doctor` (not in pi-subagents package exports). */
+export const PI_SUBAGENTS_DOCTOR_MODULES = {
+  doctor: "pi-subagents/src/extension/doctor.ts",
+  config: "pi-subagents/src/extension/config.ts",
+  intercom: "pi-subagents/src/intercom/intercom-bridge.ts",
+} as const;
 
 function ensureAccessibleDir(dirPath: string): void {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -112,11 +122,9 @@ export async function registerSubagentsDoctorCommand(pi: ExtensionAPI): Promise<
   await ensureChainRunsDir();
 
   const [doctorMod, configMod, intercomMod] = await Promise.all([
-    import(bundledImportUrl("pi-subagents/src/extension/doctor.ts")) as Promise<DoctorModule>,
-    import(bundledImportUrl("pi-subagents/src/extension/config.ts")) as Promise<ConfigModule>,
-    import(
-      bundledImportUrl("pi-subagents/src/intercom/intercom-bridge.ts")
-    ) as Promise<IntercomModule>,
+    import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.doctor)) as Promise<DoctorModule>,
+    import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.config)) as Promise<ConfigModule>,
+    import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.intercom)) as Promise<IntercomModule>,
   ]);
 
   const deps = {

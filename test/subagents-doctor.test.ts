@@ -1,18 +1,19 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import { bundledImportUrl, resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
-
-const DOCTOR_MODULE = "pi-subagents/src/extension/doctor.ts";
+import { PI_SUBAGENTS_DOCTOR_MODULES } from "../src/bootstrap/subagents-doctor.ts";
 
 describe("subagents doctor (bundled third-party path)", () => {
-  it("resolves pi-subagents doctor from the hotmilk dependency tree", () => {
-    const resolved = resolveBundledModule(DOCTOR_MODULE, import.meta.url);
-    expect(resolved).toMatch(/pi-subagents[/\\]src[/\\]extension[/\\]doctor\.ts$/);
-    expect(existsSync(resolved)).toBe(true);
+  it("resolves every deep doctor module from the hotmilk dependency tree", () => {
+    for (const relative of Object.values(PI_SUBAGENTS_DOCTOR_MODULES)) {
+      const resolved = resolveBundledModule(relative, import.meta.url);
+      expect(resolved.replaceAll("\\", "/")).toContain(relative);
+      expect(existsSync(resolved)).toBe(true);
+    }
   });
 
   it("buildDoctorReport includes runtime, filesystem, and discovery sections", async () => {
-    const mod = (await import(bundledImportUrl(DOCTOR_MODULE))) as {
+    const mod = (await import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.doctor))) as {
       buildDoctorReport: (input: Record<string, unknown>) => string;
     };
 

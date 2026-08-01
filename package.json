@@ -1,11 +1,19 @@
 {
   "name": "hotmilk",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "hotmilk - Pi package bundling gentle-pi, context-mode, graphify, subagents, and bundled extension toggles via hotmilk.json",
   "keywords": [
     "hotmilk",
+    "omp",
     "pi",
-    "pi-package"
+    "pi-package",
+    "prompt",
+    "skills",
+    "context",
+    "harness",
+    "loop",
+    "graph",
+    "coaching"
   ],
   "homepage": "https://github.com/dayjobdoor/hotmilk#readme",
   "bugs": {
@@ -40,6 +48,7 @@
     "@blackbelt-technology/pi-agent-dashboard": "^0.7.0",
     "@blackbelt-technology/pi-flows": "^0.3.4",
     "@haispeed/pi-obsidian": "^0.1.1",
+    "@isac322/pi-codegraph": "^0.3.1",
     "@llblab/pi-actors": "^0.42.2",
     "@mrclrchtr/supi-context": "^4.4.0",
     "@plannotator/pi-extension": "^0.25.1",
@@ -105,7 +114,8 @@
     "protobufjs": "^7.6.5",
     "undici": "^7.29.0",
     "vite": "^8.2.0",
-    "ws": "8.21.0"
+    "ws": "8.21.0",
+    "xlsx": "npm:@e965/xlsx@0.20.3"
   },
   "engines": {
     "node": "22"

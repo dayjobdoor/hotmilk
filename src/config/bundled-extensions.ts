@@ -74,6 +74,12 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Agent tools",
   },
   {
+    id: "codegraph",
+    package: { packageName: "@isac322/pi-codegraph" },
+    module: "@isac322/pi-codegraph/dist/extensions/pi.js",
+    group: "Agent tools",
+  },
+  {
     id: "shazam",
     package: { packageName: "pi-shazam" },
     module: "pi-shazam/dist/index.js",

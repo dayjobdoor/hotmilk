@@ -27,6 +27,19 @@ export function shouldWarnCavemanJaConflict(
   return cavemanEnabled && language?.trim().toLowerCase() === "ja";
 }
 
+/** Warning when kanagawa theme replaces the hotmilk footer. */
+export const KANAGAWA_FOOTER_WARNING =
+  "kanagawa is on — it replaces the hotmilk footer. Turn off kanagawa (/mode) if you want the hotmilk status footer back.";
+
+/**
+ * Detect when kanagawa will replace the hotmilk footer.
+ *
+ * @param kanagawaEnabled - whether kanagawa toggle is on
+ */
+export function shouldWarnKanagawaFooter(kanagawaEnabled: boolean): boolean {
+  return kanagawaEnabled;
+}
+
 /**
  * Write `.pi/gentle-ai/persona.json` from resolved defaults when absent.
  *

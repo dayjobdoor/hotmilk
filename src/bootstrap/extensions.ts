@@ -28,8 +28,13 @@ const BUNDLED_EXTENSION_LOADERS = Object.fromEntries(
 ) as Record<BundledExtensionId, () => Promise<ExtensionModule>>;
 
 async function registerOne(pi: ExtensionAPI, id: BundledExtensionId): Promise<void> {
-  const mod = await BUNDLED_EXTENSION_LOADERS[id]();
-  await (mod.default as ExtensionFactory)(pi);
+  try {
+    const mod = await BUNDLED_EXTENSION_LOADERS[id]();
+    await (mod.default as ExtensionFactory)(pi);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.warn(`[hotmilk] Failed to load bundled extension "${id}": ${detail}`);
+  }
 }
 
 /** Options controlling how bundled extensions are registered. */

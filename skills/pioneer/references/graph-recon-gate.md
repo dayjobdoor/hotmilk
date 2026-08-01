@@ -8,6 +8,8 @@
 2. `graphify-out/GRAPH_REPORT.md` — god nodes, surprising connections, suggested questions
 3. `graphify-out/graph.json` — fallback for paths and communities
 
+If `extensions.codegraph: true` instead of graphify, use CodeGraph tools (`explore` / `search` / `impact`) for Phase 0 and **do not** also query `graphify-out/` in the same turn. Prefer **one** recon map per session.
+
 ## Graph commands
 
 Full CLI: `/skill:graphify`.

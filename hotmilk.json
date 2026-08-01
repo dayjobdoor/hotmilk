@@ -6,6 +6,7 @@
     "context-mode": true,
     "ask-user": true,
     "graphify": true,
+    "codegraph": false,
     "shazam": false,
     "subagents": true,
     "pi-actors": false,

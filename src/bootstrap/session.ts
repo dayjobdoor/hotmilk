@@ -7,8 +7,10 @@ import type { HotmilkRuntime } from "../config/runtime.ts";
 import { setupHotmilkFooter } from "../ui/footer.ts";
 import {
   CAVEMAN_JA_CONFLICT_MESSAGE,
+  KANAGAWA_FOOTER_WARNING,
   seedPersonaFromDefaults,
   shouldWarnCavemanJaConflict,
+  shouldWarnKanagawaFooter,
 } from "./defaults.ts";
 
 /** Message shown when hotmilk config is seeded. */
@@ -116,6 +118,10 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
 
     if (shouldWarnCavemanJaConflict(runtime.extensionToggles.caveman, runtime.defaults.language)) {
       uiNotify(CAVEMAN_JA_CONFLICT_MESSAGE, "warning");
+    }
+
+    if (shouldWarnKanagawaFooter(runtime.extensionToggles.kanagawa)) {
+      uiNotify(KANAGAWA_FOOTER_WARNING, "warning");
     }
 
     if (runtime.mcp.seedOnStart) {

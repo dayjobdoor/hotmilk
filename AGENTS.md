@@ -13,7 +13,7 @@ User-facing setup: [README.md](README.md).
 | `bun run lint`  | `vp lint`                 |
 | `bun run check` | lint + format + test      |
 
-Requires **Node.js 22+**. Targets **Pi 0.83** (`@earendil-works/pi-coding-agent` peers).
+Requires **Node.js 22+**. Targets **Pi 0.83** (`@earendil-works/pi-coding-agent` peers). This repo commits **`bun.lock`** only (no `package-lock.json`).
 
 ## Pi essentials
 
@@ -22,6 +22,8 @@ Requires **Node.js 22+**. Targets **Pi 0.83** (`@earendil-works/pi-coding-agent`
 - **Config**: `~/.pi/agent/hotmilk.json` — change with `/mode`, apply with `/reload`.
 - **Project trust (Pi 0.79+)**: `projectTrust` in `hotmilk.json`; handler in `src/bootstrap/project-trust.ts`. Bundled extension dedupe scans global settings only until trust (`includeProjectSettings: false` in `src/index.ts`).
 - **Do not** add packages to `pi.extensions` for toggled deps; add one row to `BUNDLED_EXTENSION_DEFINITIONS` in `src/config/bundled-extensions.ts`.
+- **Local runtime dirs (gitignored)**: `.agents/`, `.codegraph`, `graphify-out/` — install/index artifacts, not package sources.
+- **Graph tools**: `graphify` default on; `codegraph` / `shazam` default off. Prefer one recon map per session (see README workflow routing).
 
 ## Code layout
 
