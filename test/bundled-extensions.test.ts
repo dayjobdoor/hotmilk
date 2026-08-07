@@ -9,10 +9,6 @@ import {
   BUNDLED_EXTENSION_PACKAGES,
   CONTEXT_STACK_EXTENSION_IDS,
 } from "../src/config/bundled-extensions.ts";
-import {
-  detectGlobalProviderForBundledExtension,
-  packageNamesForBundledExtension,
-} from "../src/config/bundled-package-registry.ts";
 import { PACKAGE_JSON } from "./fixtures/manifest.ts";
 
 describe("bundled extension manifest", () => {
@@ -71,38 +67,26 @@ describe("bundled extension manifest", () => {
     expect(contextPerf).toContain("supi-context");
   });
 
-  it("groups agent tools including shazam and pi-actors alongside graphify", () => {
+  it("groups agent tools including shazam alongside graphify", () => {
     const agentTools = BUNDLED_EXTENSION_GROUPS.find((group) => group.label === "Agent tools")!.ids;
 
     expect(agentTools).toContain("graphify");
     expect(agentTools).toContain("codegraph");
     expect(agentTools).toContain("shazam");
-    expect(agentTools).toContain("pi-actors");
     expect(agentTools).toContain("herdr-squad");
     expect(agentTools).toContain("prompt-template-model");
     expect(agentTools.indexOf("graphify")).toBeLessThan(agentTools.indexOf("codegraph"));
     expect(agentTools.indexOf("codegraph")).toBeLessThan(agentTools.indexOf("shazam"));
   });
-
-  it("groups experiment extensions separately from workflow plan tools", () => {
+  it("groups autoresearch separately from workflow plan tools", () => {
     const experiments = BUNDLED_EXTENSION_GROUPS.find(
       (group) => group.label === "Experiments",
     )!.ids;
     const workflow = BUNDLED_EXTENSION_GROUPS.find((group) => group.label === "Workflow")!.ids;
 
-    expect(experiments).toEqual(["autoresearch", "tetris"]);
+    expect(experiments).toEqual(["autoresearch"]);
     expect(workflow).toContain("plannotator");
     expect(workflow).toContain("red-green");
     expect(experiments).not.toContain("plannotator");
-  });
-
-  it("resolves global provider via aliases", () => {
-    const installed = new Set(["@blackbelt-technology/pi-dashboard-extension"]);
-    expect(detectGlobalProviderForBundledExtension("agent-dashboard", installed)).toBe(
-      "@blackbelt-technology/pi-dashboard-extension",
-    );
-    expect(packageNamesForBundledExtension("agent-dashboard")).toContain(
-      "@blackbelt-technology/pi-dashboard-extension",
-    );
   });
 });

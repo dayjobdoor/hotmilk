@@ -9,7 +9,7 @@ describe("formatFooterTime", () => {
 });
 
 describe("footerModelRuntimeFromContext", () => {
-  it("delegates isUsingOAuth through the current model provider", () => {
+  it("returns OAuth status for the current provider", () => {
     const model = { provider: "anthropic", id: "claude" } as const;
     const modelRegistry = {
       isUsingOAuth: (candidate: { provider: string }) => candidate.provider === "anthropic",
@@ -25,7 +25,31 @@ describe("footerModelRuntimeFromContext", () => {
     expect(runtime.isUsingOAuth("openai")).toBe(false);
   });
 
-  it("falls back to registry lookup when current model provider differs", () => {
+  it("marks only OAuth providers with subscription auth as subscriptions", () => {
+    const subscriptionModel = { provider: "anthropic", id: "claude" } as const;
+    const oauthModel = { provider: "openai", id: "codex" } as const;
+    const apiKeyModel = { provider: "groq", id: "llama" } as const;
+    const providers = {
+      anthropic: { auth: { oauth: { isSubscription: true } } },
+      openai: { auth: { oauth: { isSubscription: false } } },
+      groq: { auth: { apiKey: {} } },
+    };
+    const runtime = footerModelRuntimeFromContext({
+      model: subscriptionModel as never,
+      modelRegistry: {
+        isUsingOAuth: (candidate: { provider: string }) =>
+          candidate.provider === "anthropic" || candidate.provider === "openai",
+        getAll: () => [subscriptionModel, oauthModel, apiKeyModel],
+        getProvider: (provider: string) => providers[provider as keyof typeof providers],
+      } as never,
+    });
+
+    expect(runtime.isUsingSubscription("anthropic")).toBe(true);
+    expect(runtime.isUsingSubscription("openai")).toBe(false);
+    expect(runtime.isUsingSubscription("groq")).toBe(false);
+  });
+
+  it("returns OAuth status from a registry model when provider differs", () => {
     const match = { provider: "openai", id: "gpt" } as const;
     const modelRegistry = {
       isUsingOAuth: (candidate: { provider: string }) => candidate.provider === "openai",
@@ -40,7 +64,7 @@ describe("footerModelRuntimeFromContext", () => {
     expect(runtime.isUsingOAuth("openai")).toBe(true);
   });
 
-  it("returns false when no matching model exists", () => {
+  it("returns false when no current or registry model matches", () => {
     const runtime = footerModelRuntimeFromContext({
       model: undefined,
       modelRegistry: {

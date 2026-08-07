@@ -1,7 +1,7 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vite-plus/test";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 import {
   BUNDLED_EXTENSION_IDS,
   DEFAULT_HOTMILK_CONFIG,
@@ -16,9 +16,19 @@ import {
 } from "../src/config/hotmilk.ts";
 import { HOTMILK_JSON_TEMPLATE } from "./fixtures/manifest.ts";
 
+const tempDirs: string[] = [];
+
 function tempConfigDir(): string {
-  return mkdtempSync(join(tmpdir(), "hotmilk-test-"));
+  const dir = mkdtempSync(join(tmpdir(), "hotmilk-test-"));
+  tempDirs.push(dir);
+  return dir;
 }
+
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 describe("resolveBundledExtensionToggles", () => {
   it("falls back to hotmilk.json template defaults for every bundled id", () => {

@@ -1,11 +1,19 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vite-plus/test";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 import { pruneContextModeFromMcpJsonAt } from "../src/config/mcp.ts";
+const tempDirs: string[] = [];
+
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 function tempMcpJson(initial: object): string {
   const dir = mkdtempSync(join(tmpdir(), "hotmilk-mcp-"));
+  tempDirs.push(dir);
   const path = join(dir, "mcp.json");
   writeFileSync(path, JSON.stringify(initial, null, 2), "utf8");
   return path;
@@ -37,13 +45,22 @@ describe("pruneContextModeFromMcpJsonAt", () => {
     expect(result.error).toBeUndefined();
   });
 
+  it("returns false when the MCP file is missing", () => {
+    const path = join(tmpdir(), "hotmilk-mcp-missing", "mcp.json");
+    const result = pruneContextModeFromMcpJsonAt(path);
+
+    expect(result).toEqual({ pruned: false, path });
+  });
+
   it("returns error for invalid JSON instead of throwing", () => {
     const dir = mkdtempSync(join(tmpdir(), "hotmilk-mcp-bad-"));
+    tempDirs.push(dir);
     const path = join(dir, "mcp.json");
     writeFileSync(path, "not json", "utf8");
 
     const result = pruneContextModeFromMcpJsonAt(path);
+
     expect(result.pruned).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result.error).toEqual(expect.any(String));
   });
 });

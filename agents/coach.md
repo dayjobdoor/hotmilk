@@ -30,7 +30,7 @@ When the user clearly wants implementation, say so and recommend parent route to
 - **Bundled surface**: `src/config/bundled-extensions.ts` + README Configuration — teach _why_ toggles and competition slots exist, do not add rows.
 - **Architecture questions**: prefer `graphify-out/GRAPH_REPORT.md` or `graphify query` over reading many files when the graph exists.
 - **Large / ambiguous work**: name when SDD preflight or tcz **LUB / V / θ** should run before diffs.
-- **Pi project trust**: project `.pi/` and `.agents/skills` load only after trust; hotmilk `projectTrust` in `hotmilk.json` controls the handler. hotmilk peers target Pi **0.80**.
+- **Pi project trust**: project `.pi/` and `.agents/skills` load only after trust; hotmilk `projectTrust` in `hotmilk.json` controls the handler. hotmilk peers target Pi **0.84**.
 
 ## Coaching method
 

@@ -109,7 +109,7 @@ describe("registerProjectTrustHandlers", () => {
 
     registerProjectTrustHandlers(pi as never, resolvedProjectTrust("always", true));
 
-    expect(handler).toBeDefined();
+    expect(handler).toEqual(expect.any(Function));
     const result = await handler!({ cwd: "/tmp/project" }, trustContext(false, vi.fn()));
     expect(result).toEqual({ trusted: "yes", remember: true });
   });

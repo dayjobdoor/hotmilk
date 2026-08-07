@@ -9,7 +9,6 @@
     "codegraph": false,
     "shazam": false,
     "subagents": true,
-    "pi-actors": false,
     "herdr-squad": false,
     "goal": true,
     "docparser": true,
@@ -25,12 +24,9 @@
     "caveman": false,
     "red-green": false,
     "autoresearch": false,
-    "agent-dashboard": false,
     "web-access": false,
-    "pi-flows": false,
     "kanagawa": false,
-    "prompt-template-model": false,
-    "tetris": false
+    "prompt-template-model": false
   },
   "graph": {
     "warnOnStale": true,

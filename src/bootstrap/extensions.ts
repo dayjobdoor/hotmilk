@@ -84,20 +84,6 @@ export async function registerBundledExtensions(
     }
   }
 
-  if (enabledIds.has("agent-dashboard")) {
-    enabledIds.delete("agent-dashboard");
-    const { ensureDashboardWarmStarted, logHotmilkDashboardDoctorHint } =
-      await import("./dashboard.ts");
-    const warmStart = await ensureDashboardWarmStarted();
-    if (warmStart.status === "failed" || warmStart.status === "skipped-conflict") {
-      const detail = warmStart.message ?? `port ${warmStart.port}`;
-      console.warn(`[hotmilk] Dashboard warm-start ${warmStart.status}: ${detail}`);
-    } else {
-      logHotmilkDashboardDoctorHint(warmStart);
-    }
-    await registerOne(pi, "agent-dashboard");
-  }
-
   if (enabledIds.has("btw")) {
     const { setHotmilkBtwConfig } = await import("./btw.ts");
     setHotmilkBtwConfig({ extensionToggles: enabled });

@@ -45,7 +45,8 @@ function mockPiBtwLoader(append: string[]): ResourceLoader {
     getSystemPrompt: () => "Project rules stay.\n## graphify\nDelegate.",
     getSystemPromptSource: () => ({ path: "/tmp/mock-system-prompt.md" }),
     getAppendSystemPrompt: () => append,
-    getAppendSystemPromptSources: () => append.map((_, i) => ({ path: `/tmp/mock-append-${i}.md` })),
+    getAppendSystemPromptSources: () =>
+      append.map((_, i) => ({ path: `/tmp/mock-append-${i}.md` })),
     extendResources: () => {},
     reload: async () => {},
   };

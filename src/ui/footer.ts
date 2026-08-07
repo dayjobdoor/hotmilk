@@ -129,14 +129,18 @@ function latestThinkingLevel(sessionManager: ExtensionContext["sessionManager"])
 /**
  * Minimal ModelRuntime facade for FooterComponent.
  * ExtensionContext exposes ModelRegistry, while FooterComponent calls
- * `session.modelRuntime.isUsingOAuth(providerId)`.
+ * `session.modelRuntime.isUsingOAuth(providerId)` and
+ * `session.modelRuntime.isUsingSubscription(providerId)`.
  *
  * @param ctx - model + modelRegistry from extension context
- * @returns object with isUsingOAuth(providerId)
+ * @returns OAuth and subscription status methods by provider ID
  */
 export function footerModelRuntimeFromContext(
   ctx: Pick<ExtensionContext, "model" | "modelRegistry">,
-): { isUsingOAuth(providerId: string): boolean } {
+): {
+  isUsingOAuth(providerId: string): boolean;
+  isUsingSubscription(providerId: string): boolean;
+} {
   return {
     isUsingOAuth(providerId: string): boolean {
       const { model, modelRegistry } = ctx;
@@ -145,6 +149,12 @@ export function footerModelRuntimeFromContext(
       }
       const match = modelRegistry.getAll().find((candidate) => candidate.provider === providerId);
       return match ? modelRegistry.isUsingOAuth(match) : false;
+    },
+    isUsingSubscription(providerId: string): boolean {
+      if (!this.isUsingOAuth(providerId)) {
+        return false;
+      }
+      return ctx.modelRegistry.getProvider(providerId)?.auth.oauth?.isSubscription === true;
     },
   };
 }

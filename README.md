@@ -17,14 +17,12 @@ Use it when you want a practical engineering workstation without hand-picking a 
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Orchestration**       | [gentle-pi](https://www.npmjs.com/package/gentle-pi) **^2.1.x** (el Gentleman, SDD/OpenSpec sync, skill registry, `/gentle-ai:doctor`)                                                                                                                                                                 |
 | **Context**             | [context-mode](https://www.npmjs.com/package/context-mode), [pi-simplify](https://www.npmjs.com/package/pi-simplify), [pi-rtk-optimizer](https://www.npmjs.com/package/pi-rtk-optimizer) (default off), [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory) (default off) |
-| **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi) (default on); optional [@isac322/pi-codegraph](https://www.npmjs.com/package/@isac322/pi-codegraph) / [pi-shazam](https://www.npmjs.com/package/pi-shazam) (default off)                                                                         |
-| **Subagents / actors**  | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user), [pi-actors](https://www.npmjs.com/package/@llblab/pi-actors) (off by default), [pi-herdr-squad](https://www.npmjs.com/package/pi-herdr-squad) (Herdr panes only, off by default) |
+| **Codebase graph**      | [graphify-pi](https://www.npmjs.com/package/graphify-pi) (default on); optional [@isac322/pi-codegraph](https://www.npmjs.com/package/@isac322/pi-codegraph) / [pi-shazam](https://www.npmjs.com/package/pi-shazam) (default off)                                                                      |
+| **Subagents**           | [pi-subagents](https://www.npmjs.com/package/pi-subagents), [pi-ask-user](https://www.npmjs.com/package/pi-ask-user), [pi-herdr-squad](https://www.npmjs.com/package/pi-herdr-squad) (Herdr panes only, off by default)                                                                                |
 | **Goals & docs**        | [pi-goal](https://www.npmjs.com/package/pi-goal), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                                                                                                           |
 | **File-based planning** | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files), [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension) (browser plan approval)                                                                                           |
 | **Integrations**        | [pi-mcp-adapter](https://www.npmjs.com/package/pi-mcp-adapter), [pi-btw](https://www.npmjs.com/package/pi-btw) (side channel — see below), [@haispeed/pi-obsidian](https://www.npmjs.com/package/@haispeed/pi-obsidian)                                                                                |
-| **Dashboard**           | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard)                                                                                                                                                                                     |
 | **Web tools**           | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                                                                                                                           |
-| **Flows**               | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                                                                                                                                                                                                         |
 | **Experiment loops**    | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                                                                                                                                                                                                       |
 | **Local assets**        | `./prompts`, `./skills`, `./themes`, `mcp.json` template                                                                                                                                                                                                                                               |
 
@@ -58,13 +56,11 @@ pi install -l npm:hotmilk
 2. On first session, hotmilk creates `~/.pi/agent/hotmilk.json` if missing (defaults match the bundled template).
 3. After config changes, run `/reload`.
 
-### Pi 0.83 and npm peers
+### Pi 0.84 and npm peers
 
-hotmilk targets **Pi 0.83** (`@earendil-works/pi-coding-agent` and peers). Some bundled dependencies still declare **narrow peer ranges** that exclude 0.83 (`pi-docparser` `^0.74`, `@blackbelt-technology/pi-flows` `^0.80`; `pi-kanagawa` peers on the `@mariozechner/*` namespace). npm may report `ERESOLVE` until those packages publish wider peers.
+hotmilk targets **Pi 0.84** (`@earendil-works/pi-coding-agent` and peers). Some bundled dependencies still declare **narrow peer ranges** that exclude 0.84 (`pi-kanagawa` peers on the `@mariozechner/*` namespace). npm may report `ERESOLVE` until those packages publish wider peers.
 
-This repo ships **`.npmrc`** with `legacy-peer-deps=true` so `npm install` and `npm ci` succeed. Copy from `.npmrc.example` if you clone without `.npmrc`. Treat upstream extensions as **best-effort on 0.83** until their maintainers widen peer ranges.
-
-Heavy optional stacks (`agent-dashboard`, `pi-flows`) stay **off by default**; enable in `/mode` only when you need them and accept extra peer / startup cost.
+This repo ships **`.npmrc`** with `legacy-peer-deps=true` so `npm install` and `npm ci` succeed. Copy from `.npmrc.example` if you clone without `.npmrc`. Treat upstream extensions as **best-effort on 0.84** until their maintainers widen peer ranges.
 
 ### Project trust (Pi 0.79+)
 
@@ -118,7 +114,6 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
     "codegraph": false,
     "shazam": false,
     "subagents": true,
-    "pi-actors": false,
     "herdr-squad": false,
     "goal": true,
     "docparser": true,
@@ -134,12 +129,9 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
     "caveman": false,
     "red-green": false,
     "autoresearch": false,
-    "agent-dashboard": false,
     "web-access": false,
-    "pi-flows": false,
     "kanagawa": false,
-    "prompt-template-model": false,
-    "tetris": false
+    "prompt-template-model": false
   },
   "graph": {
     "warnOnStale": true,
@@ -162,7 +154,7 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `extensions.*`                    | Set to `false` to skip registering that bundled extension                                                                                                                                                              |
 | `extensions.gentle-ai`            | Default `true`. gentle-pi **2.1.x** (bundled `^2.1.2`): orchestration, lazy SDD preflight, OpenSpec sync/archive agents, `/gentle-ai:doctor` / `:status`. hotmilk keeps **startup-banner off** (figlet header instead) |
-| `extensions.subagents`            | Default `true`. Imports pi-subagents **0.38+** (bundled `^0.38.0`): acceptance gates, `timeoutMs`, resource limits. Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools                          |
+| `extensions.subagents`            | Default `true`. Imports pi-subagents **0.38+** (bundled `^0.38.0`): acceptance gates, `timeoutMs`, resource limits. Use with `gentle-ai` for delegation; set `false` for faster startup without Task tools             |
 | `extensions.btw`                  | Default `true`. Side conversation via `/btw` while main runs. **Delegate implementation to subagents**; use BTW for quick human questions. See [pi-btw coexistence](#pi-btw-with-subagents-default-on)                 |
 | `extensions.context-mode`         | Default `true`. Prefer `ctx_*` for large outputs (see project context-window rules)                                                                                                                                    |
 | `extensions.observational-memory` | Default `false`. Compaction continuity; pairs with `context-mode`. See [Workflow routing](#workflow-routing)                                                                                                           |
@@ -190,15 +182,15 @@ For **which plan, memory, or optimize path to use**, see [Workflow routing](#wor
 
 `/mode` sections follow `BUNDLED_EXTENSION_GROUP_ORDER` in `src/config/bundled-extensions.ts`:
 
-| Group                     | Extensions (toggle ids)                                                                                                                         |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Harness**               | `skill-registry`, `sdd-init`, `gentle-ai`                                                                                                       |
-| **Agent tools**           | `ask-user`, `graphify`, `codegraph`, `shazam`, `prompt-template-model`, `subagents`, `pi-actors`, `herdr-squad`, `agent-dashboard`, `web-access`, `pi-flows` |
-| **Context & performance** | `context-mode`, `simplify`, `rtk-optimizer`, `observational-memory`, `supi-context`                                                             |
-| **Integrations**          | `goal`, `docparser`, `obsidian`, `btw`, `mcp-adapter`                                                                                           |
-| **Workflow**              | `planning-with-files`, `plannotator`, `red-green`                                                                                               |
-| **Output**                | `caveman`, `kanagawa`                                                                                                                           |
-| **Experiments**           | `autoresearch`, `tetris`                                                                                                                        |
+| Group                     | Extensions (toggle ids)                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Harness**               | `skill-registry`, `sdd-init`, `gentle-ai`                                                                        |
+| **Agent tools**           | `ask-user`, `graphify`, `codegraph`, `shazam`, `prompt-template-model`, `subagents`, `herdr-squad`, `web-access` |
+| **Context & performance** | `context-mode`, `simplify`, `rtk-optimizer`, `observational-memory`, `supi-context`                              |
+| **Integrations**          | `goal`, `docparser`, `obsidian`, `btw`, `mcp-adapter`                                                            |
+| **Workflow**              | `planning-with-files`, `plannotator`, `red-green`                                                                |
+| **Output**                | `caveman`, `kanagawa`                                                                                            |
+| **Experiments**           | `autoresearch`                                                                                                   |
 
 ### Workflow routing
 
@@ -215,13 +207,13 @@ Pick **one plan authority per task**. Memory and optimize loops are **not** plan
 
 **Memory layers** (supplementary — never replace plan/spec authority):
 
-| Need                          | Prefer                                                                          |
-| ----------------------------- | ------------------------------------------------------------------------------- |
-| Large logs, docs, test output | `context-mode` → `ctx_*`                                                        |
-| Rationale across compactions  | `observational-memory` (extra model cost; V3 needs clean session after upgrade) |
-| User-readable plan files      | `planning-with-files`                                                           |
-| Execute-time impact / LSP     | `shazam` (after graphify recon; not a graph replacement)                        |
-| Codebase graph, worktree-aware  | `codegraph` (alternative index to graphify; prefer one, not both)               |
+| Need                           | Prefer                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| Large logs, docs, test output  | `context-mode` → `ctx_*`                                                        |
+| Rationale across compactions   | `observational-memory` (extra model cost; V3 needs clean session after upgrade) |
+| User-readable plan files       | `planning-with-files`                                                           |
+| Execute-time impact / LSP      | `shazam` (after graphify recon; not a graph replacement)                        |
+| Codebase graph, worktree-aware | `codegraph` (alternative index to graphify; prefer one, not both)               |
 
 Details: [`observational-memory-routing.md`](skills/pioneer/references/observational-memory-routing.md), [`shazam-routing.md`](skills/pioneer/references/shazam-routing.md).
 
@@ -239,10 +231,10 @@ Stop active loops (`/autoresearch off`) before switching plan paths. Details: [`
 
 Pi resolves bundled assets at **user (global)**, **project**, and **package** layers. hotmilk ships package defaults; you override per machine or per repo.
 
-| Layer             | Config                                                  | Agents (pi-subagents)                                                                         | Skills / prompts                                                                                |
-| ----------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **User (global)** | `~/.pi/agent/hotmilk.json`, `~/.pi/agent/settings.json` | `~/.pi/agent/agents/` or `~/.agents/`                                                         | User skill dirs indexed by gentle-pi `skill-registry`                                           |
-| **Project**       | `.pi/settings.json`                                     | **`.pi/agents/`** (canonical); legacy `.agents/` still read                                   | `.pi/skills/`; legacy `.agents/skills/`                                                         |
+| Layer             | Config                                                  | Agents (pi-subagents)                                                                         | Skills / prompts                                                                                              |
+| ----------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **User (global)** | `~/.pi/agent/hotmilk.json`, `~/.pi/agent/settings.json` | `~/.pi/agent/agents/` or `~/.agents/`                                                         | User skill dirs indexed by gentle-pi `skill-registry`                                                         |
+| **Project**       | `.pi/settings.json`                                     | **`.pi/agents/`** (canonical); legacy `.agents/` still read                                   | `.pi/skills/`; legacy `.agents/skills/`                                                                       |
 | **Package**       | `pi install npm:hotmilk`                                | **`agents/` in the npm tarball** — source of truth in git, **not** auto-discovered at runtime | `package.json` → `pi.skills`, `pi.prompts`, `pi.themes` (always indexed; extension toggles do not gate these) |
 
 **Precedence (same runtime name):** project → user → builtin (pi-subagents built-ins). `/run`, chains, and the `subagent` tool default to `agentScope: "both"` (user + project + builtin).
@@ -293,20 +285,16 @@ Pi and bundled extensions read the process environment. hotmilk itself only defi
 
 **Bundled extensions** (only when the matching `/mode` toggle is on):
 
-| Variable                                              | Toggle / package  | Purpose                                                                                    |
-| ----------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------ |
-| `PI_SUBAGENT_MAX_DEPTH`                               | `subagents`       | Max nested subagent depth (default 2). Do not set `PI_SUBAGENT_DEPTH` manually             |
-| `PI_SUBAGENT_INHERIT_PROJECT_CONTEXT`                 | `subagents`       | `0`/`false` — child skips project context inheritance                                      |
-| `PI_SUBAGENT_INHERIT_SKILLS`                          | `subagents`       | `0`/`false` — child skips skill inheritance                                                |
-| `PI_DASHBOARD_PORT`, `PI_DASHBOARD_PI_PORT`           | `agent-dashboard` | HTTP / bridge ports (hotmilk seeds **8102** when config still has upstream default `8000`) |
-| `PI_DASHBOARD_ALLOW_MULTIPLE`                         | `agent-dashboard` | `1`/`true` — allow multiple dashboard processes                                            |
-| `PI_DASHBOARD_URL`                                    | `agent-dashboard` | Bridge WebSocket URL (spawn sets this)                                                     |
-| `PI_DASHBOARD_SPAWN_TOKEN`                            | `agent-dashboard` | Set by dashboard spawn; do not set by hand                                                 |
-| `GEMINI_API_KEY`, `GOOGLE_API_KEY`                    | `graphify` (CLI)  | Semantic extraction backend for `graphify extract`                                         |
-| `GRAPHIFY_GEMINI_MODEL`, `GRAPHIFY_WHISPER_MODEL`     | `graphify` (CLI)  | Override graphify LLM / Whisper model                                                      |
-| `EXA_API_KEY`, `PERPLEXITY_API_KEY`, `GEMINI_API_KEY` | `web-access`      | Search / fetch keys (`~/.pi/web-search.json` also)                                         |
-| `PI_ALLOW_BROWSER_COOKIES`                            | `web-access`      | `1` — allow Chromium cookie extraction for Gemini Web                                      |
-| `CTX_FETCH_STRICT`                                    | `context-mode`    | `1` — stricter fetch routing in context-mode                                               |
+| Variable                                              | Toggle / package | Purpose                                                                        |
+| ----------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------ |
+| `PI_SUBAGENT_MAX_DEPTH`                               | `subagents`      | Max nested subagent depth (default 2). Do not set `PI_SUBAGENT_DEPTH` manually |
+| `PI_SUBAGENT_INHERIT_PROJECT_CONTEXT`                 | `subagents`      | `0`/`false` — child skips project context inheritance                          |
+| `PI_SUBAGENT_INHERIT_SKILLS`                          | `subagents`      | `0`/`false` — child skips skill inheritance                                    |
+| `GEMINI_API_KEY`, `GOOGLE_API_KEY`                    | `graphify` (CLI) | Semantic extraction backend for `graphify extract`                             |
+| `GRAPHIFY_GEMINI_MODEL`, `GRAPHIFY_WHISPER_MODEL`     | `graphify` (CLI) | Override graphify LLM / Whisper model                                          |
+| `EXA_API_KEY`, `PERPLEXITY_API_KEY`, `GEMINI_API_KEY` | `web-access`     | Search / fetch keys (`~/.pi/web-search.json` also)                             |
+| `PI_ALLOW_BROWSER_COOKIES`                            | `web-access`     | `1` — allow Chromium cookie extraction for Gemini Web                          |
+| `CTX_FETCH_STRICT`                                    | `context-mode`   | `1` — stricter fetch routing in context-mode                                   |
 
 Internal `PI_SUBAGENT_*` spawn markers (`PI_SUBAGENT_CHILD`, `PI_SUBAGENT_RUN_ID`, …) are set by pi-subagents between parent and child processes — not user configuration.
 
@@ -340,25 +328,21 @@ Set `"btw": false` in `/mode` if you want delegation only with no side channel.
 
 Enable in `/mode` or set the key to `true` in `hotmilk.json`, then `/reload`. Workflow-oriented toggles are summarized in [Workflow routing](#workflow-routing).
 
-| Toggle                  | Package                                                                                                            | Notes                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `planning-with-files`   | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files)                     | On-disk planning; `/skill:planning-with-files`                         |
-| `plannotator`           | [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension)                               | `/plannotator`, `pi --plan`; ~37MB UI; `plannotator.json`              |
-| `observational-memory`  | [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory)                                   | Compaction continuity; V3 = clean session after upgrade                |
-| `supi-context`          | [@mrclrchtr/supi-context](https://www.npmjs.com/package/@mrclrchtr/supi-context)                                   | Context analysis & formatting; default off                             |
-| `codegraph`             | [@isac322/pi-codegraph](https://www.npmjs.com/package/@isac322/pi-codegraph)                                       | CodeGraph CLI/MCP wrapper; `/codegraph`; overlaps graphify — default off |
-| `shazam`                | [pi-shazam](https://www.npmjs.com/package/pi-shazam)                                                               | `shazam_*` tools; LSP-backed verify; complements graphify              |
-| `autoresearch`          | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                   | `/autoresearch`, `.auto/`; shortcut override in `pi-autoresearch.json` |
-| `caveman`               | [pi-caveman](https://www.npmjs.com/package/pi-caveman)                                                             | Terse English; conflicts with `defaults.language: ja`                  |
-| `red-green`             | [pi-red-green](https://www.npmjs.com/package/pi-red-green)                                                         | `/tdd`, `/tdd-status`; `~/.pi/red-green/config.json`                   |
-| `agent-dashboard`       | [@blackbelt-technology/pi-agent-dashboard](https://www.npmjs.com/package/@blackbelt-technology/pi-agent-dashboard) | Warm-start; peers `*` (earendil + mariozechner)                        |
-| `web-access`            | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                       | `web_search`, fetch; `~/.pi/web-search.json`                           |
-| `pi-flows`              | [@blackbelt-technology/pi-flows](https://www.npmjs.com/package/@blackbelt-technology/pi-flows)                     | `/flows`; peers **0.80**                                               |
-| `pi-actors`             | [@llblab/pi-actors](https://www.npmjs.com/package/@llblab/pi-actors)                                               | Local actor kernel (`spawn`, `message`, `inspect`)                     |
-| `herdr-squad`           | [pi-herdr-squad](https://www.npmjs.com/package/pi-herdr-squad)                                                     | Visible read-only Herdr squads; requires `HERDR_ENV=1`                 |
-| `prompt-template-model` | [pi-prompt-template-model](https://www.npmjs.com/package/pi-prompt-template-model)                                 | Prompt template model selector; default off                            |
-| `kanagawa`              | [pi-kanagawa](https://www.npmjs.com/package/pi-kanagawa)                                                           | Theme; **replaces hotmilk footer** when on                             |
-| `tetris`                | [pi-tetris](https://www.npmjs.com/package/pi-tetris)                                                               | `/tetris`                                                              |
+| Toggle                  | Package                                                                                        | Notes                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `planning-with-files`   | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files) | On-disk planning; `/skill:planning-with-files`                           |
+| `plannotator`           | [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension)           | `/plannotator`, `pi --plan`; ~37MB UI; `plannotator.json`                |
+| `observational-memory`  | [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory)               | Compaction continuity; V3 = clean session after upgrade                  |
+| `supi-context`          | [@mrclrchtr/supi-context](https://www.npmjs.com/package/@mrclrchtr/supi-context)               | Context analysis & formatting; default off                               |
+| `codegraph`             | [@isac322/pi-codegraph](https://www.npmjs.com/package/@isac322/pi-codegraph)                   | CodeGraph CLI/MCP wrapper; `/codegraph`; overlaps graphify — default off |
+| `shazam`                | [pi-shazam](https://www.npmjs.com/package/pi-shazam)                                           | `shazam_*` tools; LSP-backed verify; complements graphify                |
+| `autoresearch`          | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                               | `/autoresearch`, `.auto/`; shortcut override in `pi-autoresearch.json`   |
+| `caveman`               | [pi-caveman](https://www.npmjs.com/package/pi-caveman)                                         | Terse English; conflicts with `defaults.language: ja`                    |
+| `red-green`             | [pi-red-green](https://www.npmjs.com/package/pi-red-green)                                     | `/tdd`, `/tdd-status`; `~/.pi/red-green/config.json`                     |
+| `web-access`            | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                   | `web_search`, fetch; `~/.pi/web-search.json`                             |
+| `herdr-squad`           | [pi-herdr-squad](https://www.npmjs.com/package/pi-herdr-squad)                                 | Visible read-only Herdr squads; requires `HERDR_ENV=1`                   |
+| `prompt-template-model` | [pi-prompt-template-model](https://www.npmjs.com/package/pi-prompt-template-model)             | Prompt template model selector; default off                              |
+| `kanagawa`              | [pi-kanagawa](https://www.npmjs.com/package/pi-kanagawa)                                       | Theme; **replaces hotmilk footer** when on                               |
 
 ### Alternative skill stacks (not bundled)
 
@@ -372,15 +356,6 @@ Do not enable bigpowers alongside pioneer OpenSpec/Plannotator on the same task.
 
 [latchkey](https://www.npmjs.com/package/latchkey) (API credential injection via `/skill:latchkey`) is also **not** bundled — install with `pi install npm:latchkey` if needed.
 
-### Agent dashboard troubleshooting
-
-- Run **one** dashboard process: either hotmilk warm-start (`agent-dashboard: true`) **or** manual `pi-dashboard` (from `@blackbelt-technology/pi-agent-dashboard`), not both.
-- Keep only `"hotmilk"` in `~/.pi/agent/settings.json` `packages[]` (not a standalone dashboard extension path). Hotmilk prunes duplicate dashboard paths on session start when `agent-dashboard` is enabled.
-- Hotmilk seeds dashboard HTTP port **8102** (when config still has upstream default `8000`) to avoid common port conflicts. Custom ports are preserved.
-- `EADDRINUSE` on `8102` (or `9999` for pi bridge): stop the stale dashboard (`pi-dashboard stop` or `lsof -i :8102` / `:9999`), then restart Pi.
-- Without `zrok` on PATH, hotmilk sets `tunnel.enabled` to `false`.
-- **`ERR TypeScript loader` / jiti or tsx not found** (paths under `~/.pi-dashboard/node_modules/`): the dashboard doctor checks the legacy managed install dir and hardcodes port **8000** in its messages. Hotmilk runs on **8102** with bundled jiti from `pi-dashboard-server`. If `http://localhost:8102/api/health` returns `{"ok":true}`, the doctor error is a false positive — hotmilk logs a hint on warm-start. To silence it entirely: run **Help → Setup** once, or `npm install jiti` under `~/.pi-dashboard` after setup creates that tree.
-
 ### Cursor models (optional, not bundled)
 
 hotmilk does not ship [@netandreus/pi-cursor-provider](https://www.npmjs.com/package/@netandreus/pi-cursor-provider). Install when you route Pi through the Cursor Agent CLI:
@@ -393,7 +368,7 @@ agent login
 
 ## Development
 
-Requires **Node.js 22+** (or **Bun 1.3+**), **Bun** for installs in this repo, and Pi **0.83** peers in the environment.
+Requires **Node.js 22+** (or **Bun 1.3+**), **Bun** for installs in this repo, and Pi **0.84** peers in the environment.
 
 ```bash
 bun install       # commit bun.lock; peers resolved by Bun

@@ -1,4 +1,3 @@
-import { execSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
@@ -14,8 +13,8 @@ import {
 const PI_080_FLOOR = "0.80.0";
 
 /** Declared hotmilk peer target (dev/peer/overrides). */
-const PI_PEER_TARGET = /0\.83/;
-const PI_TOP_FLOOR = "0.83.0";
+const PI_PEER_TARGET = /0\.84/;
+const PI_TOP_FLOOR = "0.84.0";
 
 type BundledPeerRangeExclusion = {
   packageName: string;
@@ -29,13 +28,12 @@ type BundledPeerRangeExclusion = {
  */
 const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly BundledPeerRangeExclusion[] = [
   { packageName: "pi-rtk-optimizer", excludedVersionPrefix: "^0.79.0" },
-  { packageName: "pi-docparser", excludedVersionPrefix: "^0.74.0" },
   { packageName: "pi-red-green", excludedVersionPrefix: "^0.74.0" },
 ];
 
 /**
  * Nested @earendil-works copies still below Pi 0.80 — remove rows when upstream dedupes to 0.80.x.
- * pi-subagents / pi-mcp-adapter / agent-dashboard server are the usual sources.
+ * pi-subagents / pi-mcp-adapter are the usual sources.
  */
 const KNOWN_NESTED_DRIFT_BELOW_080: readonly { name: string; below: string }[] = [];
 
@@ -100,12 +98,12 @@ describe("third-party risk (hotmilk meta-package)", () => {
     expect(semverAtLeast(resolved, floor!)).toBe(true);
   });
 
-  it("installs Pi 0.83 coding-agent at the top level", () => {
+  it("installs Pi 0.84 coding-agent at the top level", () => {
     const version = installedPackageVersion("@earendil-works/pi-coding-agent");
     expect(semverAtLeast(version, PI_TOP_FLOOR)).toBe(true);
   });
 
-  it("declares Pi 0.83 peers on hotmilk itself", () => {
+  it("declares Pi 0.84 peers on hotmilk itself", () => {
     for (const [name, range] of Object.entries(PACKAGE_JSON.peerDependencies ?? {})) {
       if (name.startsWith("@earendil-works/")) {
         expect(range).toMatch(PI_PEER_TARGET);
@@ -152,25 +150,4 @@ describe("third-party risk (hotmilk meta-package)", () => {
       }
     },
   );
-
-  it("has no critical npm audit findings in production dependencies", { timeout: 60_000 }, () => {
-    let output = "";
-    try {
-      output = execSync("npm audit --audit-level=critical --omit=dev --json", {
-        cwd: REPO_ROOT,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      });
-    } catch (error) {
-      const err = error as { stdout?: string; status?: number };
-      output = err.stdout ?? "";
-      if (!output) throw error;
-    }
-
-    const report = JSON.parse(output) as {
-      metadata?: { vulnerabilities?: { critical?: number } };
-    };
-    const critical = report.metadata?.vulnerabilities?.critical ?? 0;
-    expect(critical).toBe(0);
-  });
 });

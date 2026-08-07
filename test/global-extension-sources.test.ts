@@ -148,27 +148,6 @@ describe("detectGlobalBundledExtensionSkips", () => {
 
     expect(skips.some((skip) => skip.id === "graphify")).toBe(false);
   });
-
-  it("detects dashboard bridge alias package", () => {
-    const dashboardExt = path.join(tmpHome, "pi-dashboard-extension");
-    fs.mkdirSync(dashboardExt, { recursive: true });
-    fs.writeFileSync(
-      path.join(dashboardExt, "package.json"),
-      JSON.stringify({ name: "@blackbelt-technology/pi-dashboard-extension" }),
-      "utf-8",
-    );
-
-    const dir = path.join(tmpHome, ".pi", "agent");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(
-      path.join(dir, "settings.json"),
-      `${JSON.stringify({ packages: ["npm:hotmilk", dashboardExt] }, null, 2)}\n`,
-      "utf-8",
-    );
-
-    const skips = detectGlobalBundledExtensionSkips({ homedir: tmpHome, cwd: tmpHome });
-    expect(skips.some((skip) => skip.id === "agent-dashboard")).toBe(true);
-  });
 });
 
 describe("registerBundledExtensions global skip", () => {

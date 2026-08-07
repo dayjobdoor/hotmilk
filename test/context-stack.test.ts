@@ -13,7 +13,7 @@ describe("context-stack", () => {
   const tempDirs: string[] = [];
 
   afterEach(() => {
-    for (const dir of tempDirs) {
+    for (const dir of tempDirs.splice(0)) {
       rmSync(dir, { recursive: true, force: true });
     }
   });
@@ -115,7 +115,7 @@ describe("context-stack", () => {
 
     expect(result.updated).toBe(false);
     expect(result.seeded).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result.error).toEqual(expect.any(String));
   });
 
   it("seedRtkConfigIfMissing reports error when config dir is not writable", () => {
@@ -133,6 +133,6 @@ describe("context-stack", () => {
     const result = seedRtkConfigIfMissing(true, configPath);
 
     expect(result.seeded).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result.error).toEqual(expect.any(String));
   });
 });

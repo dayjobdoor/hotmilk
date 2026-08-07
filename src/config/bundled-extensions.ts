@@ -2,7 +2,7 @@
 export type BundledPackageSpec = {
   /** Primary npm package for `npm:<name>` entries and bundled loader resolution. */
   packageName: string;
-  /** Extra package names that satisfy the same bundled id (e.g. dashboard bridge shim). */
+  /** Extra package names that satisfy the same bundled id (for provider aliases). */
   aliases?: readonly string[];
 };
 
@@ -98,12 +98,6 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Agent tools",
   },
   {
-    id: "pi-actors",
-    package: { packageName: "@llblab/pi-actors" },
-    module: "@llblab/pi-actors/index.ts",
-    group: "Agent tools",
-  },
-  {
     id: "herdr-squad",
     package: { packageName: "pi-herdr-squad" },
     module: "pi-herdr-squad/index.ts",
@@ -195,24 +189,9 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Experiments",
   },
   {
-    id: "agent-dashboard",
-    package: {
-      packageName: "@blackbelt-technology/pi-agent-dashboard",
-      aliases: ["@blackbelt-technology/pi-dashboard-extension"],
-    },
-    module: "@blackbelt-technology/pi-agent-dashboard/packages/extension/src/bridge.ts",
-    group: "Agent tools",
-  },
-  {
     id: "web-access",
     package: { packageName: "pi-web-access" },
     module: "pi-web-access/index.ts",
-    group: "Agent tools",
-  },
-  {
-    id: "pi-flows",
-    package: { packageName: "@blackbelt-technology/pi-flows" },
-    module: "@blackbelt-technology/pi-flows/extensions/index.ts",
     group: "Agent tools",
   },
   {
@@ -220,12 +199,6 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     package: { packageName: "pi-kanagawa" },
     module: "pi-kanagawa/index.ts",
     group: "Output",
-  },
-  {
-    id: "tetris",
-    package: { packageName: "pi-tetris" },
-    module: "pi-tetris/extensions/pi-tetris.ts",
-    group: "Experiments",
   },
 ] as const satisfies readonly BundledExtensionDefinition[];
 
