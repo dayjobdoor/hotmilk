@@ -62,15 +62,37 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Push git tag after publish
-        if: steps.should_publish.outputs.need == 'true'
+      - name: Ensure git release tag
+        if: |
+          steps.should_publish.outputs.need == 'false' ||
+          (steps.should_publish.outputs.need == 'true' && success())
         run: |
-          TAG="v$(node -p "require('./package.json').version")"
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-            echo "::error::Tag $TAG already exists on origin — refusing to move it"
-            exit 1
+
+          if ! npm view "hotmilk@$VERSION" version >/dev/null 2>&1; then
+            echo "npm does not have hotmilk@$VERSION yet — skipping tag"
+            exit 0
           fi
-          git tag "$TAG"
+
+          # Prefer the version-bump commit on this branch (commit message "vX.Y.Z").
+          TAG_COMMIT=$(git log --format=%H --grep="^v${VERSION}$" -n 1 HEAD || true)
+          if [ -z "$TAG_COMMIT" ]; then
+            TAG_COMMIT="$GITHUB_SHA"
+          fi
+
+          REMOTE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')
+          if [ "$REMOTE_SHA" = "$TAG_COMMIT" ]; then
+            echo "Tag $TAG already points to $TAG_COMMIT on origin"
+            exit 0
+          fi
+
+          if [ -n "$REMOTE_SHA" ]; then
+            echo "::warning::Moving tag $TAG from $REMOTE_SHA to $TAG_COMMIT"
+            git push origin ":refs/tags/$TAG"
+          fi
+
+          git tag -fa "$TAG" "$TAG_COMMIT" -m "hotmilk $TAG"
           git push origin "refs/tags/${TAG}"
