@@ -24,7 +24,7 @@ flowchart TD
 
 ## OpenSpec vs Chat Plan
 
-`extensions.gentle-ai` must be **true** for OpenSpec. `extensions.openspec-pi` (default **false**) only adds official `/opsx-*` skills; it is not a second plan path.
+`extensions.gentle-ai` must be **true** for OpenSpec SDD (`/skill:gentle-ai`, `/sdd-*`).
 
 ```mermaid
 flowchart TD

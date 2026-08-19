@@ -25,7 +25,7 @@ Single orchestration skill for **hotmilk** planning and execution.
 | ------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
 | **Graph**     | `/skill:graphify`                                                              | Codebase map before broad search                              |
 | **Structure** | pi-shazam (bundled, default off)                                               | Impact / verify during execute — not graph replacement        |
-| **Goal**      | pi-goal (bundled)                                                              | Multi-turn objective (optional)                               |
+| **Goal**      | pi-goal (bundled, default off)                                                              | Multi-turn objective (optional)                               |
 | **Grill**     | `/skill:grill-with-docs`                                                       | One question, CONTEXT/ADR, recommended answers                |
 | **Plan**      | chat `Plan:` **or** Plannotator **or** planning-with-files **or** OpenSpec SDD | Light chat; approval gate; file memory; substantial spec work |
 | **Execute**   | **`/skill:gentle-ai`** + subagents                                             | Implement, verify; SDD phases when active                     |
@@ -34,7 +34,7 @@ Single orchestration skill for **hotmilk** planning and execution.
 
 ## Runtime
 
-hotmilk bundles **gentle-ai**, **graphify**, **pi-goal**, **pi-subagents**. Toggle via `/mode` + `/reload`. Verify commands: **`AGENTS.md`** (`bun run test`, `bun run check`).
+hotmilk bundles **graphify**, **gentle-ai** (default off), **pi-goal** (default off), **pi-subagents** (default off). Toggle via `/mode` + `/reload`. Verify commands: **`AGENTS.md`** (`bun run test`, `bun run check`).
 
 | Toggle                            | Pioneer note                                                                                       |
 | --------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -42,7 +42,6 @@ hotmilk bundles **gentle-ai**, **graphify**, **pi-goal**, **pi-subagents**. Togg
 | `extensions.shazam`               | Phase 4 impact/verify (`shazam_*`); default off; complements graphify — not recon substitute       |
 | `extensions.goal`                 | Phase 1; `/goal`, `get_goal`, `update_goal`                                                        |
 | `extensions.gentle-ai`            | OpenSpec path; off → Chat Plan + direct execute only                                               |
-| `extensions.openspec-pi`          | Official `/opsx-*` skills/prompts (default off); complements gentle-ai SDD, not a second plan path |
 | `extensions.ponytail`             | Lazy-senior output bias (default off); not a plan path                                             |
 | `extensions.plannotator`          | Phase 3 approval gate; `/plannotator`, `--plan`; off → Chat Plan or OpenSpec                       |
 | `extensions.planning-with-files`  | On-disk `task_plan` / `findings` / `progress`; off → skip file-memory path                         |

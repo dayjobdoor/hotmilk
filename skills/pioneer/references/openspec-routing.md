@@ -18,8 +18,6 @@ Before proposal/spec work, confirm via **`/skill:gentle-ai`**:
 | Init guard        | `openspec/config.yaml` exists or `/sdd-init` runs first                                                  |
 | Toggle            | `extensions.gentle-ai: true` — if off, **stop**; Chat Plan only                                          |
 
-`extensions.openspec-pi` (default **false**) adds official `/opsx-*` skills/prompts. It complements gentle-ai SDD; it is **not** a second plan path and does not replace `/skill:gentle-ai`.
-
 ## Gate
 
 If `openspec/config.yaml` is missing, run **`/sdd-init`** (or enable `sdd-init` in `/mode`) before proposal/spec work.
@@ -49,7 +47,6 @@ Grill output (`## Proposed CONTEXT.md`, `## Proposed ADR`) feeds proposal/design
 - Do not skip **verify** or **sync** because chat plan "looks done".
 - Do not mix chat `Plan:` and OpenSpec artifacts for the same change unless the user explicitly wants a sketch first.
 - Do not downgrade an **active** OpenSpec change to Chat Plan when gentle-ai becomes unavailable mid-flow.
-- Do not treat `openspec-pi` `/opsx-*` as a replacement for gentle-ai SDD gates.
 
 ## Mid-flow recovery (gentle-ai lost during SDD)
 

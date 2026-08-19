@@ -1,6 +1,6 @@
 {
   "name": "hotmilk",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "hotmilk - Pi package bundling prompt, context, graph, subagents, plan, and bundled extension toggles via hotmilk.json",
   "keywords": [
     "coaching",
@@ -46,13 +46,13 @@
   },
   "dependencies": {
     "@dietrichgebert/ponytail": "^4.9.0",
+    "@ff-labs/pi-fff": "^0.10.5",
     "@haispeed/pi-obsidian": "^0.1.1",
     "@plannotator/pi-extension": "^0.27.4",
     "@tomxprime/planning-with-files": "^1.1.0",
     "context-mode": "^1.0.169",
     "gentle-pi": "^2.2.0",
     "graphify-pi": "^0.3.0",
-    "openspec-pi": "^0.1.0",
     "pi-ask-user": "^0.14.0",
     "pi-autoresearch": "^1.6.2",
     "pi-btw": "^0.4.1",
@@ -130,8 +130,7 @@
       "node_modules/gentle-pi/prompts",
       "node_modules/pi-subagents/prompts",
       "node_modules/pi-herdr-squad/agent/prompts/herdr-squad.md",
-      "node_modules/pi-herdr-squad/agent/prompts/herdr-worker-squad.md",
-      "node_modules/openspec-pi/prompts"
+      "node_modules/pi-herdr-squad/agent/prompts/herdr-worker-squad.md"
     ],
     "skills": [
       "./skills",
@@ -146,16 +145,12 @@
       "node_modules/@tomxprime/planning-with-files",
       "node_modules/pi-herdr-squad/agent/skills/herdr-squad",
       "node_modules/pi-herdr-squad/agent/skills/herdr-worker-squad",
-      "node_modules/@dietrichgebert/ponytail/skills",
-      "node_modules/openspec-pi/skills"
+      "node_modules/@dietrichgebert/ponytail/skills"
     ],
     "themes": [
       "./themes",
       "node_modules/pi-kanagawa/themes"
     ],
-    "image": [
-      "https://raw.githubusercontent.com/dayjobdoor/hotmilk/main/assets/image.jpeg",
-      "https://raw.githubusercontent.com/dayjobdoor/hotmilk/main/assets/bg.jpeg"
-    ]
+    "image": "https://raw.githubusercontent.com/dayjobdoor/hotmilk/main/assets/image.jpeg"
   }
 }

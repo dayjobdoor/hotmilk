@@ -159,12 +159,6 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Workflow",
   },
   {
-    id: "openspec-pi",
-    package: { packageName: "openspec-pi" },
-    module: "openspec-pi/extensions/openspec.ts",
-    group: "Workflow",
-  },
-  {
     id: "caveman",
     package: { packageName: "pi-caveman" },
     module: "pi-caveman/extensions/caveman.ts",
@@ -192,6 +186,12 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     id: "web-access",
     package: { packageName: "pi-web-access" },
     module: "pi-web-access/index.ts",
+    group: "Agent tools",
+  },
+  {
+    id: "fff",
+    package: { packageName: "@ff-labs/pi-fff" },
+    module: "@ff-labs/pi-fff/src/index.ts",
     group: "Agent tools",
   },
   {
