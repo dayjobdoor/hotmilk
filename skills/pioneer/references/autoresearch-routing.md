@@ -85,7 +85,7 @@ When `extensions.gentle-ai: true` and autoresearch is active:
 
 ## Shortcuts and UI
 
-Default shortcut: `Ctrl+Shift+F` (fullscreen dashboard). Override in `~/.pi/agent/extensions/pi-autoresearch.json`:
+Default shortcut: `Ctrl+Shift+F` (fullscreen dashboard). Override in `$PI_CODING_AGENT_DIR/extensions/pi-autoresearch.json`:
 
 ```json
 {

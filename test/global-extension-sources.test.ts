@@ -1,12 +1,15 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
+import { beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   collectInstalledPackageNamesFromPiSettings,
   detectGlobalBundledExtensionSkips,
   parseNpmPackageName,
 } from "../src/bootstrap/global-extension-sources.ts";
+import type { BundledExtensionId } from "../src/config/hotmilk.ts";
+import type { JsonObject } from "../src/json.ts";
+import { recordingPi } from "./fixtures/recording-pi.ts";
+import { makeTempDir } from "./fixtures/tmp.ts";
 
 describe("parseNpmPackageName", () => {
   it("parses scoped and unscoped npm specs", () => {
@@ -20,14 +23,10 @@ describe("collectInstalledPackageNamesFromPiSettings", () => {
   let tmpHome: string;
 
   beforeEach(() => {
-    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "hotmilk-global-ext-"));
+    tmpHome = makeTempDir("hotmilk-global-ext-");
   });
 
-  afterEach(() => {
-    fs.rmSync(tmpHome, { recursive: true, force: true });
-  });
-
-  function writeSettings(relativeDir: string, settings: Record<string, unknown>): void {
+  function writeSettings(relativeDir: string, settings: JsonObject): void {
     const dir = path.join(tmpHome, relativeDir);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(
@@ -65,6 +64,31 @@ describe("collectInstalledPackageNamesFromPiSettings", () => {
     expect(names.has("pi-ask-user")).toBe(true);
   });
 
+  it("reads global settings from PI_CODING_AGENT_DIR when homedir is omitted", () => {
+    const agentDir = makeTempDir("hotmilk-agent-dir-");
+    fs.mkdirSync(agentDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(agentDir, "settings.json"),
+      `${JSON.stringify({ packages: ["npm:graphify-pi"] }, null, 2)}\n`,
+      "utf-8",
+    );
+    const previousPi = process.env.PI_CODING_AGENT_DIR;
+    process.env.PI_CODING_AGENT_DIR = agentDir;
+    try {
+      const names = collectInstalledPackageNamesFromPiSettings({
+        cwd: agentDir,
+        includeProjectSettings: false,
+      });
+      expect(names.has("graphify-pi")).toBe(true);
+    } finally {
+      if (previousPi === undefined) {
+        delete process.env.PI_CODING_AGENT_DIR;
+      } else {
+        process.env.PI_CODING_AGENT_DIR = previousPi;
+      }
+    }
+  });
+
   it("ignores non-string settings entries", () => {
     writeSettings(".pi/agent", { packages: ["npm:graphify-pi", 42, null] });
 
@@ -100,11 +124,7 @@ describe("detectGlobalBundledExtensionSkips", () => {
   let tmpHome: string;
 
   beforeEach(() => {
-    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "hotmilk-global-skip-"));
-  });
-
-  afterEach(() => {
-    fs.rmSync(tmpHome, { recursive: true, force: true });
+    tmpHome = makeTempDir("hotmilk-global-skip-");
   });
 
   it("maps global gentle-pi to all gentle-pi bundled ids", () => {
@@ -155,16 +175,19 @@ describe("registerBundledExtensions global skip", () => {
     const { registerBundledExtensions } = await import("../src/bootstrap/extensions.ts");
     const { BUNDLED_EXTENSION_IDS } = await import("../src/config/hotmilk.ts");
 
-    const enabled = Object.fromEntries(BUNDLED_EXTENSION_IDS.map((id) => [id, false])) as Record<
-      (typeof BUNDLED_EXTENSION_IDS)[number],
-      boolean
-    >;
+    // SAFETY: test fixture starts every bundled id at false.
+    const enabled = {} as Record<BundledExtensionId, boolean>;
+    for (const id of BUNDLED_EXTENSION_IDS) {
+      enabled[id] = false;
+    }
     enabled.graphify = true;
 
-    const result = await registerBundledExtensions({} as never, enabled, {
+    const { pi, accessed } = recordingPi();
+    const result = await registerBundledExtensions(pi, enabled, {
       globalSkips: [{ id: "graphify", packageName: "graphify-pi" }],
     });
 
     expect(result.globalSkips).toEqual([{ id: "graphify", packageName: "graphify-pi" }]);
+    expect(accessed).toEqual([]);
   });
 });

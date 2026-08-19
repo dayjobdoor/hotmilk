@@ -1,4 +1,4 @@
-import type { ProjectTrustContext } from "@earendil-works/pi-coding-agent";
+import type { ProjectTrustContext, ProjectTrustEventResult } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vite-plus/test";
 import {
   registerProjectTrustHandlers,
@@ -97,16 +97,19 @@ describe("resolveProjectTrustDecision", () => {
 });
 
 describe("registerProjectTrustHandlers", () => {
-  it("wires project_trust handler to resolveProjectTrustDecision", async () => {
-    let handler:
-      | ((event: { cwd: string }, ctx: ProjectTrustContext) => Promise<unknown>)
-      | undefined;
+  it("registers a project_trust handler that applies settings", async () => {
+    type ProjectTrustHandler = (
+      event: { cwd: string },
+      ctx: ProjectTrustContext,
+    ) => Promise<ProjectTrustEventResult>;
+    let handler: ProjectTrustHandler | undefined;
     const pi = {
-      on: (event: string, fn: typeof handler) => {
-        if (event === "project_trust") handler = fn;
+      on(_event: "project_trust", next: ProjectTrustHandler) {
+        handler = next;
       },
     };
 
+    // SAFETY: test double implements only the project_trust registration hook.
     registerProjectTrustHandlers(pi as never, resolvedProjectTrust("always", true));
 
     expect(handler).toEqual(expect.any(Function));

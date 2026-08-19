@@ -9,17 +9,19 @@ import {
 } from "./global-extension-sources.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
 import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmilk.ts";
+import { formatCaughtError } from "../json.ts";
 
 type ExtensionFactory = (pi: ExtensionAPI) => void | Promise<void>;
 
 /** Bundled deps may type against @mariozechner/pi-coding-agent; hotmilk uses @earendil-works. */
-type ExtensionModule = { default: unknown };
+type ExtensionModule = { default: ExtensionFactory };
 
 function loadBundled(relativePath: string): () => Promise<ExtensionModule> {
   return () => import(bundledImportUrl(relativePath));
 }
 
 /** Derived from {@link BUNDLED_EXTENSION_DEFINITIONS} — one loader per manifest row. */
+// SAFETY: every BundledExtensionId is present because we map BUNDLED_EXTENSION_DEFINITIONS.
 const BUNDLED_EXTENSION_LOADERS = Object.fromEntries(
   BUNDLED_EXTENSION_DEFINITIONS.map((definition) => [
     definition.id,
@@ -30,9 +32,12 @@ const BUNDLED_EXTENSION_LOADERS = Object.fromEntries(
 async function registerOne(pi: ExtensionAPI, id: BundledExtensionId): Promise<void> {
   try {
     const mod = await BUNDLED_EXTENSION_LOADERS[id]();
-    await (mod.default as ExtensionFactory)(pi);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
+    const factory = mod.default;
+    if (factory instanceof Function) {
+      await factory(pi);
+    }
+  } catch (cause) {
+    const detail = formatCaughtError(cause);
     console.warn(`[hotmilk] Failed to load bundled extension "${id}": ${detail}`);
   }
 }

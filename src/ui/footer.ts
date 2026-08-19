@@ -1,6 +1,5 @@
 import {
   FooterComponent,
-  type AgentSession,
   type ExtensionContext,
   type ReadonlyFooterDataProvider,
   type Theme,
@@ -109,6 +108,18 @@ function appendMetaToLastLine(lines: string[], meta: string, width: number): str
 
 const FOOTER_TIME_REFRESH_MS = 30_000;
 
+function isThinkingLevel(value: string): value is ThinkingLevel {
+  return (
+    value === "off" ||
+    value === "minimal" ||
+    value === "low" ||
+    value === "medium" ||
+    value === "high" ||
+    value === "xhigh" ||
+    value === "max"
+  );
+}
+
 /**
  * Get the latest thinking level from session manager entries.
  *
@@ -119,8 +130,8 @@ function latestThinkingLevel(sessionManager: ExtensionContext["sessionManager"])
   const entries = sessionManager.getEntries();
   for (let i = entries.length - 1; i >= 0; i--) {
     const entry = entries[i];
-    if (entry.type === "thinking_level_change") {
-      return entry.thinkingLevel as ThinkingLevel;
+    if (entry.type === "thinking_level_change" && isThinkingLevel(entry.thinkingLevel)) {
+      return entry.thinkingLevel;
     }
   }
   return "off";
@@ -135,12 +146,14 @@ function latestThinkingLevel(sessionManager: ExtensionContext["sessionManager"])
  * @param ctx - model + modelRegistry from extension context
  * @returns OAuth and subscription status methods by provider ID
  */
-export function footerModelRuntimeFromContext(
-  ctx: Pick<ExtensionContext, "model" | "modelRegistry">,
-): {
+export type FooterModelRuntime = {
   isUsingOAuth(providerId: string): boolean;
   isUsingSubscription(providerId: string): boolean;
-} {
+};
+
+export function footerModelRuntimeFromContext(
+  ctx: Pick<ExtensionContext, "model" | "modelRegistry">,
+): FooterModelRuntime {
   return {
     isUsingOAuth(providerId: string): boolean {
       const { model, modelRegistry } = ctx;
@@ -163,21 +176,40 @@ export function footerModelRuntimeFromContext(
  * Create a footer-compatible session object from extension context.
  *
  * @param ctx - extension context
- * @returns agent session for footer
+ * @returns agent session fields FooterComponent reads
  */
-function footerSessionFromContext(ctx: ExtensionContext): AgentSession {
+function footerSessionFromContext(ctx: ExtensionContext): FooterSession {
   return {
     get state() {
       return {
         model: ctx.model,
-        thinkingLevel: latestThinkingLevel(ctx.sessionManager),
+        thinkingLevel: ctx.thinkingLevel ?? latestThinkingLevel(ctx.sessionManager),
       };
     },
     sessionManager: ctx.sessionManager,
     getContextUsage: () => ctx.getContextUsage(),
-    modelRegistry: ctx.modelRegistry,
     modelRuntime: footerModelRuntimeFromContext(ctx),
-  } as unknown as AgentSession;
+  };
+}
+
+type FooterSession = {
+  readonly state: {
+    model: ExtensionContext["model"];
+    thinkingLevel: ThinkingLevel;
+  };
+  sessionManager: ExtensionContext["sessionManager"];
+  getContextUsage: ExtensionContext["getContextUsage"];
+  modelRuntime: FooterModelRuntime;
+};
+
+function createHotmilkFooterComponent(
+  ctx: ExtensionContext,
+  footerData: ReadonlyFooterDataProvider,
+): FooterComponent {
+  // SAFETY: FooterComponent.render only reads state.{model, thinkingLevel},
+  // sessionManager.{getEntries, getCwd, getSessionName}, getContextUsage(),
+  // and modelRuntime.isUsingSubscription(). AgentSession private members are unused.
+  return new FooterComponent(footerSessionFromContext(ctx) as never, footerData);
 }
 
 /**
@@ -224,7 +256,7 @@ export function setupHotmilkFooter(ctx: ExtensionContext, termProgram: string): 
     let resolveStarted = false;
     let disposed = false;
 
-    const base = new FooterComponent(footerSessionFromContext(ctx), footerData);
+    const base = createHotmilkFooterComponent(ctx, footerData);
     const unsubBranch = footerData.onBranchChange(() => {
       if (disposed) return;
       tui.requestRender();

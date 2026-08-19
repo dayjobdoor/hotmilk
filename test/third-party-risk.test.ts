@@ -8,6 +8,13 @@ import {
   REPO_ROOT,
   semverAtLeast,
 } from "./fixtures/manifest.ts";
+import { isJsonObject, isJsonString, parseJsonValue } from "../src/json.ts";
+
+type NestedInstall = { path: string; name: string; version: string };
+
+type PackageJsonFields = { name?: string; version?: string };
+
+type KnownNestedDrift = { name: string; below: string };
 
 /** Minimum Pi floor for nested @earendil-works supply-chain drift checks. */
 const PI_080_FLOOR = "0.80.0";
@@ -35,7 +42,7 @@ const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly BundledPeerRangeExclusion[]
  * Nested @earendil-works copies still below Pi 0.80 — remove rows when upstream dedupes to 0.80.x.
  * pi-subagents / pi-mcp-adapter are the usual sources.
  */
-const KNOWN_NESTED_DRIFT_BELOW_080: readonly { name: string; below: string }[] = [];
+const KNOWN_NESTED_DRIFT_BELOW_080: readonly KnownNestedDrift[] = [];
 
 function bundledPiPeerRanges(packageName: string): string[] {
   const peers = installedPackageJson(packageName).peerDependencies ?? {};
@@ -44,8 +51,8 @@ function bundledPiPeerRanges(packageName: string): string[] {
     .map(([, range]) => range);
 }
 
-function collectNestedEarendilInstalls(): Array<{ path: string; name: string; version: string }> {
-  const found: Array<{ path: string; name: string; version: string }> = [];
+function collectNestedEarendilInstalls(): NestedInstall[] {
+  const found: NestedInstall[] = [];
   const nodeModules = join(REPO_ROOT, "node_modules");
 
   function collectPackagesInScopeDir(dir: string, pkgDirName: string): void {
@@ -55,9 +62,11 @@ function collectNestedEarendilInstalls(): Array<{ path: string; name: string; ve
       const pkgJsonPath = join(scopePath, pkg, "package.json");
       if (!existsSync(pkgJsonPath)) continue;
       try {
-        const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf8")) as {
-          name?: string;
-          version?: string;
+        const parsed = parseJsonValue(readFileSync(pkgJsonPath, "utf8"));
+        if (!isJsonObject(parsed)) continue;
+        const pkgJson: PackageJsonFields = {
+          name: isJsonString(parsed.name) ? parsed.name : undefined,
+          version: isJsonString(parsed.version) ? parsed.version : undefined,
         };
         if (pkgJson.name?.startsWith("@earendil-works/") && pkgJson.version) {
           found.push({

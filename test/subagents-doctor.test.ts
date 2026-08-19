@@ -2,6 +2,34 @@ import { existsSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import { bundledImportUrl, resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
 import { PI_SUBAGENTS_DOCTOR_MODULES } from "../src/bootstrap/subagents-doctor.ts";
+import type { JsonObject } from "../src/json.ts";
+
+type DoctorReportInput = {
+  cwd: string;
+  config: JsonObject;
+  state: { baseCwd: string; currentSessionId: string | null };
+  deps: {
+    discoverAgentsAll: () => {
+      builtin: never[];
+      user: never[];
+      project: never[];
+      chains: never[];
+    };
+    discoverAvailableSkills: () => never[];
+    diagnoseIntercomBridge: () => {
+      active: boolean;
+      mode: string;
+      orchestratorTarget: undefined;
+      piIntercomAvailable: boolean;
+      extensionDir: string;
+    };
+    isAsyncAvailable: () => boolean;
+  };
+};
+
+type DoctorModule = {
+  buildDoctorReport: (input: DoctorReportInput) => string;
+};
 
 describe("subagents doctor (bundled third-party path)", () => {
   it("resolves every deep doctor module from the hotmilk dependency tree", () => {
@@ -13,9 +41,11 @@ describe("subagents doctor (bundled third-party path)", () => {
   });
 
   it("buildDoctorReport includes runtime, filesystem, and discovery sections", async () => {
-    const mod = (await import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.doctor))) as {
-      buildDoctorReport: (input: Record<string, unknown>) => string;
-    };
+    // Dynamic import: doctor path is resolved from the bundled third-party tree at runtime.
+    // SAFETY: bundled doctor module exports buildDoctorReport with this shape.
+    const mod = (await import(
+      bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.doctor)
+    )) as DoctorModule;
 
     const report = mod.buildDoctorReport({
       cwd: process.cwd(),

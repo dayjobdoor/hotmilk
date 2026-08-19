@@ -1,13 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { coerce, gte, minVersion } from "semver";
+import { parseJsonValue } from "../../src/json.ts";
 
-/** Repo root — one level above `test/`. */
-export const REPO_ROOT = join(import.meta.dirname, "../..");
-
-/** Parsed `hotmilk.json` shipped as the user config template. */
-export const HOTMILK_JSON_TEMPLATE = JSON.parse(
-  readFileSync(join(REPO_ROOT, "hotmilk.json"), "utf8"),
-) as {
+export type HotmilkJsonTemplate = {
   extensions: Record<string, boolean>;
   graph: { warnOnStale: boolean; autoSuggestUpdate: boolean };
   defaults: { persona: string; language?: string };
@@ -15,7 +11,7 @@ export const HOTMILK_JSON_TEMPLATE = JSON.parse(
   projectTrust: { mode: string; remember: boolean };
 };
 
-export const PACKAGE_JSON = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8")) as {
+export type PackageJsonManifest = {
   dependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
   pi?: {
@@ -26,21 +22,35 @@ export const PACKAGE_JSON = JSON.parse(readFileSync(join(REPO_ROOT, "package.jso
   };
 };
 
+export type InstalledPackageJson = {
+  version?: string;
+  peerDependencies?: Record<string, string>;
+};
+
+/** Repo root — one level above `test/`. */
+export const REPO_ROOT = join(import.meta.dirname, "../..");
+
+/** Parsed `hotmilk.json` shipped as the user config template. */
+export const HOTMILK_JSON_TEMPLATE =
+  // SAFETY: we own this repo file and treat it as this named shape.
+  parseJsonValue(readFileSync(join(REPO_ROOT, "hotmilk.json"), "utf8")) as HotmilkJsonTemplate;
+
+export const PACKAGE_JSON =
+  // SAFETY: we own this repo file and treat it as this named shape.
+  parseJsonValue(readFileSync(join(REPO_ROOT, "package.json"), "utf8")) as PackageJsonManifest;
+
 /** Resolve a repo-relative path from package.json `pi.*` entries. */
 export function repoPath(relative: string): string {
   return join(REPO_ROOT, relative);
 }
 
 /** Read an installed dependency's package.json from the hotmilk node_modules tree. */
-export function installedPackageJson(packageName: string): {
-  version?: string;
-  peerDependencies?: Record<string, string>;
-} {
+export function installedPackageJson(packageName: string): InstalledPackageJson {
   const pkgJsonPath = join(REPO_ROOT, "node_modules", ...packageName.split("/"), "package.json");
-  return JSON.parse(readFileSync(pkgJsonPath, "utf8")) as {
-    version?: string;
-    peerDependencies?: Record<string, string>;
-  };
+  return (
+    // SAFETY: installed package.json is treated as this named shape.
+    parseJsonValue(readFileSync(pkgJsonPath, "utf8")) as InstalledPackageJson
+  );
 }
 
 export function installedPackageVersion(packageName: string): string {
@@ -51,25 +61,11 @@ export function installedPackageVersion(packageName: string): string {
   return version;
 }
 
-/** Strip range operators and prerelease/build metadata; leaves `major.minor.patch`. */
-export function normalizeSemver(input: string): string {
-  const trimmed = input.trim();
-  if (!trimmed || trimmed === "*") {
-    return "0.0.0";
-  }
-  const withoutRange = trimmed.replace(/^[v^~=<>]+/, "");
-  return withoutRange.split("-")[0]?.split("+")[0] ?? withoutRange;
-}
-
-/** Compare dotted semver tuples (no prerelease ordering — sufficient for 0.x floors). */
+/**
+ * Floor-style semver compare: range floors (`^0.10.2`, `>=0.80.0`, `*`) resolve
+ * via their minimum matching version; prerelease/build metadata on the installed
+ * version is ignored (sufficient for 0.x floor checks).
+ */
 export function semverAtLeast(version: string, floor: string): boolean {
-  const parse = (v: string) =>
-    normalizeSemver(v)
-      .split(".")
-      .map((part) => Number.parseInt(part, 10));
-  const [aMajor = 0, aMinor = 0, aPatch = 0] = parse(version);
-  const [bMajor = 0, bMinor = 0, bPatch = 0] = parse(floor);
-  if (aMajor !== bMajor) return aMajor > bMajor;
-  if (aMinor !== bMinor) return aMinor > bMinor;
-  return aPatch >= bPatch;
+  return gte(coerce(version) ?? "0.0.0", minVersion(floor.trim()) ?? "0.0.0");
 }

@@ -8,6 +8,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
+import {
+  formatCaughtError,
+  isJsonBoolean,
+  isJsonObject,
+  isJsonString,
+  parseJsonValue,
+  type JsonValue,
+} from "../json.ts";
 import { pruneContextModeMcpServerFromAgentConfig } from "../config/mcp.ts";
 import type { HotmilkRuntime } from "../config/runtime.ts";
 import type { BundledExtensionId } from "../config/hotmilk.ts";
@@ -29,12 +37,50 @@ export function expectedRtkMode(contextModeEnabled: boolean): "suggest" | "rewri
   return contextModeEnabled ? "suggest" : "rewrite";
 }
 
+export type HotmilkRtkConfig = {
+  enabled: boolean;
+  mode: "suggest" | "rewrite";
+  guardWhenRtkMissing: boolean;
+  showRewriteNotifications: boolean;
+  outputCompaction: {
+    enabled: boolean;
+    stripAnsi: boolean;
+    readCompaction: { enabled: boolean };
+    truncate: { enabled: boolean; maxChars: number };
+    sourceCodeFilteringEnabled: boolean;
+    preserveExactSkillReads: boolean;
+    sourceCodeFiltering: string;
+    smartTruncate: { enabled: boolean; maxLines: number };
+    aggregateTestOutput: boolean;
+    filterBuildOutput: boolean;
+    compactGitOutput: boolean;
+    aggregateLinterOutput: boolean;
+    groupSearchOutput: boolean;
+    trackSavings: boolean;
+  };
+};
+
+export type SeedRtkResult = {
+  seeded: boolean;
+  path: string;
+  error?: string;
+};
+
+export type SyncRtkResult = {
+  updated: boolean;
+  seeded: boolean;
+  path: string;
+  error?: string;
+};
+
+type MutableJsonObject = { [key: string]: JsonValue };
+
 /**
  * Build the default pi-rtk-optimizer config shaped for hotmilk.
  *
  * @param contextModeEnabled - whether context-mode is toggled on
  */
-export function buildHotmilkRtkConfig(contextModeEnabled: boolean): Record<string, unknown> {
+export function buildHotmilkRtkConfig(contextModeEnabled: boolean): HotmilkRtkConfig {
   return {
     enabled: true,
     mode: expectedRtkMode(contextModeEnabled),
@@ -59,28 +105,41 @@ export function buildHotmilkRtkConfig(contextModeEnabled: boolean): Record<strin
   };
 }
 
-type RtkConfigRecord = Record<string, unknown> & {
-  mode?: string;
-  outputCompaction?: {
-    readCompaction?: { enabled?: boolean };
-  };
-};
-
-function writeRtkConfig(configPath: string, config: unknown): void {
+function writeRtkConfig(configPath: string, config: HotmilkRtkConfig | MutableJsonObject): void {
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
 }
 
-/**
- * Create pi-rtk-optimizer config if it does not already exist.
- *
- * @param contextModeEnabled - whether context-mode is toggled on
- * @param configPath - override config path (default: agent extension dir)
- * @returns seed result, with `error` set on filesystem failure
- */
+function parseRtkConfigRecord(text: string) {
+  const parsed = parseJsonValue(text);
+  if (!isJsonObject(parsed)) {
+    throw new Error("rtk config must be an object");
+  }
+  const config: MutableJsonObject = {};
+  for (const key of Object.keys(parsed)) {
+    config[key] = parsed[key];
+  }
+  return config;
+}
+
+function rtkModeOf(config: MutableJsonObject): string | undefined {
+  return isJsonString(config.mode) ? config.mode : undefined;
+}
+
+function readCompactionEnabled(config: MutableJsonObject): boolean | undefined {
+  if (!isJsonObject(config.outputCompaction)) {
+    return undefined;
+  }
+  if (!isJsonObject(config.outputCompaction.readCompaction)) {
+    return undefined;
+  }
+  const enabled = config.outputCompaction.readCompaction.enabled;
+  return isJsonBoolean(enabled) ? enabled : undefined;
+}
+
 export function seedRtkConfigIfMissing(
   contextModeEnabled: boolean,
   configPath = getRtkOptimizerConfigPath(),
-): { seeded: boolean; path: string; error?: string } {
+): SeedRtkResult {
   if (existsSync(configPath)) {
     return { seeded: false, path: configPath };
   }
@@ -93,46 +152,38 @@ export function seedRtkConfigIfMissing(
     return {
       seeded: false,
       path: configPath,
-      error: error instanceof Error ? error.message : String(error),
+      error: formatCaughtError(error),
     };
   }
 }
 
 /** Hotmilk-managed fields only — does not touch Pi auto-compaction (settings.json). */
 function alignRtkConfigWithContextMode(
-  config: RtkConfigRecord,
+  config: MutableJsonObject,
   contextModeEnabled: boolean,
 ): boolean {
   let changed = false;
   const mode = expectedRtkMode(contextModeEnabled);
-  if (config.mode !== mode) {
+  if (rtkModeOf(config) !== mode) {
     config.mode = mode;
     changed = true;
   }
 
-  if (contextModeEnabled && config.outputCompaction?.readCompaction?.enabled !== false) {
-    config.outputCompaction ??= {};
-    config.outputCompaction.readCompaction = { enabled: false };
+  if (contextModeEnabled && readCompactionEnabled(config) !== false) {
+    const output = isJsonObject(config.outputCompaction) ? { ...config.outputCompaction } : {};
+    output.readCompaction = { enabled: false };
+    config.outputCompaction = output;
     changed = true;
   }
 
   return changed;
 }
 
-/**
- * Keep pi-rtk-optimizer config aligned with the context-mode toggle.
- *
- * Seeds when missing, otherwise updates `mode` and `readCompaction`.
- *
- * @param contextModeEnabled - whether context-mode is toggled on
- * @param rtkEnabled - whether rtk-optimizer is toggled on
- * @param configPath - override config path (default: agent extension dir)
- */
 export function syncRtkConfigForContextStack(
   contextModeEnabled: boolean,
   rtkEnabled: boolean,
   configPath = getRtkOptimizerConfigPath(),
-): { updated: boolean; seeded: boolean; path: string; error?: string } {
+): SyncRtkResult {
   if (!rtkEnabled) {
     return { updated: false, seeded: false, path: configPath };
   }
@@ -146,7 +197,7 @@ export function syncRtkConfigForContextStack(
   }
 
   try {
-    const config = JSON.parse(readFileSync(configPath, "utf8")) as RtkConfigRecord;
+    const config = parseRtkConfigRecord(readFileSync(configPath, "utf8"));
     const changed = alignRtkConfigWithContextMode(config, contextModeEnabled);
     if (changed) {
       writeRtkConfig(configPath, config);
@@ -158,7 +209,7 @@ export function syncRtkConfigForContextStack(
       updated: false,
       seeded: false,
       path: configPath,
-      error: error instanceof Error ? error.message : String(error),
+      error: formatCaughtError(error),
     };
   }
 }

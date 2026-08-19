@@ -1,34 +1,27 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { describe, expect, it } from "vite-plus/test";
 import {
+  AGENT_HOTMILK_CONFIG_LABEL,
   BUNDLED_EXTENSION_IDS,
   DEFAULT_HOTMILK_CONFIG,
   getHotmilkConfigPath,
+  hotmilkConfigDisplayPath,
   loadHotmilkConfig,
   resolveBundledExtensionToggles,
   resolveDefaults,
   resolveGraphSettings,
+  resolveHotmilkConfigRoot,
   resolveMcpSettings,
   resolveProjectTrust,
   seedHotmilkConfigIfMissing,
 } from "../src/config/hotmilk.ts";
 import { HOTMILK_JSON_TEMPLATE } from "./fixtures/manifest.ts";
-
-const tempDirs: string[] = [];
+import { makeTempDir } from "./fixtures/tmp.ts";
+import { parseJsonValue } from "../src/json.ts";
 
 function tempConfigDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "hotmilk-test-"));
-  tempDirs.push(dir);
-  return dir;
+  return makeTempDir("hotmilk-test-");
 }
-
-afterEach(() => {
-  for (const dir of tempDirs.splice(0)) {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
 
 describe("resolveBundledExtensionToggles", () => {
   it("falls back to hotmilk.json template defaults for every bundled id", () => {
@@ -117,13 +110,25 @@ describe("resolveProjectTrust", () => {
 
   it("falls back to delegate for invalid projectTrust mode", () => {
     expect(
-      resolveProjectTrust({ projectTrust: { mode: "bogus" as never, remember: true } }),
+      resolveProjectTrust({
+        projectTrust: {
+          // SAFETY: test fixture injects an invalid value to prove fallback.
+          mode: "bogus" as never,
+          remember: true,
+        },
+      }),
     ).toEqual({ mode: "delegate", remember: true });
   });
 
   it("falls back to default remember for non-boolean remember", () => {
     expect(
-      resolveProjectTrust({ projectTrust: { mode: "prompt", remember: "yes" as never } }),
+      resolveProjectTrust({
+        projectTrust: {
+          mode: "prompt",
+          // SAFETY: test fixture injects an invalid value to prove fallback.
+          remember: "yes" as never,
+        },
+      }),
     ).toEqual({ mode: "prompt", remember: false });
   });
 });
@@ -134,7 +139,10 @@ describe("bundled hotmilk.json template", () => {
       [...BUNDLED_EXTENSION_IDS].sort(),
     );
     for (const id of BUNDLED_EXTENSION_IDS) {
-      expect(typeof HOTMILK_JSON_TEMPLATE.extensions[id]).toBe("boolean");
+      expect(
+        HOTMILK_JSON_TEMPLATE.extensions[id] === true ||
+          HOTMILK_JSON_TEMPLATE.extensions[id] === false,
+      ).toBe(true);
     }
     expect(DEFAULT_HOTMILK_CONFIG.extensions).toEqual(HOTMILK_JSON_TEMPLATE.extensions);
     expect(DEFAULT_HOTMILK_CONFIG.graph).toEqual(HOTMILK_JSON_TEMPLATE.graph);
@@ -144,6 +152,95 @@ describe("bundled hotmilk.json template", () => {
   });
 });
 
+describe("resolveHotmilkConfigRoot", () => {
+  it("uses an explicit configRoot over env vars", () => {
+    const explicit = tempConfigDir();
+    const previousHotmilk = process.env.HOTMILK_CONFIG_ROOT;
+    const previousPi = process.env.PI_CODING_AGENT_DIR;
+    process.env.HOTMILK_CONFIG_ROOT = tempConfigDir();
+    process.env.PI_CODING_AGENT_DIR = tempConfigDir();
+    try {
+      expect(resolveHotmilkConfigRoot(explicit)).toBe(explicit);
+    } finally {
+      if (previousHotmilk === undefined) {
+        delete process.env.HOTMILK_CONFIG_ROOT;
+      } else {
+        process.env.HOTMILK_CONFIG_ROOT = previousHotmilk;
+      }
+      if (previousPi === undefined) {
+        delete process.env.PI_CODING_AGENT_DIR;
+      } else {
+        process.env.PI_CODING_AGENT_DIR = previousPi;
+      }
+    }
+  });
+
+  it("prefers HOTMILK_CONFIG_ROOT over PI_CODING_AGENT_DIR", () => {
+    const hotmilkRoot = tempConfigDir();
+    const previousHotmilk = process.env.HOTMILK_CONFIG_ROOT;
+    const previousPi = process.env.PI_CODING_AGENT_DIR;
+    process.env.HOTMILK_CONFIG_ROOT = hotmilkRoot;
+    process.env.PI_CODING_AGENT_DIR = tempConfigDir();
+    try {
+      expect(resolveHotmilkConfigRoot()).toBe(hotmilkRoot);
+    } finally {
+      if (previousHotmilk === undefined) {
+        delete process.env.HOTMILK_CONFIG_ROOT;
+      } else {
+        process.env.HOTMILK_CONFIG_ROOT = previousHotmilk;
+      }
+      if (previousPi === undefined) {
+        delete process.env.PI_CODING_AGENT_DIR;
+      } else {
+        process.env.PI_CODING_AGENT_DIR = previousPi;
+      }
+    }
+  });
+
+  it("uses PI_CODING_AGENT_DIR when HOTMILK_CONFIG_ROOT is unset", () => {
+    const agentDir = tempConfigDir();
+    const previousHotmilk = process.env.HOTMILK_CONFIG_ROOT;
+    const previousPi = process.env.PI_CODING_AGENT_DIR;
+    delete process.env.HOTMILK_CONFIG_ROOT;
+    process.env.PI_CODING_AGENT_DIR = agentDir;
+    try {
+      expect(resolveHotmilkConfigRoot()).toBe(agentDir);
+      expect(hotmilkConfigDisplayPath()).toBe(getHotmilkConfigPath());
+    } finally {
+      if (previousHotmilk === undefined) {
+        delete process.env.HOTMILK_CONFIG_ROOT;
+      } else {
+        process.env.HOTMILK_CONFIG_ROOT = previousHotmilk;
+      }
+      if (previousPi === undefined) {
+        delete process.env.PI_CODING_AGENT_DIR;
+      } else {
+        process.env.PI_CODING_AGENT_DIR = previousPi;
+      }
+    }
+  });
+
+  it("keeps the conventional label for the default agent path", () => {
+    const previousHotmilk = process.env.HOTMILK_CONFIG_ROOT;
+    const previousPi = process.env.PI_CODING_AGENT_DIR;
+    delete process.env.HOTMILK_CONFIG_ROOT;
+    delete process.env.PI_CODING_AGENT_DIR;
+    try {
+      expect(hotmilkConfigDisplayPath()).toBe(AGENT_HOTMILK_CONFIG_LABEL);
+    } finally {
+      if (previousHotmilk === undefined) {
+        delete process.env.HOTMILK_CONFIG_ROOT;
+      } else {
+        process.env.HOTMILK_CONFIG_ROOT = previousHotmilk;
+      }
+      if (previousPi === undefined) {
+        delete process.env.PI_CODING_AGENT_DIR;
+      } else {
+        process.env.PI_CODING_AGENT_DIR = previousPi;
+      }
+    }
+  });
+});
 describe("seedHotmilkConfigIfMissing", () => {
   it("creates hotmilk.json when missing", () => {
     const configRoot = tempConfigDir();
@@ -151,7 +248,7 @@ describe("seedHotmilkConfigIfMissing", () => {
     const result = seedHotmilkConfigIfMissing(configRoot);
 
     expect(result.seeded).toBe(true);
-    const written = JSON.parse(readFileSync(getHotmilkConfigPath(configRoot), "utf8"));
+    const written = parseJsonValue(readFileSync(getHotmilkConfigPath(configRoot), "utf8"));
     expect(written).toEqual(HOTMILK_JSON_TEMPLATE);
   });
 
@@ -163,7 +260,7 @@ describe("seedHotmilkConfigIfMissing", () => {
     const result = seedHotmilkConfigIfMissing(configRoot);
 
     expect(result.seeded).toBe(false);
-    expect(JSON.parse(readFileSync(configPath, "utf8"))).toEqual({
+    expect(parseJsonValue(readFileSync(configPath, "utf8"))).toEqual({
       extensions: { "ask-user": false },
     });
   });

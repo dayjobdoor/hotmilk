@@ -1,13 +1,50 @@
 import { defineConfig } from "vite-plus";
 
-const ignorePatterns = ["node_modules", "dist", "graphify-out"];
+const ignorePatterns = [
+  "node_modules",
+  "dist",
+  "graphify-out",
+  ".agent/**",
+  ".agents/**",
+  ".atl/**",
+  ".claude/**",
+  ".codegraph",
+  ".codex/**",
+  ".continue/**",
+  ".cursor/**",
+  ".gemini/**",
+  ".opencode/**",
+  ".pi/**",
+  ".roo/**",
+  ".windsurf/**",
+  "openspec/**",
+  "tools/oxlint/anti-slop/**",
+];
 
 export default defineConfig({
   lint: {
     ignorePatterns,
+    jsPlugins: [{ name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" }],
     options: {
       typeAware: true,
       typeCheck: true,
+    },
+    rules: {
+      "anti-slop/no-chained-type-assertions": "error",
+      "anti-slop/no-conditional-empty-object-spread": "error",
+      "anti-slop/no-known-value-widening": "error",
+      "anti-slop/no-module-mocking": "error",
+      "anti-slop/no-object-parameters": "error",
+      "anti-slop/no-reflect-apply": "error",
+      "anti-slop/no-reflect-get": "error",
+      "anti-slop/no-runtime-typeof": "error",
+      "anti-slop/no-shape-in-symbol-names": "error",
+      "anti-slop/no-unknown-parameters": "error",
+      "anti-slop/no-unknown-returns": "error",
+      "anti-slop/no-unknown-type-aliases": "error",
+      "anti-slop/no-unsafe-dictionary-type": "error",
+      "anti-slop/no-widen-then-assert": "error",
+      "anti-slop/require-safety-comment-for-type-assertion": "error",
     },
   },
   fmt: { ignorePatterns },

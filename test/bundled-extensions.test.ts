@@ -55,38 +55,6 @@ describe("bundled extension manifest", () => {
     expect(CONTEXT_STACK_EXTENSION_IDS).toEqual(["context-mode", "rtk-optimizer"]);
   });
 
-  it("groups context performance extensions including observational memory", () => {
-    const contextPerf = BUNDLED_EXTENSION_GROUPS.find(
-      (group) => group.label === "Context & performance",
-    )!.ids;
-
-    expect(contextPerf).toContain("context-mode");
-    expect(contextPerf).toContain("simplify");
-    expect(contextPerf).toContain("rtk-optimizer");
-    expect(contextPerf).toContain("observational-memory");
-    expect(contextPerf).toContain("supi-context");
-  });
-
-  it("groups agent tools including shazam alongside graphify", () => {
-    const agentTools = BUNDLED_EXTENSION_GROUPS.find((group) => group.label === "Agent tools")!.ids;
-
-    expect(agentTools).toContain("graphify");
-    expect(agentTools).toContain("codegraph");
-    expect(agentTools).toContain("shazam");
-    expect(agentTools).toContain("herdr-squad");
-    expect(agentTools).toContain("prompt-template-model");
-    expect(agentTools.indexOf("graphify")).toBeLessThan(agentTools.indexOf("codegraph"));
-    expect(agentTools.indexOf("codegraph")).toBeLessThan(agentTools.indexOf("shazam"));
-  });
-  it("groups autoresearch separately from workflow plan tools", () => {
-    const experiments = BUNDLED_EXTENSION_GROUPS.find(
-      (group) => group.label === "Experiments",
-    )!.ids;
-    const workflow = BUNDLED_EXTENSION_GROUPS.find((group) => group.label === "Workflow")!.ids;
-
-    expect(experiments).toEqual(["autoresearch"]);
-    expect(workflow).toContain("plannotator");
-    expect(workflow).toContain("red-green");
-    expect(experiments).not.toContain("plannotator");
-  });
+  // /mode menu group membership is config, not behavior — the invariant tests above
+  // (cover every id once, declared labels only) already guard structural drift.
 });

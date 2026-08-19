@@ -1,33 +1,35 @@
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { chmodSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 import {
   buildHotmilkRtkConfig,
   expectedRtkMode,
   seedRtkConfigIfMissing,
   syncRtkConfigForContextStack,
 } from "../src/bootstrap/context-stack.ts";
+import { parseJsonValue } from "../src/json.ts";
+import { makeTempDir } from "./fixtures/tmp.ts";
+
+type WrittenRtkConfig = {
+  mode: string;
+  outputCompaction: { readCompaction: { enabled: boolean } };
+};
+
+function readWrittenRtkConfig(configPath: string): WrittenRtkConfig {
+  // SAFETY: test wrote this file with WrittenRtkConfig shape.
+  return parseJsonValue(readFileSync(configPath, "utf8")) as WrittenRtkConfig;
+}
 
 describe("context-stack", () => {
-  const tempDirs: string[] = [];
-
-  afterEach(() => {
-    for (const dir of tempDirs.splice(0)) {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-
   it("maps context-mode toggle to suggest mode and rewrite when off", () => {
     expect(expectedRtkMode(true)).toBe("suggest");
     expect(expectedRtkMode(false)).toBe("rewrite");
-    expect((buildHotmilkRtkConfig(true) as { mode: string }).mode).toBe("suggest");
-    expect((buildHotmilkRtkConfig(false) as { mode: string }).mode).toBe("rewrite");
+    expect(buildHotmilkRtkConfig(true).mode).toBe("suggest");
+    expect(buildHotmilkRtkConfig(false).mode).toBe("rewrite");
   });
 
   it("seedRtkConfigIfMissing writes config once", () => {
-    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-"));
-    tempDirs.push(agentDir);
+    const agentDir = makeTempDir("hotmilk-rtk-");
     const configPath = join(agentDir, "config.json");
 
     const first = seedRtkConfigIfMissing(true, configPath);
@@ -36,17 +38,13 @@ describe("context-stack", () => {
     expect(first.seeded).toBe(true);
     expect(second.seeded).toBe(false);
 
-    const written = JSON.parse(readFileSync(configPath, "utf8")) as {
-      mode: string;
-      outputCompaction: { readCompaction: { enabled: boolean } };
-    };
+    const written = readWrittenRtkConfig(configPath);
     expect(written.mode).toBe("suggest");
     expect(written.outputCompaction.readCompaction.enabled).toBe(false);
   });
 
   it("syncRtkConfigForContextStack updates stale mode when context-mode is on", () => {
-    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-sync-"));
-    tempDirs.push(agentDir);
+    const agentDir = makeTempDir("hotmilk-rtk-sync-");
     const configPath = join(agentDir, "config.json");
 
     writeFileSync(
@@ -56,10 +54,7 @@ describe("context-stack", () => {
     );
 
     const result = syncRtkConfigForContextStack(true, true, configPath);
-    const written = JSON.parse(readFileSync(configPath, "utf8")) as {
-      mode: string;
-      outputCompaction: { readCompaction: { enabled: boolean } };
-    };
+    const written = readWrittenRtkConfig(configPath);
 
     expect(result.updated).toBe(true);
     expect(result.seeded).toBe(false);
@@ -68,8 +63,7 @@ describe("context-stack", () => {
   });
 
   it("syncRtkConfigForContextStack leaves rewrite mode when context-mode is off", () => {
-    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-off-"));
-    tempDirs.push(agentDir);
+    const agentDir = makeTempDir("hotmilk-rtk-off-");
     const configPath = join(agentDir, "config.json");
 
     writeFileSync(
@@ -79,10 +73,7 @@ describe("context-stack", () => {
     );
 
     const result = syncRtkConfigForContextStack(false, true, configPath);
-    const written = JSON.parse(readFileSync(configPath, "utf8")) as {
-      mode: string;
-      outputCompaction: { readCompaction: { enabled: boolean } };
-    };
+    const written = readWrittenRtkConfig(configPath);
 
     expect(result.updated).toBe(false);
     expect(result.seeded).toBe(false);
@@ -91,8 +82,7 @@ describe("context-stack", () => {
   });
 
   it("syncRtkConfigForContextStack no-ops when rtk toggle is off", () => {
-    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-disabled-"));
-    tempDirs.push(agentDir);
+    const agentDir = makeTempDir("hotmilk-rtk-disabled-");
     const configPath = join(agentDir, "config.json");
 
     writeFileSync(configPath, `${JSON.stringify({ mode: "rewrite" }, null, 2)}\n`, "utf8");
@@ -101,12 +91,11 @@ describe("context-stack", () => {
 
     expect(result.updated).toBe(false);
     expect(result.seeded).toBe(false);
-    expect(JSON.parse(readFileSync(configPath, "utf8"))).toEqual({ mode: "rewrite" });
+    expect(parseJsonValue(readFileSync(configPath, "utf8"))).toEqual({ mode: "rewrite" });
   });
 
   it("syncRtkConfigForContextStack reports error for corrupted JSON instead of throwing", () => {
-    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-corrupt-"));
-    tempDirs.push(agentDir);
+    const agentDir = makeTempDir("hotmilk-rtk-corrupt-");
     const configPath = join(agentDir, "config.json");
 
     writeFileSync(configPath, "not json", "utf8");
@@ -124,8 +113,7 @@ describe("context-stack", () => {
       return;
     }
 
-    const agentDir = mkdtempSync(join(tmpdir(), "hotmilk-rtk-ro-"));
-    tempDirs.push(agentDir);
+    const agentDir = makeTempDir("hotmilk-rtk-ro-");
     const configPath = join(agentDir, "nested", "config.json");
 
     chmodSync(agentDir, 0o555);

@@ -40,7 +40,7 @@ Inspired by [Armin Ronacher — _The Coming Loop_](https://lucumr.pocoo.org/2026
 | ----------- | ------------------------------------------------------------------------------------------------------------- |
 | Toggle      | `extensions.observational-memory: true` — if off, say compaction memory unavailable; do not fake `recall`     |
 | Extension   | `pi-observational-memory` loaded via `/reload` after `/mode`                                                  |
-| Pi version  | Targets Pi **0.74+** peers; hotmilk ships **0.80**                                                            |
+| Pi peers    | Must match hotmilk `peerDependencies` in `package.json` (run `/reload` after `/mode`)                         |
 | V3 upgrade  | V3 does **not** read V2 settings or memory — new clean session after upgrade                                  |
 | Model cost  | Observer/reflector agents may call a separate model — configure in extension settings; default off in hotmilk |
 

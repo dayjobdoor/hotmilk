@@ -2,7 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { applyContextStackOnSessionStart } from "./context-stack.ts";
 import { detectGlobalBundledExtensionSkips } from "./global-extension-sources.ts";
 import { seedAgentMcpJsonIfMissing } from "../config/mcp.ts";
-import { AGENT_HOTMILK_CONFIG_LABEL, seedHotmilkConfigIfMissing } from "../config/hotmilk.ts";
+import { hotmilkConfigDisplayPath, seedHotmilkConfigIfMissing } from "../config/hotmilk.ts";
 import type { HotmilkRuntime } from "../config/runtime.ts";
 import { setupHotmilkFooter } from "../ui/footer.ts";
 import {
@@ -10,11 +10,11 @@ import {
   KANAGAWA_FOOTER_WARNING,
   seedPersonaFromDefaults,
   shouldWarnCavemanJaConflict,
-  shouldWarnKanagawaFooter,
 } from "./defaults.ts";
 
 /** Message shown when hotmilk config is seeded. */
-const HOTMILK_SEEDED_MESSAGE = `Created ${AGENT_HOTMILK_CONFIG_LABEL} (toggle bundled extensions with /mode, then /reload).`;
+const HOTMILK_SEEDED_MESSAGE = (path: string): string =>
+  `Created ${path} (toggle bundled extensions with /mode, then /reload).`;
 /**
  * Format error message for hotmilk config parse failures.
  *
@@ -89,7 +89,7 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
 
     const hotmilkSeed = seedHotmilkConfigIfMissing();
     if (hotmilkSeed.seeded) {
-      uiNotify(HOTMILK_SEEDED_MESSAGE, "info");
+      uiNotify(HOTMILK_SEEDED_MESSAGE(hotmilkConfigDisplayPath()), "info");
     }
 
     if (runtime.configError) {
@@ -120,7 +120,7 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
       uiNotify(CAVEMAN_JA_CONFLICT_MESSAGE, "warning");
     }
 
-    if (shouldWarnKanagawaFooter(runtime.extensionToggles.kanagawa)) {
+    if (runtime.extensionToggles.kanagawa) {
       uiNotify(KANAGAWA_FOOTER_WARNING, "warning");
     }
 

@@ -16,6 +16,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { formatCaughtError, type JsonValue } from "../json.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
 
 /** Deep modules used by `/subagents-doctor` (not in pi-subagents package exports). */
@@ -37,7 +38,7 @@ type SharedTypesModule = {
 type DoctorModule = {
   buildDoctorReport: (input: {
     cwd: string;
-    config: unknown;
+    config: JsonValue;
     state: { baseCwd: string; currentSessionId: string | null };
     currentSessionFile: string | null;
     currentSessionId: string | null;
@@ -48,7 +49,7 @@ type DoctorModule = {
 };
 
 type ConfigModule = {
-  loadConfig: () => unknown;
+  loadConfig: () => JsonValue;
 };
 
 type IntercomModule = {
@@ -57,6 +58,7 @@ type IntercomModule = {
 
 /** pi-subagents creates async/results on init but not chain-runs until the first /chain. */
 async function ensureChainRunsDir(): Promise<void> {
+  // SAFETY: bundled specifier is a known pi-subagents module with this named export shape.
   const types = (await import(
     bundledImportUrl("pi-subagents/src/shared/types.ts")
   )) as SharedTypesModule;
@@ -84,8 +86,8 @@ function buildDirectDoctorReport(
   try {
     currentSessionFile = ctx.sessionManager.getSessionFile() ?? null;
     currentSessionId = ctx.sessionManager.getSessionId();
-  } catch (error) {
-    sessionError = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  } catch (cause) {
+    sessionError = formatCaughtError(cause);
   }
 
   let orchestratorTarget: string | undefined;
@@ -122,8 +124,11 @@ export async function registerSubagentsDoctorCommand(pi: ExtensionAPI): Promise<
   await ensureChainRunsDir();
 
   const [doctorMod, configMod, intercomMod] = await Promise.all([
+    // SAFETY: bundled specifier is a known pi-subagents module with this named export shape.
     import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.doctor)) as Promise<DoctorModule>,
+    // SAFETY: bundled specifier is a known pi-subagents module with this named export shape.
     import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.config)) as Promise<ConfigModule>,
+    // SAFETY: bundled specifier is a known pi-subagents module with this named export shape.
     import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.intercom)) as Promise<IntercomModule>,
   ]);
 

@@ -1,22 +1,13 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 import {
   bundledImportUrl,
   parseBundledModulePath,
   resolveBundledModule,
 } from "../src/bootstrap/resolve-bundled.ts";
-
-let tempDir: string | undefined;
-
-afterEach(() => {
-  if (tempDir) {
-    rmSync(tempDir, { recursive: true, force: true });
-    tempDir = undefined;
-  }
-});
+import { makeTempDir } from "./fixtures/tmp.ts";
 
 describe("parseBundledModulePath", () => {
   it("parses scoped package paths", () => {
@@ -59,7 +50,7 @@ describe("resolveBundledModule", () => {
   });
 
   it("resolves hoisted sibling packages next to hotmilk", () => {
-    tempDir = mkdtempSync(join(tmpdir(), "hotmilk-resolve-bundled-"));
+    const tempDir = makeTempDir("hotmilk-resolve-bundled-");
 
     const hotmilkRoot = join(tempDir, "node_modules", "hotmilk");
     const bootstrapDir = join(hotmilkRoot, "src", "bootstrap");

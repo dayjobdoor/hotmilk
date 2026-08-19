@@ -1,13 +1,17 @@
 import { getSettingsListTheme, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Container, SettingsList, Text, type SettingItem } from "@earendil-works/pi-tui";
-import { BUNDLED_EXTENSION_GROUPS } from "../config/bundled-extensions.ts";
+import { BUNDLED_EXTENSION_GROUPS, BUNDLED_EXTENSION_IDS } from "../config/bundled-extensions.ts";
 import {
-  AGENT_HOTMILK_CONFIG_LABEL,
+  hotmilkConfigDisplayPath,
   type BundledExtensionId,
   loadBundledExtensionToggles,
   loadHotmilkConfig,
   saveHotmilkConfig,
 } from "../config/hotmilk.ts";
+
+function isBundledExtensionId(id: string): id is BundledExtensionId {
+  return BUNDLED_EXTENSION_IDS.some((candidate) => candidate === id);
+}
 
 /**
  * Format toggle state as "on" or "off".
@@ -64,7 +68,7 @@ function notifyCurrentConfig(
   ctx: ExtensionContext,
   toggles: Record<BundledExtensionId, boolean>,
 ): void {
-  ctx.ui.notify(`${AGENT_HOTMILK_CONFIG_LABEL}\n${formatToggleRows(toggles)}`, "info");
+  ctx.ui.notify(`${hotmilkConfigDisplayPath()}\n${formatToggleRows(toggles)}`, "info");
 }
 
 /**
@@ -106,10 +110,12 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
         if (id.startsWith("_group:")) {
           return;
         }
-        const extensionId = id as BundledExtensionId;
+        if (!isBundledExtensionId(id)) {
+          return;
+        }
         const enabled = newValue === "on";
-        toggles[extensionId] = enabled;
-        saveExtensionToggle(ctx, extensionId, enabled);
+        toggles[id] = enabled;
+        saveExtensionToggle(ctx, id, enabled);
       },
       () => done(undefined),
       { enableSearch: true },
@@ -124,5 +130,5 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
   });
 
   notifyCurrentConfig(ctx, toggles);
-  ctx.ui.notify(`Updated ${AGENT_HOTMILK_CONFIG_LABEL} from /mode. Run /reload to apply.`, "info");
+  ctx.ui.notify(`Updated ${hotmilkConfigDisplayPath()} from /mode. Run /reload to apply.`, "info");
 }

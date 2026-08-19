@@ -8,8 +8,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { isJsonObject, isJsonString, parseJsonValue } from "../json.ts";
 
 const HOTMILK_MODULE_PREFIX = "hotmilk/";
+export type BundledModulePath = { pkgName: string; subpath: string };
 
 function findHotmilkPackageRoot(fromModuleUrl: string): string {
   let dir = dirname(fileURLToPath(fromModuleUrl));
@@ -18,8 +20,8 @@ function findHotmilkPackageRoot(fromModuleUrl: string): string {
     const pkgJsonPath = join(dir, "package.json");
     if (existsSync(pkgJsonPath)) {
       try {
-        const pkg = JSON.parse(readFileSync(pkgJsonPath, "utf8")) as { name?: string };
-        if (pkg.name === "hotmilk") {
+        const pkg = parseJsonValue(readFileSync(pkgJsonPath, "utf8"));
+        if (isJsonObject(pkg) && isJsonString(pkg.name) && pkg.name === "hotmilk") {
           return dir;
         }
       } catch {
@@ -44,7 +46,7 @@ function findHotmilkPackageRoot(fromModuleUrl: string): string {
  *
  * @param relativePath - specifier like `pkg/subpath` or `@scope/pkg/subpath`
  */
-export function parseBundledModulePath(relativePath: string): { pkgName: string; subpath: string } {
+export function parseBundledModulePath(relativePath: string): BundledModulePath {
   if (relativePath.startsWith(HOTMILK_MODULE_PREFIX)) {
     return {
       pkgName: "hotmilk",

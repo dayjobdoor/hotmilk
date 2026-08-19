@@ -5,13 +5,14 @@
  */
 
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import {
   detectGlobalProviderForBundledExtension,
   HOTMILK_PACKAGE_NAME,
 } from "../config/bundled-package-registry.ts";
 import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmilk.ts";
+import { isJsonObject, isJsonString, parseJsonValue, type JsonValue } from "../json.ts";
 
 const PI_PROJECT_CONFIG_DIR = ".pi";
 
@@ -39,8 +40,10 @@ function readPackageName(dir: string): string | null {
   try {
     const pkgPath = path.join(dir, "package.json");
     if (!fs.existsSync(pkgPath)) return null;
-    const parsed = JSON.parse(fs.readFileSync(pkgPath, "utf-8")) as { name?: unknown };
-    return typeof parsed.name === "string" ? parsed.name : null;
+    const parsed = parseJsonValue(fs.readFileSync(pkgPath, "utf-8"));
+    if (!isJsonObject(parsed)) return null;
+    const name = parsed.name;
+    return isJsonString(name) ? name : null;
   } catch {
     return null;
   }
@@ -97,10 +100,17 @@ export function parseNpmPackageName(entry: string): string | null {
   return versionAt === -1 ? spec : spec.slice(0, versionAt);
 }
 
-function toStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((entry): entry is string => typeof entry === "string")
-    : [];
+function toStringArray(value: JsonValue | undefined): string[] {
+  if (value === undefined || !Array.isArray(value)) {
+    return [];
+  }
+  const entries: string[] = [];
+  for (const entry of value) {
+    if (isJsonString(entry)) {
+      entries.push(entry);
+    }
+  }
+  return entries;
 }
 
 function readSettingsEntries(settingsPath: string): string[] {
@@ -111,11 +121,21 @@ function readSettingsEntries(settingsPath: string): string[] {
   try {
     const raw = fs.readFileSync(settingsPath, "utf-8").trim();
     if (!raw) return [];
-    const settings = JSON.parse(raw) as Record<string, unknown>;
-    return [...toStringArray(settings.packages), ...toStringArray(settings.extensions)];
+    const parsed = parseJsonValue(raw);
+    if (!isJsonObject(parsed)) {
+      return [];
+    }
+    return [...toStringArray(parsed.packages), ...toStringArray(parsed.extensions)];
   } catch {
     return [];
   }
+}
+
+function resolveGlobalAgentDir(options: CollectGlobalExtensionSourcesOptions): string {
+  if (options.homedir) {
+    return path.join(options.homedir, ".pi", "agent");
+  }
+  return getAgentDir();
 }
 
 /**
@@ -129,15 +149,15 @@ function readSettingsEntries(settingsPath: string): string[] {
 export function collectInstalledPackageNamesFromPiSettings(
   options: CollectGlobalExtensionSourcesOptions = {},
 ): Set<string> {
-  const home = options.homedir ?? process.env.HOME ?? process.env.USERPROFILE ?? os.homedir();
+  const agentDir = resolveGlobalAgentDir(options);
   const cwd = options.cwd ?? process.cwd();
   const includeProjectSettings = options.includeProjectSettings ?? true;
   const names = new Set<string>();
 
   const sources: Array<{ settingsPath: string; baseDir: string }> = [
     {
-      settingsPath: path.join(home, ".pi", "agent", "settings.json"),
-      baseDir: path.join(home, ".pi", "agent"),
+      settingsPath: path.join(agentDir, "settings.json"),
+      baseDir: agentDir,
     },
   ];
 

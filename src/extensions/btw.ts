@@ -10,6 +10,7 @@ import { bundledImportUrl } from "../bootstrap/resolve-bundled.ts";
 installHotmilkBtwSessionHook();
 
 const upstreamModule = await import(bundledImportUrl("pi-btw/extensions/btw.ts"));
+// SAFETY: pi-btw default export is the ExtensionFactory.
 const upstream = upstreamModule.default as ExtensionFactory;
 
 export default async function hotmilkBtw(pi: ExtensionAPI): Promise<void> {

@@ -14,7 +14,7 @@ export type BundledExtensionDefinition = {
   /** Path passed to `loadBundled()` / `bundledImportUrl()`. */
   readonly module: string;
   /** `/mode` section label — must appear in {@link BUNDLED_EXTENSION_GROUP_ORDER}. */
-  readonly group: string;
+  readonly group: BundledExtensionGroupLabel;
   readonly loadPhase?: BundledExtensionLoadPhase;
 };
 
@@ -71,12 +71,6 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     id: "graphify",
     package: { packageName: "graphify-pi" },
     module: "graphify-pi/extensions/graphify.ts",
-    group: "Agent tools",
-  },
-  {
-    id: "codegraph",
-    package: { packageName: "@isac322/pi-codegraph" },
-    module: "@isac322/pi-codegraph/dist/extensions/pi.js",
     group: "Agent tools",
   },
   {
@@ -147,12 +141,6 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Context & performance",
   },
   {
-    id: "supi-context",
-    package: { packageName: "@mrclrchtr/supi-context" },
-    module: "@mrclrchtr/supi-context/src/extension.ts",
-    group: "Context & performance",
-  },
-  {
     id: "mcp-adapter",
     package: { packageName: "pi-mcp-adapter" },
     module: "pi-mcp-adapter/index.ts",
@@ -171,9 +159,21 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Workflow",
   },
   {
+    id: "openspec-pi",
+    package: { packageName: "openspec-pi" },
+    module: "openspec-pi/extensions/openspec.ts",
+    group: "Workflow",
+  },
+  {
     id: "caveman",
     package: { packageName: "pi-caveman" },
     module: "pi-caveman/extensions/caveman.ts",
+    group: "Output",
+  },
+  {
+    id: "ponytail",
+    package: { packageName: "@dietrichgebert/ponytail" },
+    module: "@dietrichgebert/ponytail/pi-extension/index.js",
     group: "Output",
   },
   {
@@ -208,7 +208,11 @@ export const BUNDLED_EXTENSION_IDS: BundledExtensionId[] = BUNDLED_EXTENSION_DEF
   (definition) => definition.id,
 );
 
+/** Complete on/off map for every bundled extension id. */
+export type ExtensionToggleMap = { [K in BundledExtensionId]: boolean };
+
 export const BUNDLED_EXTENSION_PACKAGES: Record<BundledExtensionId, BundledPackageSpec> =
+  // SAFETY: every BundledExtensionId is present because we map BUNDLED_EXTENSION_DEFINITIONS.
   Object.fromEntries(
     BUNDLED_EXTENSION_DEFINITIONS.map((definition) => [definition.id, definition.package]),
   ) as Record<BundledExtensionId, BundledPackageSpec>;
@@ -229,7 +233,7 @@ export function buildBundledExtensionGroups(): BundledExtensionGroup[] {
   }
 
   for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
-    const group = definition.group as BundledExtensionGroupLabel;
+    const group = definition.group;
     if (!idsByGroup.has(group)) {
       throw new Error(
         `Bundled extension ${definition.id} uses unknown group "${definition.group}" — add it to BUNDLED_EXTENSION_GROUP_ORDER`,

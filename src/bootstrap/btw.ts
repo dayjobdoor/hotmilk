@@ -14,13 +14,13 @@ import * as piSdk from "@earendil-works/pi-coding-agent";
 import {
   createExtensionRuntime,
   defineTool,
-  type AgentToolResult,
   type CreateAgentSessionOptions,
   type ExtensionAPI,
   type ResourceLoader,
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import type { BundledExtensionId } from "../config/bundled-extensions.ts";
+import { formatCaughtError } from "../json.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
 
 // --- Session config (injected before btw extension loads) ---
@@ -201,10 +201,7 @@ export function adaptBtwResourceLoaderForHotmilk(
 type MainCtxSearchTool = {
   description: string;
   parameters: ToolDefinition["parameters"];
-  execute: (
-    toolCallId: string,
-    params: Record<string, unknown>,
-  ) => Promise<AgentToolResult<unknown>>;
+  execute: ToolDefinition["execute"];
 };
 
 let mainCtxSearchTool: MainCtxSearchTool | null = null;
@@ -224,8 +221,7 @@ export function captureMainCtxSearchTool(tool: {
   mainCtxSearchTool = {
     description: tool.description,
     parameters: tool.parameters,
-    execute: (toolCallId, params) =>
-      tool.execute(toolCallId, params as never, undefined, undefined, undefined as never),
+    execute: tool.execute,
   };
 }
 
@@ -322,7 +318,7 @@ function createCtxSearchProxyTool(mainTool: MainCtxSearchTool | null): ToolDefin
       mainTool?.description ??
       "Search the main session knowledge base (read-only proxy). Batch related questions in queries: [...].",
     parameters: mainTool?.parameters ?? CTX_SEARCH_FALLBACK_PARAMS,
-    execute: async (toolCallId, params) => {
+    execute: async (toolCallId, params, signal, onUpdate, ctx) => {
       const main = await resolveMainCtxSearchTool();
       if (!main) {
         return {
@@ -337,7 +333,7 @@ function createCtxSearchProxyTool(mainTool: MainCtxSearchTool | null): ToolDefin
           details: { ok: false as const },
         };
       }
-      return main.execute(toolCallId, params as Record<string, unknown>);
+      return main.execute(toolCallId, params, signal, onUpdate, ctx);
     },
   });
 }
@@ -388,8 +384,8 @@ export function createHotmilkBtwCustomTools(config: HotmilkBtwConfig): ToolDefin
           content: [{ type: "text", text: output.trim() || "(graphify returned no output)" }],
           details: { question: params.question, ok: true as const },
         };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+      } catch (cause) {
+        const message = formatCaughtError(cause);
         return {
           content: [
             {
@@ -445,5 +441,6 @@ export function installHotmilkBtwSessionHook(): void {
     const resolved = options ? patchHotmilkBtwSessionOptions(options) : options;
     return original(resolved);
   };
+  // SAFETY: createAgentSession is a mutable export we wrap once at process start.
   (piSdk as { createAgentSession: typeof patched }).createAgentSession = patched;
 }

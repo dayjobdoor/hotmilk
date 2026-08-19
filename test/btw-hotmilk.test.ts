@@ -11,20 +11,22 @@ import {
   type HotmilkBtwConfig,
 } from "../src/bootstrap/btw.ts";
 import type { BundledExtensionId } from "../src/config/bundled-extensions.ts";
-import { createExtensionRuntime, type ResourceLoader } from "@earendil-works/pi-coding-agent";
+import { BUNDLED_EXTENSION_IDS } from "../src/config/hotmilk.ts";
+import { createExtensionRuntime } from "@earendil-works/pi-coding-agent";
+import type { ResourceLoader } from "@earendil-works/pi-coding-agent";
+import type { JsonObject } from "../src/json.ts";
 
 function hotmilkBtwConfig(
   overrides: Partial<Record<BundledExtensionId, boolean>> = {},
 ): HotmilkBtwConfig {
-  const base = Object.fromEntries(
-    (["btw", "subagents", "graphify", "gentle-ai"] as BundledExtensionId[]).map((id) => [
-      id,
-      false,
-    ]),
-  ) as Record<BundledExtensionId, boolean>;
+  // SAFETY: test fixture starts every bundled id at false.
+  const extensionToggles = {} as Record<BundledExtensionId, boolean>;
+  for (const id of BUNDLED_EXTENSION_IDS) {
+    extensionToggles[id] = false;
+  }
   return {
     extensionToggles: {
-      ...base,
+      ...extensionToggles,
       btw: true,
       subagents: true,
       graphify: true,
@@ -94,6 +96,7 @@ describe("hotmilk btw prompt", () => {
       "You are having an aside conversation with the user, separate from their main working session.",
     ]);
     const upstreamExtensions = loader.getExtensions();
+    // SAFETY: test fixture injects an invalid value to prove fallback.
     upstreamExtensions.extensions.push({ id: "context-mode" } as never);
 
     const adapted = adaptBtwResourceLoaderForHotmilk(loader, hotmilkBtwConfig());
@@ -148,26 +151,32 @@ describe("hotmilk btw tools", () => {
     const [proxy] = createHotmilkBtwCustomTools(
       hotmilkBtwConfig({ "context-mode": true, graphify: false }),
     );
-    const result = await proxy.execute("call-1", { queries: ["decision"] }, undefined, undefined, {
-      cwd: process.cwd(),
-    } as never);
+    const result = await proxy.execute(
+      "call-1",
+      { queries: ["decision"] },
+      undefined,
+      undefined,
+      // SAFETY: test double implements only the cwd field used by execute.
+      { cwd: process.cwd() } as never,
+    );
 
     expect(result.content[0]).toMatchObject({ type: "text", text: "indexed hit" });
   });
 
   it("installHotmilkCtxSearchCapture stores ctx_search from registerTool", () => {
-    resetMainCtxSearchCaptureForTests();
+    type CapturedTool = {
+      name: string;
+      description?: string;
+      parameters?: JsonObject;
+      execute?: () => Promise<JsonObject>;
+    };
     const registered: string[] = [];
     const pi = {
-      registerTool: (tool: {
-        name: string;
-        description?: string;
-        parameters?: unknown;
-        execute?: () => Promise<unknown>;
-      }) => {
+      registerTool: (tool: CapturedTool) => {
         registered.push(tool.name);
       },
     };
+    // SAFETY: test double implements only registerTool.
     installHotmilkCtxSearchCapture(pi as never);
     pi.registerTool({
       name: "ctx_search",

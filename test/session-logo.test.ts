@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
-import { centerAsciiLines, shouldShowSessionLogo } from "../src/ui/session-logo.ts";
+import { centerAsciiLines, HOTMILK_LOGO, shouldShowSessionLogo } from "../src/ui/session-logo.ts";
 
 describe("session logo", () => {
-  it("centers the figlet banner within the terminal width", () => {
+  it("centers the shipped banner within the terminal width", () => {
     const width = 80;
-    const raw = [
-      " _        _         _ _ _   ",
-      "| |_  ___| |_ _ __ (_) | |__",
-      "  ' \\/ _ \\  _| '  \\| | | / /",
-    ];
+    const raw = HOTMILK_LOGO.split("\n");
     const lines = centerAsciiLines(raw, width);
 
-    expect(lines.length).toBe(3);
+    expect(lines.length).toBe(raw.length);
     for (const line of lines) {
       expect(line.length).toBeLessThanOrEqual(width);
     }
@@ -19,11 +15,18 @@ describe("session logo", () => {
     expect(lines[0]?.slice(0, expectedPad)).toBe(" ".repeat(expectedPad));
   });
 
-  it("shows splash on startup, new, and resume; skips reload only", () => {
-    expect(shouldShowSessionLogo("startup")).toBe(true);
-    expect(shouldShowSessionLogo("new")).toBe(true);
-    expect(shouldShowSessionLogo("resume")).toBe(true);
-    expect(shouldShowSessionLogo("fork")).toBe(true);
+  it("pads nothing when the terminal is narrower than the banner", () => {
+    const raw = HOTMILK_LOGO.split("\n");
+    const maxWidth = Math.max(...raw.map((l) => l.length));
+    const lines = centerAsciiLines(raw, maxWidth - 2);
+
+    expect(lines).toEqual(raw.map((line) => line.padEnd(maxWidth)));
+  });
+
+  it("shows the splash on every session start except reload", () => {
+    for (const reason of ["startup", "new", "resume", "fork"]) {
+      expect(shouldShowSessionLogo(reason)).toBe(true);
+    }
     expect(shouldShowSessionLogo("reload")).toBe(false);
   });
 });

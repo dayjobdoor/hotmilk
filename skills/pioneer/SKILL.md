@@ -34,21 +34,23 @@ Single orchestration skill for **hotmilk** planning and execution.
 
 ## Runtime
 
-hotmilk bundles **gentle-ai**, **graphify**, **pi-goal**, **pi-subagents**. Toggle via `/mode` + `/reload`. Verify commands: **`AGENTS.md`** (`bun test`, `bun run check`).
+hotmilk bundles **gentle-ai**, **graphify**, **pi-goal**, **pi-subagents**. Toggle via `/mode` + `/reload`. Verify commands: **`AGENTS.md`** (`bun run test`, `bun run check`).
 
-| Toggle                            | Pioneer note                                                                                 |
-| --------------------------------- | -------------------------------------------------------------------------------------------- |
-| `extensions.graphify`             | Phase 0; `graphify-out/` when built — off → graph-recon-gate fallback                        |
-| `extensions.shazam`               | Phase 4 impact/verify (`shazam_*`); default off; complements graphify — not recon substitute |
-| `extensions.goal`                 | Phase 1; `/goal`, `get_goal`, `update_goal`                                                  |
-| `extensions.gentle-ai`            | OpenSpec path; off → Chat Plan + direct execute only                                         |
-| `extensions.plannotator`          | Phase 3 approval gate; `/plannotator`, `--plan`; off → Chat Plan or OpenSpec                 |
-| `extensions.planning-with-files`  | On-disk `task_plan` / `findings` / `progress`; off → skip file-memory path                   |
-| `extensions.autoresearch`         | Optimize loop (`/autoresearch`, `.auto/`); off → one-shot Chat Plan + benchmark in `verify:` |
-| `extensions.context-mode`         | Prefer `ctx_*` for large outputs; pairs with observational-memory for long sessions          |
-| `extensions.observational-memory` | Compaction continuity (observations/reflections); default off; not plan authority            |
-| `extensions.rtk-optimizer`        | Bash/read output compaction with context-mode                                                |
-| `extensions.subagents`            | Phase 4 delegation; off → inline execute                                                     |
+| Toggle                            | Pioneer note                                                                                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `extensions.graphify`             | Phase 0; `graphify-out/` when built — off → graph-recon-gate fallback                              |
+| `extensions.shazam`               | Phase 4 impact/verify (`shazam_*`); default off; complements graphify — not recon substitute       |
+| `extensions.goal`                 | Phase 1; `/goal`, `get_goal`, `update_goal`                                                        |
+| `extensions.gentle-ai`            | OpenSpec path; off → Chat Plan + direct execute only                                               |
+| `extensions.openspec-pi`          | Official `/opsx-*` skills/prompts (default off); complements gentle-ai SDD, not a second plan path |
+| `extensions.ponytail`             | Lazy-senior output bias (default off); not a plan path                                             |
+| `extensions.plannotator`          | Phase 3 approval gate; `/plannotator`, `--plan`; off → Chat Plan or OpenSpec                       |
+| `extensions.planning-with-files`  | On-disk `task_plan` / `findings` / `progress`; off → skip file-memory path                         |
+| `extensions.autoresearch`         | Optimize loop (`/autoresearch`, `.auto/`); off → one-shot Chat Plan + benchmark in `verify:`       |
+| `extensions.context-mode`         | Prefer `ctx_*` for large outputs; pairs with observational-memory for long sessions                |
+| `extensions.observational-memory` | Compaction continuity (observations/reflections); default off; not plan authority                  |
+| `extensions.rtk-optimizer`        | Bash/read output compaction with context-mode                                                      |
+| `extensions.subagents`            | Phase 4 delegation; off → inline execute                                                           |
 
 **Skill dependencies** (`/skill:graphify`, `/skill:grill-with-docs`, `/skill:tdd`, `/skill:gentle-ai`) may live in bundled packages or global Pi config.
 
@@ -60,7 +62,7 @@ When a `/skill:*` path is missing, resolve in order — stop at first hit. Annou
 | ---- | ------------------- | ------------------------------------------------------------------------- |
 | 1    | Hotmilk first-party | Search `./skills/*/SKILL.md` for the same skill name                      |
 | 2    | Bundled package     | Search `node_modules/*/skills/` and `.pi/skills/` for the same skill name |
-| 3    | Global Pi config    | `~/.pi/agent/skills/`, `~/.claude/skills/`, `~/.agents/skills/`           |
+| 3    | Global Pi config    | `$PI_CODING_AGENT_DIR/skills/`, `~/.claude/skills/`, `~/.agents/skills/`           |
 | 4    | Project fallback    | `AGENTS.md` commands only; say which `/skill:*` was unavailable           |
 
 Path-specific fallbacks when step 4 hits:
