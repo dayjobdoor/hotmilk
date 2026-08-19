@@ -112,8 +112,20 @@ describe("third-party risk (hotmilk meta-package)", () => {
     expect(semverAtLeast(version, PI_TOP_FLOOR)).toBe(true);
   });
 
-  it("declares Pi 0.84 peers on hotmilk itself", () => {
+  it("declares permissive Pi peers and pins 0.84 in overrides", () => {
     for (const [name, range] of Object.entries(PACKAGE_JSON.peerDependencies ?? {})) {
+      if (name.startsWith("@earendil-works/")) {
+        expect(range).toBe("*");
+      }
+    }
+
+    for (const [name, range] of Object.entries(PACKAGE_JSON.overrides ?? {})) {
+      if (name.startsWith("@earendil-works/")) {
+        expect(range).toMatch(PI_PEER_TARGET);
+      }
+    }
+
+    for (const [name, range] of Object.entries(PACKAGE_JSON.devDependencies ?? {})) {
       if (name.startsWith("@earendil-works/")) {
         expect(range).toMatch(PI_PEER_TARGET);
       }

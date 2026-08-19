@@ -13,7 +13,9 @@ export type HotmilkJsonTemplate = {
 
 export type PackageJsonManifest = {
   dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
+  overrides?: Record<string, string>;
   pi?: {
     extensions?: string[];
     prompts?: string[];
