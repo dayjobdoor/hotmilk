@@ -17,10 +17,10 @@ sequenceDiagram
   Index->>Index: project_trust handler
   Index->>Index: session logo + ctx_search capture
   Index->>Index: prepareContextStack
-  Index->>Ext: enabled toggles
+  Ext->>Ext: enabled toggles
   Note over Ext: includeProjectSettings false — global settings only at startup
+  Ext->>Ext: prepare BTW hook/config when enabled
   Ext->>Ext: context-stack sequential
-  Ext->>Ext: btw (after context-stack)
   Ext->>Ext: remaining enabled ids in parallel
   Index->>Index: /subagents-doctor if subagents on
   Index->>Index: graph, defaults, session, input commands
@@ -28,17 +28,17 @@ sequenceDiagram
 
 ## Extension load order
 
-`loadPhase: "context-stack"` is only on `context-mode` and `rtk-optimizer` (definition order: context-mode first). Disabled stack ids are skipped. `btw` loads after the stack so `setHotmilkBtwConfig` runs first. Everything else enabled loads with `Promise.all`.
+`loadPhase: "context-stack"` is only on `context-mode` and `rtk-optimizer` (definition order: context-mode first). When BTW is enabled, hotmilk prepares its session hook and toggle config before registry loading; `pi-btw/extensions/btw.ts` then loads through the same registry path as every other bundle. Context-stack ids load sequentially; all remaining enabled ids load with `Promise.all`.
 
 ```mermaid
 flowchart TD
-  enabled[Enabled ids minus global skips] --> stack["context-stack sequential"]
+  enabled[Enabled ids minus global skips] --> prep{"btw enabled?"}
+  prep -->|yes| hook["prepare hotmilk BTW hook/config"]
+  prep -->|no| stack
+  hook --> stack["context-stack sequential"]
   stack --> cm["context-mode if enabled"]
   cm --> rtk["rtk-optimizer if enabled"]
-  rtk --> btw{"btw enabled?"}
-  btw -->|yes| btwLoad["setHotmilkBtwConfig then load btw"]
-  btw -->|no| parallel
-  btwLoad --> parallel["remaining enabled ids in parallel"]
+  rtk --> parallel["remaining enabled ids in parallel"]
 ```
 
 ## Config surfaces

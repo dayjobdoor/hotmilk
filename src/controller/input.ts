@@ -72,7 +72,7 @@ export function registerInputCommands(pi: ExtensionAPI): void {
   });
 
   pi.registerCommand("mode", {
-    description: "Open mode selection modal for bundled extension toggles.",
+    description: "Open mode selection modal for persona and bundled extension toggles.",
     handler: async (_args, ctx) => {
       await openModeSettingsModal(ctx);
     },

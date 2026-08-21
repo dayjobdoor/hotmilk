@@ -25,7 +25,7 @@ Single orchestration skill for **hotmilk** planning and execution.
 | ------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
 | **Graph**     | `/skill:graphify`                                                              | Codebase map before broad search                              |
 | **Structure** | pi-shazam (bundled, default off)                                               | Impact / verify during execute — not graph replacement        |
-| **Goal**      | pi-goal (bundled, default off)                                                              | Multi-turn objective (optional)                               |
+| **Goal**      | pi-goal (bundled, default off)                                                 | Multi-turn objective (optional)                               |
 | **Grill**     | `/skill:grill-with-docs`                                                       | One question, CONTEXT/ADR, recommended answers                |
 | **Plan**      | chat `Plan:` **or** Plannotator **or** planning-with-files **or** OpenSpec SDD | Light chat; approval gate; file memory; substantial spec work |
 | **Execute**   | **`/skill:gentle-ai`** + subagents                                             | Implement, verify; SDD phases when active                     |
@@ -36,20 +36,20 @@ Single orchestration skill for **hotmilk** planning and execution.
 
 hotmilk bundles **graphify**, **gentle-ai** (default off), **pi-goal** (default off), **pi-subagents** (default off). Toggle via `/mode` + `/reload`. Verify commands: **`AGENTS.md`** (`bun run test`, `bun run check`).
 
-| Toggle                            | Pioneer note                                                                                       |
-| --------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `extensions.graphify`             | Phase 0; `graphify-out/` when built — off → graph-recon-gate fallback                              |
-| `extensions.shazam`               | Phase 4 impact/verify (`shazam_*`); default off; complements graphify — not recon substitute       |
-| `extensions.goal`                 | Phase 1; `/goal`, `get_goal`, `update_goal`                                                        |
-| `extensions.gentle-ai`            | OpenSpec path; off → Chat Plan + direct execute only                                               |
-| `extensions.ponytail`             | Lazy-senior output bias (default off); not a plan path                                             |
-| `extensions.plannotator`          | Phase 3 approval gate; `/plannotator`, `--plan`; off → Chat Plan or OpenSpec                       |
-| `extensions.planning-with-files`  | On-disk `task_plan` / `findings` / `progress`; off → skip file-memory path                         |
-| `extensions.autoresearch`         | Optimize loop (`/autoresearch`, `.auto/`); off → one-shot Chat Plan + benchmark in `verify:`       |
-| `extensions.context-mode`         | Prefer `ctx_*` for large outputs; pairs with observational-memory for long sessions                |
-| `extensions.observational-memory` | Compaction continuity (observations/reflections); default off; not plan authority                  |
-| `extensions.rtk-optimizer`        | Bash/read output compaction with context-mode                                                      |
-| `extensions.subagents`            | Phase 4 delegation; off → inline execute                                                           |
+| Toggle                            | Pioneer note                                                                                 |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `extensions.graphify`             | Phase 0; `graphify-out/` when built — off → graph-recon-gate fallback                        |
+| `extensions.shazam`               | Phase 4 impact/verify (`shazam_*`); default off; complements graphify — not recon substitute |
+| `extensions.goal`                 | Phase 1; `/goal`, `get_goal`, `update_goal`                                                  |
+| `extensions.gentle-ai`            | OpenSpec path; off → Chat Plan + direct execute only                                         |
+| `extensions.ponytail`             | Lazy-senior output bias (default off); not a plan path                                       |
+| `extensions.plannotator`          | Phase 3 approval gate; `/plannotator`, `--plan`; off → Chat Plan or OpenSpec                 |
+| `extensions.planning-with-files`  | On-disk `task_plan` / `findings` / `progress`; off → skip file-memory path                   |
+| `extensions.autoresearch`         | Optimize loop (`/autoresearch`, `.auto/`); off → one-shot Chat Plan + benchmark in `verify:` |
+| `extensions.context-mode`         | Prefer `ctx_*` for large outputs; pairs with observational-memory for long sessions          |
+| `extensions.observational-memory` | Compaction continuity (observations/reflections); default off; not plan authority            |
+| `extensions.rtk-optimizer`        | Bash/read output compaction with context-mode                                                |
+| `extensions.subagents`            | Phase 4 delegation; off → inline execute                                                     |
 
 **Skill dependencies** (`/skill:graphify`, `/skill:grill-with-docs`, `/skill:tdd`, `/skill:gentle-ai`) may live in bundled packages or global Pi config.
 
@@ -61,7 +61,7 @@ When a `/skill:*` path is missing, resolve in order — stop at first hit. Annou
 | ---- | ------------------- | ------------------------------------------------------------------------- |
 | 1    | Hotmilk first-party | Search `./skills/*/SKILL.md` for the same skill name                      |
 | 2    | Bundled package     | Search `node_modules/*/skills/` and `.pi/skills/` for the same skill name |
-| 3    | Global Pi config    | `$PI_CODING_AGENT_DIR/skills/`, `~/.claude/skills/`, `~/.agents/skills/`           |
+| 3    | Global Pi config    | `$PI_CODING_AGENT_DIR/skills/`, `~/.claude/skills/`, `~/.agents/skills/`  |
 | 4    | Project fallback    | `AGENTS.md` commands only; say which `/skill:*` was unavailable           |
 
 Path-specific fallbacks when step 4 hits:

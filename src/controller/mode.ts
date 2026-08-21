@@ -3,11 +3,19 @@ import { Container, SettingsList, Text, type SettingItem } from "@earendil-works
 import { BUNDLED_EXTENSION_GROUPS, BUNDLED_EXTENSION_IDS } from "../config/bundled-extensions.ts";
 import {
   hotmilkConfigDisplayPath,
+  isPersonaMode,
+  PERSONA_MODES,
+  resolveDefaults,
   type BundledExtensionId,
+  type HotmilkConfig,
+  type PersonaMode,
   loadBundledExtensionToggles,
   loadHotmilkConfig,
   saveHotmilkConfig,
 } from "../config/hotmilk.ts";
+
+/** SettingsList id for `defaults.persona`. */
+export const PERSONA_SETTING_ID = "defaults.persona";
 
 function isBundledExtensionId(id: string): id is BundledExtensionId {
   return BUNDLED_EXTENSION_IDS.some((candidate) => candidate === id);
@@ -29,33 +37,48 @@ function formatToggleState(enabled: boolean): "on" | "off" {
  * @param toggles - extension toggle states
  * @returns formatted toggle rows
  */
-function formatToggleRows(toggles: Record<BundledExtensionId, boolean>): string {
-  return BUNDLED_EXTENSION_GROUPS.map((group) => {
+function formatToggleRows(
+  toggles: Record<BundledExtensionId, boolean>,
+  persona: PersonaMode,
+): string {
+  const extensionRows = BUNDLED_EXTENSION_GROUPS.map((group) => {
     const rows = group.ids.map((id) => `  ${id}: ${formatToggleState(toggles[id])}`);
     return `${group.label}\n${rows.join("\n")}`;
   }).join("\n\n");
+  return `Defaults\n  persona: ${persona}\n\n${extensionRows}`;
 }
 
-/**
- * Create setting items for the mode settings modal.
- *
- * @param toggles - extension toggle states
- * @returns setting items
- */
-function createModeSettingItems(toggles: Record<BundledExtensionId, boolean>): SettingItem[] {
-  return BUNDLED_EXTENSION_GROUPS.flatMap((group) => [
+/** Build `/mode` rows: persona first, then bundled extension toggles. */
+export function createModeSettingItems(
+  toggles: Record<BundledExtensionId, boolean>,
+  persona: PersonaMode,
+): SettingItem[] {
+  return [
     {
-      id: `_group:${group.label}`,
-      label: group.label,
+      id: "_group:Defaults",
+      label: "Defaults",
       currentValue: "",
     },
-    ...group.ids.map((id) => ({
-      id,
-      label: `  ${id}`,
-      currentValue: formatToggleState(toggles[id]),
-      values: ["on", "off"],
-    })),
-  ]);
+    {
+      id: PERSONA_SETTING_ID,
+      label: "  persona",
+      currentValue: persona,
+      values: [...PERSONA_MODES],
+    },
+    ...BUNDLED_EXTENSION_GROUPS.flatMap((group) => [
+      {
+        id: `_group:${group.label}`,
+        label: group.label,
+        currentValue: "",
+      },
+      ...group.ids.map((id) => ({
+        id,
+        label: `  ${id}`,
+        currentValue: formatToggleState(toggles[id]),
+        values: ["on", "off"],
+      })),
+    ]),
+  ];
 }
 
 /**
@@ -67,36 +90,43 @@ function createModeSettingItems(toggles: Record<BundledExtensionId, boolean>): S
 function notifyCurrentConfig(
   ctx: ExtensionContext,
   toggles: Record<BundledExtensionId, boolean>,
+  persona: PersonaMode,
 ): void {
-  ctx.ui.notify(`${hotmilkConfigDisplayPath()}\n${formatToggleRows(toggles)}`, "info");
+  ctx.ui.notify(`${hotmilkConfigDisplayPath()}\n${formatToggleRows(toggles, persona)}`, "info");
 }
 
-/**
- * Save extension toggle state to config.
- *
- * @param ctx - extension context
- * @param extensionId - extension ID
- * @param enabled - toggle state
- */
+function saveConfigPatch(ctx: ExtensionContext, patch: HotmilkConfig): void {
+  const saved = saveHotmilkConfig(patch);
+  if (saved.error) {
+    ctx.ui.notify(`Failed to write ${saved.path}: ${saved.error}`, "error");
+  }
+}
+
 function saveExtensionToggle(
   ctx: ExtensionContext,
   extensionId: BundledExtensionId,
   enabled: boolean,
 ): void {
   const { config } = loadHotmilkConfig();
-  const saved = saveHotmilkConfig({
+  saveConfigPatch(ctx, {
     ...config,
     extensions: { ...config.extensions, [extensionId]: enabled },
   });
-  if (saved.error) {
-    ctx.ui.notify(`Failed to write ${saved.path}: ${saved.error}`, "error");
-  }
+}
+
+function savePersona(ctx: ExtensionContext, persona: PersonaMode): void {
+  const { config } = loadHotmilkConfig();
+  saveConfigPatch(ctx, {
+    ...config,
+    defaults: { ...config.defaults, persona },
+  });
 }
 
 /** Open the interactive TUI modal for toggling bundled extensions. */
 export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void> {
   const toggles = loadBundledExtensionToggles();
-  const items = createModeSettingItems(toggles);
+  let persona = resolveDefaults(loadHotmilkConfig().config).persona;
+  const items = createModeSettingItems(toggles, persona);
 
   await ctx.ui.custom((_tui, theme, _kb, done) => {
     const container = new Container();
@@ -108,6 +138,14 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
       getSettingsListTheme(),
       (id, newValue) => {
         if (id.startsWith("_group:")) {
+          return;
+        }
+        if (id === PERSONA_SETTING_ID) {
+          if (!isPersonaMode(newValue)) {
+            return;
+          }
+          persona = newValue;
+          savePersona(ctx, newValue);
           return;
         }
         if (!isBundledExtensionId(id)) {
@@ -129,6 +167,6 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
     };
   });
 
-  notifyCurrentConfig(ctx, toggles);
+  notifyCurrentConfig(ctx, toggles, persona);
   ctx.ui.notify(`Updated ${hotmilkConfigDisplayPath()} from /mode. Run /reload to apply.`, "info");
 }

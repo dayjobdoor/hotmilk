@@ -2,20 +2,24 @@
   "extensions": {
     "skill-registry": true,
     "sdd-init": true,
-    "gentle-ai": false,
+    "gentle-ai": true,
     "context-mode": true,
     "ask-user": true,
+    "todo": true,
     "graphify": true,
     "shazam": false,
-    "subagents": false,
+    "subagents": true,
     "herdr-squad": false,
+    "lens": true,
     "goal": false,
     "docparser": true,
     "obsidian": true,
     "btw": true,
+    "intercom": true,
     "simplify": true,
     "rtk-optimizer": false,
     "observational-memory": false,
+    "engram": true,
     "mcp-adapter": true,
     "planning-with-files": false,
     "plannotator": true,
@@ -33,7 +37,7 @@
     "autoSuggestUpdate": true
   },
   "defaults": {
-    "persona": "gentleman"
+    "persona": "neutral"
   },
   "mcp": {
     "seedOnStart": false

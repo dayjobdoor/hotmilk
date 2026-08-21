@@ -9,7 +9,7 @@ import {
 } from "./global-extension-sources.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
 import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmilk.ts";
-import { formatCaughtError } from "../json.ts";
+import { formatCaughtError } from "./json.ts";
 
 type ExtensionFactory = (pi: ExtensionAPI) => void | Promise<void>;
 
@@ -38,7 +38,9 @@ async function registerOne(pi: ExtensionAPI, id: BundledExtensionId): Promise<vo
     }
   } catch (cause) {
     const detail = formatCaughtError(cause);
-    console.warn(`[hotmilk] Failed to load bundled extension "${id}": ${detail}`);
+    const message = `[hotmilk] Failed to load bundled extension "${id}": ${detail}`;
+    console.error(message);
+    throw new Error(message);
   }
 }
 
@@ -82,18 +84,18 @@ export async function registerBundledExtensions(
     enabledIds.add(id);
   }
 
+  // Keep BTW internals lazy when its toggle is off; prepare before registry import when on.
+  if (enabledIds.has("btw")) {
+    const { installHotmilkBtwSessionHook, setHotmilkBtwConfig } = await import("./btw.ts");
+    installHotmilkBtwSessionHook();
+    setHotmilkBtwConfig({ extensionToggles: enabled });
+  }
+
   for (const id of CONTEXT_STACK_EXTENSION_IDS) {
     if (enabledIds.has(id)) {
       await registerOne(pi, id);
       enabledIds.delete(id);
     }
-  }
-
-  if (enabledIds.has("btw")) {
-    const { setHotmilkBtwConfig } = await import("./btw.ts");
-    setHotmilkBtwConfig({ extensionToggles: enabled });
-    await registerOne(pi, "btw");
-    enabledIds.delete("btw");
   }
 
   await Promise.all([...enabledIds].map((id) => registerOne(pi, id)));

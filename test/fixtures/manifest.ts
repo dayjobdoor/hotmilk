@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { coerce, gte, minVersion } from "semver";
-import { parseJsonValue } from "../../src/json.ts";
+import { parseJsonValue } from "../../src/bootstrap/json.ts";
 
 export type HotmilkJsonTemplate = {
   extensions: Record<string, boolean>;

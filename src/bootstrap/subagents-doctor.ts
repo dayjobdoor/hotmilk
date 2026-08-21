@@ -1,151 +1,52 @@
-/**
- * Direct `/subagents-doctor` command registration.
- *
- * Bypasses the upstream slash-event bridge so the doctor report works even
- * when `state.lastUiContext` is unset after `/reload`.
- *
- * Types are local (not `import("pi-subagents/src/...")`) because pi-subagents
- * `exports` only expose `.`, `./background-work`, `./delegation`,
- * `./capability-ceiling`, and `./preflight`. Doctor/config/intercom stay
- * deep paths — {@link bundledImportUrl} loads them as `file://` URLs so Node
- * package exports do not block runtime import. If upstream moves these files,
- * update {@link PI_SUBAGENTS_DOCTOR_MODULES} and the matching tests.
- */
+/** Direct `/subagents-doctor` command registration for pi-subagents-j0k3r. */
 
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { formatCaughtError, type JsonValue } from "../json.ts";
-import { bundledImportUrl } from "./resolve-bundled.ts";
+import { bundledImportUrl, resolveBundledModule } from "./resolve-bundled.ts";
 
-/** Deep modules used by `/subagents-doctor` (not in pi-subagents package exports). */
-export const PI_SUBAGENTS_DOCTOR_MODULES = {
-  doctor: "pi-subagents/src/extension/doctor.ts",
-  config: "pi-subagents/src/extension/config.ts",
-  intercom: "pi-subagents/src/intercom/intercom-bridge.ts",
-} as const;
+/** Public bundled entry used by the j0k3r subagent extension. */
+export const PI_SUBAGENTS_MODULE = "pi-subagents-j0k3r/index.ts";
 
-function ensureAccessibleDir(dirPath: string): void {
-  fs.mkdirSync(dirPath, { recursive: true });
-  fs.accessSync(dirPath, fs.constants.R_OK | fs.constants.W_OK);
+function status(value: string): string {
+  return fs.existsSync(value) ? "ok" : "missing";
 }
 
-type SharedTypesModule = {
-  CHAIN_RUNS_DIR: string;
-};
+export function buildSubagentsDoctorReport(cwd: string, sessionId: string | null): string {
+  const globalDir = process.env.PI_CODING_AGENT_DIR ?? path.join(os.homedir(), ".pi", "agent");
+  const projectAgents = path.join(cwd, ".pi", "agents");
+  const projectSubagents = path.join(cwd, ".pi", "subagents");
+  const config = path.join(globalDir, "subagents.json");
+  const modulePath = resolveBundledModule(PI_SUBAGENTS_MODULE);
 
-type DoctorModule = {
-  buildDoctorReport: (input: {
-    cwd: string;
-    config: JsonValue;
-    state: { baseCwd: string; currentSessionId: string | null };
-    currentSessionFile: string | null;
-    currentSessionId: string | null;
-    orchestratorTarget: string | undefined;
-    sessionError: string | undefined;
-    expandTilde: (value: string) => string;
-  }) => string;
-};
-
-type ConfigModule = {
-  loadConfig: () => JsonValue;
-};
-
-type IntercomModule = {
-  resolveIntercomSessionTarget: (sessionName: string | undefined, sessionId: string) => string;
-};
-
-/** pi-subagents creates async/results on init but not chain-runs until the first /chain. */
-async function ensureChainRunsDir(): Promise<void> {
-  // SAFETY: bundled specifier is a known pi-subagents module with this named export shape.
-  const types = (await import(
-    bundledImportUrl("pi-subagents/src/shared/types.ts")
-  )) as SharedTypesModule;
-  ensureAccessibleDir(types.CHAIN_RUNS_DIR);
+  return [
+    "Subagents doctor report",
+    "",
+    `runtime: pi-subagents-j0k3r (${modulePath})`,
+    `config: ${config} (${status(config)})`,
+    `global agents: ${path.join(globalDir, "agents")} (${status(path.join(globalDir, "agents"))})`,
+    `project agents: ${projectAgents} (${status(projectAgents)})`,
+    `project subagents: ${projectSubagents} (${status(projectSubagents)})`,
+    `session: ${sessionId ?? "unavailable"}`,
+    `loader: ${bundledImportUrl(PI_SUBAGENTS_MODULE)}`,
+  ].join("\n");
 }
 
-function expandTilde(value: string): string {
-  return value.startsWith("~/") ? path.join(os.homedir(), value.slice(2)) : value;
-}
-
-function buildDirectDoctorReport(
-  pi: ExtensionAPI,
-  ctx: ExtensionContext,
-  deps: {
-    buildDoctorReport: DoctorModule["buildDoctorReport"];
-    loadConfig: ConfigModule["loadConfig"];
-    resolveIntercomSessionTarget: IntercomModule["resolveIntercomSessionTarget"];
-  },
-): string {
-  const config = deps.loadConfig();
-  let currentSessionFile: string | null = null;
-  let currentSessionId: string | null = null;
-  let sessionError: string | undefined;
-
-  try {
-    currentSessionFile = ctx.sessionManager.getSessionFile() ?? null;
-    currentSessionId = ctx.sessionManager.getSessionId();
-  } catch (cause) {
-    sessionError = formatCaughtError(cause);
-  }
-
-  let orchestratorTarget: string | undefined;
-  try {
-    orchestratorTarget = deps.resolveIntercomSessionTarget(
-      pi.getSessionName(),
-      ctx.sessionManager.getSessionId(),
-    );
-  } catch {
-    // Intercom target is optional for the report.
-  }
-
-  return deps.buildDoctorReport({
-    cwd: ctx.cwd,
-    config,
-    state: {
-      baseCwd: ctx.cwd,
-      currentSessionId,
-    },
-    currentSessionFile,
-    currentSessionId,
-    orchestratorTarget,
-    sessionError,
-    expandTilde,
-  });
-}
-
-/**
- * Register the `/subagents-doctor` Pi command with a direct report builder.
- *
- * @param pi - Pi extension API
- */
+/** Register `/subagents-doctor` without relying on private upstream modules. */
 export async function registerSubagentsDoctorCommand(pi: ExtensionAPI): Promise<void> {
-  await ensureChainRunsDir();
-
-  const [doctorMod, configMod, intercomMod] = await Promise.all([
-    // SAFETY: bundled specifier is a known pi-subagents module with this named export shape.
-    import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.doctor)) as Promise<DoctorModule>,
-    // SAFETY: bundled specifier is a known pi-subagents module with this named export shape.
-    import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.config)) as Promise<ConfigModule>,
-    // SAFETY: bundled specifier is a known pi-subagents module with this named export shape.
-    import(bundledImportUrl(PI_SUBAGENTS_DOCTOR_MODULES.intercom)) as Promise<IntercomModule>,
-  ]);
-
-  const deps = {
-    buildDoctorReport: doctorMod.buildDoctorReport,
-    loadConfig: configMod.loadConfig,
-    resolveIntercomSessionTarget: intercomMod.resolveIntercomSessionTarget,
-  };
-
   pi.registerCommand("subagents-doctor", {
     description: "Show subagent diagnostics",
-    handler: async (_args, ctx) => {
-      await ensureChainRunsDir();
-      const report = buildDirectDoctorReport(pi, ctx, deps);
+    handler: async (_args, ctx: ExtensionContext) => {
+      let sessionId: string | null = null;
+      try {
+        sessionId = ctx.sessionManager.getSessionId();
+      } catch {
+        // Session metadata is optional in diagnostics.
+      }
       pi.sendMessage({
         customType: "hotmilk-subagents-doctor",
-        content: report,
+        content: buildSubagentsDoctorReport(ctx.cwd, sessionId),
         display: true,
       });
     },

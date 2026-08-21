@@ -1,9 +1,0 @@
-legacy-peer-deps=true
-
-# Install-time peer deps only. Do NOT commit tokens here.
-#
-# Publish auth belongs in ~/.npmrc (local) or CI-generated ~/.npmrc:
-# //registry.npmjs.org/:_authToken=YOUR_NPM_TOKEN
-#
-# bun publish ignores NPM_TOKEN env — it reads _authToken from npmrc.
-# Local: npm login   OR   echo the line above into ~/.npmrc

@@ -5,8 +5,12 @@ export type JsonValue = JsonPrimitive | readonly JsonValue[] | JsonObject;
 
 /** Parse a JSON document into {@link JsonValue}. */
 export function parseJsonValue(text: string): JsonValue {
-  // SAFETY: JSON.parse returns a JSON value; this is the I/O boundary.
-  return JSON.parse(text) as JsonValue;
+  try {
+    // SAFETY: JSON.parse returns a JSON value; this is the I/O boundary.
+    return JSON.parse(text) as JsonValue;
+  } catch (e) {
+    throw new Error(`Invalid JSON: ${e instanceof Error ? e.message : String(e)}`);
+  }
 }
 
 /** True when `value` is a JSON object (not an array or primitive). */

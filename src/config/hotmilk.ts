@@ -17,15 +17,21 @@ import {
   isJsonString,
   parseJsonValue,
   type JsonValue,
-} from "../json.ts";
+} from "../bootstrap/json.ts";
 import { resolveBundledExtensionToggles } from "./resolve.ts";
 import { BUNDLED_EXTENSION_IDS, type ExtensionToggleMap } from "./bundled-extensions.ts";
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const BUNDLED_TEMPLATE_PATH = join(PACKAGE_ROOT, "hotmilk.json");
 
-function isPersonaMode(value: JsonValue | string | undefined): value is PersonaMode {
-  return value === "neutral" || value === "gentleman";
+/** Supported persona modes. */
+export const PERSONA_MODES = ["gentleman", "neutral", "gyal", "raiden"] as const;
+
+export type PersonaMode = (typeof PERSONA_MODES)[number];
+
+/** Type guard for {@link PersonaMode}. */
+export function isPersonaMode(value: string | undefined): value is PersonaMode {
+  return PERSONA_MODES.some((mode) => mode === value);
 }
 
 function isProjectTrustMode(value: JsonValue | string | undefined): value is ProjectTrustMode {
@@ -61,7 +67,7 @@ function parseHotmilkConfig(value: JsonValue): HotmilkConfig {
     if (isJsonString(value.defaults.language)) {
       config.defaults.language = value.defaults.language;
     }
-    if (isPersonaMode(value.defaults.persona)) {
+    if (isJsonString(value.defaults.persona) && isPersonaMode(value.defaults.persona)) {
       config.defaults.persona = value.defaults.persona;
     }
   }
@@ -104,9 +110,8 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): DefaultHotmilk
 
   const language = template.defaults?.language?.trim();
   const persona = template.defaults?.persona;
-  const projectTrustMode = template.projectTrust?.mode;
   const defaults: ResolvedDefaults = {
-    persona: isPersonaMode(persona) ? persona : "gentleman",
+    persona: isPersonaMode(persona) ? persona : "neutral",
   };
   if (language) {
     defaults.language = language;
@@ -124,7 +129,9 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): DefaultHotmilk
       seedOnStart: template.mcp?.seedOnStart ?? false,
     },
     projectTrust: {
-      mode: isProjectTrustMode(projectTrustMode) ? projectTrustMode : "delegate",
+      mode: isProjectTrustMode(template.projectTrust?.mode)
+        ? template.projectTrust.mode
+        : "delegate",
       remember: template.projectTrust?.remember === true,
     },
   };
@@ -137,10 +144,6 @@ export const AGENT_HOTMILK_CONFIG_LABEL = "~/.pi/agent/hotmilk.json";
 
 export { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "./bundled-extensions.ts";
 
-/** Supported persona modes. */
-export type PersonaMode = "gentleman" | "neutral";
-
-/** Supported project-trust decision modes. */
 export type ProjectTrustMode = "delegate" | "prompt" | "always" | "never";
 
 /** Resolved project-trust settings. */

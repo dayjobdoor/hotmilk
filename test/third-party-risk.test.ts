@@ -8,7 +8,7 @@ import {
   REPO_ROOT,
   semverAtLeast,
 } from "./fixtures/manifest.ts";
-import { isJsonObject, isJsonString, parseJsonValue } from "../src/json.ts";
+import { isJsonObject, isJsonString, parseJsonValue } from "../src/bootstrap/json.ts";
 
 type NestedInstall = { path: string; name: string; version: string };
 

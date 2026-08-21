@@ -7,7 +7,7 @@ import {
   parseNpmPackageName,
 } from "../src/bootstrap/global-extension-sources.ts";
 import type { BundledExtensionId } from "../src/config/hotmilk.ts";
-import type { JsonObject } from "../src/json.ts";
+import type { JsonObject } from "../src/bootstrap/json.ts";
 import { recordingPi } from "./fixtures/recording-pi.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
 
@@ -38,7 +38,7 @@ describe("collectInstalledPackageNamesFromPiSettings", () => {
 
   it("ignores project settings when includeProjectSettings is false", () => {
     writeSettings(".pi/agent", { packages: ["npm:graphify-pi"] });
-    writeSettings("project/.pi", { packages: ["npm:pi-ask-user"] });
+    writeSettings("project/.pi", { packages: ["npm:@juicesharp/rpiv-ask-user-question"] });
 
     const names = collectInstalledPackageNamesFromPiSettings({
       homedir: tmpHome,
@@ -52,7 +52,7 @@ describe("collectInstalledPackageNamesFromPiSettings", () => {
 
   it("collects npm package names from global and project settings", () => {
     writeSettings(".pi/agent", { packages: ["npm:hotmilk", "npm:graphify-pi"] });
-    writeSettings("project/.pi", { packages: ["npm:pi-ask-user"] });
+    writeSettings("project/.pi", { packages: ["npm:@juicesharp/rpiv-ask-user-question"] });
 
     const names = collectInstalledPackageNamesFromPiSettings({
       homedir: tmpHome,
@@ -61,7 +61,7 @@ describe("collectInstalledPackageNamesFromPiSettings", () => {
 
     expect(names.has("hotmilk")).toBe(false);
     expect(names.has("graphify-pi")).toBe(true);
-    expect(names.has("pi-ask-user")).toBe(true);
+    expect(names.has("@juicesharp/rpiv-ask-user-question")).toBe(true);
   });
 
   it("reads global settings from PI_CODING_AGENT_DIR when homedir is omitted", () => {

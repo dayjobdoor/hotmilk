@@ -7,7 +7,7 @@ import {
   seedRtkConfigIfMissing,
   syncRtkConfigForContextStack,
 } from "../src/bootstrap/context-stack.ts";
-import { parseJsonValue } from "../src/json.ts";
+import { parseJsonValue } from "../src/bootstrap/json.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
 
 type WrittenRtkConfig = {

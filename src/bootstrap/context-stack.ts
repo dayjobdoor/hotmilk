@@ -15,7 +15,7 @@ import {
   isJsonString,
   parseJsonValue,
   type JsonValue,
-} from "../json.ts";
+} from "./json.ts";
 import { pruneContextModeMcpServerFromAgentConfig } from "../config/mcp.ts";
 import type { HotmilkRuntime } from "../config/runtime.ts";
 import type { BundledExtensionId } from "../config/hotmilk.ts";

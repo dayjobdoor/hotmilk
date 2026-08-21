@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import { pruneContextModeFromMcpJsonAt } from "../src/config/mcp.ts";
-import { isJsonObject, parseJsonValue, type JsonObject } from "../src/json.ts";
+import { isJsonObject, parseJsonValue, type JsonObject } from "../src/bootstrap/json.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
 
 function tempMcpJson(initial: JsonObject): string {

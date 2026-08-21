@@ -20,7 +20,7 @@ import {
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import type { BundledExtensionId } from "../config/bundled-extensions.ts";
-import { formatCaughtError } from "../json.ts";
+import { formatCaughtError } from "./json.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
 
 // --- Session config (injected before btw extension loads) ---

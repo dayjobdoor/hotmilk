@@ -14,7 +14,7 @@ import type { BundledExtensionId } from "../src/config/bundled-extensions.ts";
 import { BUNDLED_EXTENSION_IDS } from "../src/config/hotmilk.ts";
 import { createExtensionRuntime } from "@earendil-works/pi-coding-agent";
 import type { ResourceLoader } from "@earendil-works/pi-coding-agent";
-import type { JsonObject } from "../src/json.ts";
+import type { JsonObject } from "../src/bootstrap/json.ts";
 
 function hotmilkBtwConfig(
   overrides: Partial<Record<BundledExtensionId, boolean>> = {},

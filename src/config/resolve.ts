@@ -3,17 +3,13 @@ import {
   DEFAULT_HOTMILK_CONFIG,
   type ExtensionToggleMap,
   type HotmilkConfig,
-  type PersonaMode,
+  isPersonaMode,
   type ProjectTrustMode,
   type ResolvedDefaults,
   type ResolvedGraphSettings,
   type ResolvedMcpSettings,
   type ResolvedProjectTrust,
 } from "./hotmilk.ts";
-
-function isPersonaMode(value: string | undefined): value is PersonaMode {
-  return value === "neutral" || value === "gentleman";
-}
 
 /** Resolve final bundled-extension toggles by overlaying user config on bundled defaults. */
 export function resolveBundledExtensionToggles(config: HotmilkConfig): ExtensionToggleMap {

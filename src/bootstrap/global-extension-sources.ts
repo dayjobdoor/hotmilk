@@ -12,7 +12,7 @@ import {
   HOTMILK_PACKAGE_NAME,
 } from "../config/bundled-package-registry.ts";
 import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmilk.ts";
-import { isJsonObject, isJsonString, parseJsonValue, type JsonValue } from "../json.ts";
+import { isJsonObject, isJsonString, parseJsonValue, type JsonValue } from "./json.ts";
 
 const PI_PROJECT_CONFIG_DIR = ".pi";
 

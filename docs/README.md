@@ -2,12 +2,12 @@
 
 Diagrams for contributors. User-facing install and toggles stay in [README.md](../README.md). Commands and layout stay in [AGENTS.md](../AGENTS.md).
 
-| File | Diagrams |
-| ---- | -------- |
-| [design.md](design.md) | Session startup, extension load order, config surfaces |
-| [directory.md](directory.md) | Repo layout |
-| [workflow.md](workflow.md) | Pioneer plan paths and OpenSpec SDD |
-| [tech.md](tech.md) | Stack pins from `package.json` / CI |
+| File                         | Diagrams                                               |
+| ---------------------------- | ------------------------------------------------------ |
+| [design.md](design.md)       | Session startup, extension load order, config surfaces |
+| [directory.md](directory.md) | Repo layout                                            |
+| [workflow.md](workflow.md)   | Pioneer plan paths and OpenSpec SDD                    |
+| [tech.md](tech.md)           | Stack pins from `package.json` / CI                    |
 
 ```mermaid
 flowchart LR

@@ -63,8 +63,14 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
   },
   {
     id: "ask-user",
-    package: { packageName: "pi-ask-user" },
-    module: "pi-ask-user/index.ts",
+    package: { packageName: "@juicesharp/rpiv-ask-user-question" },
+    module: "@juicesharp/rpiv-ask-user-question/index.ts",
+    group: "Agent tools",
+  },
+  {
+    id: "todo",
+    package: { packageName: "@juicesharp/rpiv-todo" },
+    module: "@juicesharp/rpiv-todo/index.ts",
     group: "Agent tools",
   },
   {
@@ -87,14 +93,20 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
   },
   {
     id: "subagents",
-    package: { packageName: "pi-subagents" },
-    module: "pi-subagents/src/extension/index.ts",
+    package: { packageName: "pi-subagents-j0k3r" },
+    module: "pi-subagents-j0k3r/index.ts",
     group: "Agent tools",
   },
   {
     id: "herdr-squad",
     package: { packageName: "pi-herdr-squad" },
     module: "pi-herdr-squad/index.ts",
+    group: "Agent tools",
+  },
+  {
+    id: "lens",
+    package: { packageName: "pi-lens" },
+    module: "pi-lens/dist/index.js",
     group: "Agent tools",
   },
   {
@@ -118,7 +130,13 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
   {
     id: "btw",
     package: { packageName: "pi-btw" },
-    module: "hotmilk/src/extensions/btw.ts",
+    module: "pi-btw/extensions/btw.ts",
+    group: "Integrations",
+  },
+  {
+    id: "intercom",
+    package: { packageName: "pi-intercom" },
+    module: "pi-intercom/index.ts",
     group: "Integrations",
   },
   {
@@ -138,6 +156,12 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     id: "observational-memory",
     package: { packageName: "pi-observational-memory" },
     module: "pi-observational-memory/src/index.ts",
+    group: "Context & performance",
+  },
+  {
+    id: "engram",
+    package: { packageName: "gentle-engram" },
+    module: "gentle-engram/index.ts",
     group: "Context & performance",
   },
   {

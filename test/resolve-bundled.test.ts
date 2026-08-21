@@ -24,18 +24,18 @@ describe("parseBundledModulePath", () => {
     });
   });
 
-  it("parses hotmilk-owned wrapper paths", () => {
-    expect(parseBundledModulePath("hotmilk/src/extensions/btw.ts")).toEqual({
-      pkgName: "hotmilk",
-      subpath: "src/extensions/btw.ts",
+  it("parses the pi-btw extension path like other package modules", () => {
+    expect(parseBundledModulePath("pi-btw/extensions/btw.ts")).toEqual({
+      pkgName: "pi-btw",
+      subpath: "extensions/btw.ts",
     });
   });
 });
 
 describe("resolveBundledModule", () => {
-  it("resolves hotmilk wrapper modules from the package tree", () => {
-    const resolved = resolveBundledModule("hotmilk/src/extensions/btw.ts", import.meta.url);
-    expect(resolved).toMatch(/src[/\\]extensions[/\\]btw\.ts$/);
+  it("resolves pi-btw from node_modules", () => {
+    const resolved = resolveBundledModule("pi-btw/extensions/btw.ts", import.meta.url);
+    expect(resolved).toMatch(/node_modules[/\\]pi-btw[/\\]extensions[/\\]btw\.ts$/);
     expect(existsSync(resolved)).toBe(true);
   });
 

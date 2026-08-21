@@ -16,7 +16,7 @@ import {
   parseJsonValue,
   type JsonObject,
   type JsonValue,
-} from "../json.ts";
+} from "../bootstrap/json.ts";
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const MCP_TEMPLATE_PATH = join(PACKAGE_ROOT, "mcp.json");

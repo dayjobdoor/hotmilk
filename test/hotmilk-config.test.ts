@@ -17,7 +17,7 @@ import {
 } from "../src/config/hotmilk.ts";
 import { HOTMILK_JSON_TEMPLATE } from "./fixtures/manifest.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
-import { parseJsonValue } from "../src/json.ts";
+import { parseJsonValue } from "../src/bootstrap/json.ts";
 
 function tempConfigDir(): string {
   return makeTempDir("hotmilk-test-");
@@ -42,7 +42,7 @@ describe("resolveBundledExtensionToggles", () => {
     ["observational-memory", true],
     ["shazam", true],
     ["graphify", false],
-    ["subagents", false],
+    ["subagents", true],
     ["planning-with-files", true],
   ] as const)("honors explicit override for %s", (id, value) => {
     const toggles = resolveBundledExtensionToggles({ extensions: { [id]: value } });
@@ -74,8 +74,8 @@ describe("resolveGraphSettings", () => {
 });
 
 describe("resolveDefaults", () => {
-  it("defaults persona to gentleman without language", () => {
-    expect(resolveDefaults({})).toEqual({ persona: "gentleman" });
+  it("defaults persona to neutral without language", () => {
+    expect(resolveDefaults({})).toEqual({ persona: "neutral" });
   });
 
   it("passes through language and persona overrides", () => {
@@ -83,6 +83,10 @@ describe("resolveDefaults", () => {
       language: "ja",
       persona: "neutral",
     });
+  });
+
+  it.each(["gentleman", "gyal", "raiden"] as const)("keeps %s persona at runtime", (persona) => {
+    expect(resolveDefaults({ defaults: { persona } })).toEqual({ persona });
   });
 });
 
