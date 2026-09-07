@@ -1,10 +1,6 @@
 # Local Pi runtime state
 .atl/
 
-graphify-out/
-.codegraph
-.agents/
-
 openspec
 
 .env

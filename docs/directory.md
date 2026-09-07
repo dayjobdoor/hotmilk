@@ -18,26 +18,30 @@ flowchart TB
   root --> themes[themes/]
   root --> assets[assets/]
   root --> docs[docs/]
-  docs --> agentInstructions[agent-instructions/]
+  docs --> docsArchitecture["architecture.md"]
+  docs --> docsDesign["design.md"]
+  docs --> docsDirectory["directory.md"]
+  docs --> docsReference["reference-map.md"]
+  docs --> docsTech["tech.md"]
+  docs --> docsWorkflow["workflow.md"]
   root --> test[test/]
-  root --> tmpl["hotmilk.json mcp.json"]
+  root --> tmpl["hotmilk.json"]
   root --> gitig["gitignored: openspec/ graphify-out/ .agents/ .codegraph"]
 ```
 
-| Path                       | Role                                                                             |
-| -------------------------- | -------------------------------------------------------------------------------- |
-| `src/index.ts`             | Pi extension entry                                                               |
-| `src/config/`              | `hotmilk.json` I/O, resolve, `createHotmilkRuntime()`, bundled registry          |
-| `src/bootstrap/`           | Registration, session, graph, defaults, BTW, project trust, `/subagents-doctor`  |
-| `src/controller/`          | `/mode`, `/stop`, `/interrupt`                                                   |
-| `src/ui/`                  | Footer, session logo                                                             |
-| `src/json.ts`              | Shared JSON parse/type helpers                                                   |
-| `src/bootstrap/btw.ts`     | hotmilk BTW session hook, prompt shaping, and proxy tools                        |
-| `agents/`                  | Package-canonical subagent prompts; copy to `.pi/agents/` for discovery          |
-| `skills/`                  | First-party skills (`pioneer`, `update-docs`, `make-docs`, `recommend-research`) |
-| `assets/`                  | Package images (`pi.image`)                                                      |
-| `docs/agent-instructions/` | Progressive-disclosure guidance linked from `AGENTS.md`                          |
-| `hotmilk.json`             | Default toggle template shipped in the npm package                               |
-| `mcp.json`                 | MCP server template for local projects                                           |
-| `openspec/`                | Local SDD artifacts (gitignored; not in the npm tarball)                         |
-| `graphify-out/`            | Graphify index (gitignored)                                                      |
+| Path                   | Role                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| `src/index.ts`         | Pi extension entry                                                               |
+| `src/config/`          | `hotmilk.json` I/O, resolve, `createHotmilkRuntime()`, bundled registry          |
+| `src/bootstrap/`       | Registration, session, graph, defaults, BTW, project trust, `/subagents-doctor`  |
+| `src/controller/`      | `/mode`, `/stop`, `/interrupt`                                                   |
+| `src/ui/`              | Footer                                                                           |
+| `src/json.ts`          | Shared JSON parse/type helpers                                                   |
+| `src/bootstrap/btw.ts` | hotmilk BTW session hook, prompt shaping, and proxy tools                        |
+| `agents/`              | Package-canonical subagent prompts; copy to `.pi/agents/` for discovery          |
+| `skills/`              | First-party skills (`pioneer`, `update-docs`, `make-docs`, `recommend-research`) |
+| `assets/`              | Package images (`pi.image`)                                                      |
+| `docs/`                | Architecture, workflow, and agent guidance documentation                         |
+| `hotmilk.json`         | Default config template for graph, persona, language, and trust                  |
+| `openspec/`            | Local SDD artifacts (gitignored; not in the npm tarball)                         |
+| `graphify-out/`        | Graphify index (gitignored)                                                      |

@@ -1,10 +1,20 @@
 # Drift verification
 
-**Load when:** Phase 4 — after any patch, or when reporting "docs already in sync."
+**Load when:** Phase 4 after any patch, or when reporting "docs already in sync" after completing the applicable verification.
 
-**Do NOT load when:** Recon-only pass with zero edits planned — skip to a short "no drift found" note instead.
+**Do NOT load when:** Recon-only pass with zero edits and no claim of completed verification — skip to a short "no drift found" note instead.
 
-**Truth conflicts:** When sources disagree, apply **CI > manifest scripts/targets > source comments**. Report unresolved conflicts in **Gaps** — do not patch until the user picks a winner.
+## Truth ownership
+
+- CI owns CI commands and pipeline behavior.
+- The manifest owns scripts, dependencies, entry points, and published files.
+- Executable code or schemas own runtime behavior and defaults.
+- Config templates own values users copy; README samples must match them.
+
+If executable defaults and config-template values disagree without explicit reconciliation, report the unresolved conflict in `Gaps`; do not apply command precedence.
+
+- For command conflicts, use CI > manifest scripts/targets > source comments and record the resolved drift in `Drifts fixed`.
+- For conflicts outside these scopes, report unresolved conflicts in `Gaps`; do not choose silently.
 
 ## Checklist
 
@@ -18,7 +28,7 @@ Mark each item that applies to scope. All applicable items must pass before "don
 
 ### Full sync
 
-- [ ] README commands match manifest scripts/targets (or language equivalent); in monorepos, root README uses root manifest — package READMEs use package manifest only
+- [ ] README commands match their authoritative source (CI for pipeline claims; manifest for scripts/targets); in monorepos, root README uses root manifest — package READMEs use package manifest only
 - [ ] Config template in docs matches repo config defaults
 - [ ] Path references in edited docs still exist on disk
 - [ ] Duplicate facts across docs agree — one canonical source preferred

@@ -4,13 +4,10 @@ import { coerce, gte, minVersion } from "semver";
 import { parseJsonValue } from "../../src/bootstrap/json.ts";
 
 export type HotmilkJsonTemplate = {
-  extensions: Record<string, boolean>;
   graph: { warnOnStale: boolean; autoSuggestUpdate: boolean };
   defaults: { persona: string; language?: string };
-  mcp: { seedOnStart: boolean };
   projectTrust: { mode: string; remember: boolean };
 };
-
 export type PackageJsonManifest = {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;

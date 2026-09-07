@@ -17,13 +17,11 @@ Pi meta-package bundling gentle-pi, context-mode, graphify, subagents, and relat
 - Pi loads only `./src/index.ts` from `package.json` → `pi.extensions`.
 - Toggled bundles load lazily through `BUNDLED_EXTENSION_DEFINITIONS`; do not add them directly to `pi.extensions`.
 - Config changes use `/mode`, then `/reload`; tests may set `HOTMILK_CONFIG_ROOT`.
-- Project trust and pre-trust global extension deduplication follow [`architecture.md`](docs/agent-instructions/architecture.md).
-- Touch only required files, match existing patterns, and avoid speculative abstractions.
+- Project trust and pre-trust global extension deduplication follow [`architecture.md`](docs/architecture.md).
+- Keep changes scoped to requested behavior; preserve existing interfaces and load phases.
 
-## Detailed guidance
+## Task-specific guidance
 
-- [Architecture and package contracts](docs/agent-instructions/architecture.md)
-- [Implementation, verification, and documentation workflow](docs/agent-instructions/workflow.md)
-- [Progressive reference map](docs/agent-instructions/reference-map.md)
-
-Use the reference map to load only task-relevant documentation. Keep linked guidance self-contained and update it when these contracts change.
+- Package layout, startup, bundled extensions, or configuration: [architecture.md](docs/architecture.md)
+- Implementation, verification, or documentation changes: [workflow.md](docs/workflow.md)
+- Choosing which repository guidance to read: [reference-map.md](docs/reference-map.md)

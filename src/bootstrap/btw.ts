@@ -50,20 +50,7 @@ export function getHotmilkBtwConfig(): HotmilkBtwConfig {
   return activeConfig;
 }
 
-/** Clear the active config so tests start from a clean state. */
-export function resetHotmilkBtwConfigForTests(): void {
-  activeConfig = null;
-}
-
 // --- Prompt shaping ---
-
-/** Remove dynamically appended date/time/cwd footer lines from a system prompt. */
-export function stripDynamicSystemPromptFooter(systemPrompt: string): string {
-  return systemPrompt
-    .replace(/\nCurrent date and time:[^\n]*(?:\nCurrent working directory:[^\n]*)?$/u, "")
-    .replace(/\nCurrent working directory:[^\n]*$/u, "")
-    .trim();
-}
 
 const MAIN_SESSION_SECTION_MARKERS = [
   /^## graphify\b/im,
@@ -137,16 +124,18 @@ function createBtwEmptyExtensionsResult() {
   return { extensions: [], errors: [], runtime: createExtensionRuntime() };
 }
 
-function isPiBtwResourceLoader(loader: ResourceLoader): boolean {
+function getBtwAppendPromptText(loader: ResourceLoader): string {
   const append = loader.getAppendSystemPrompt();
-  const text = (Array.isArray(append) ? append : []).join("\n");
+  return (Array.isArray(append) ? append : []).join("\n");
+}
+
+function isPiBtwResourceLoader(loader: ResourceLoader): boolean {
+  const text = getBtwAppendPromptText(loader);
   return PI_BTW_APPEND_MARKERS.some((marker) => text.includes(marker));
 }
 
 function isBtwSummarizeSession(loader: ResourceLoader): boolean {
-  const append = loader.getAppendSystemPrompt();
-  const text = (Array.isArray(append) ? append : []).join("\n");
-  return text.includes("Summarize the side conversation");
+  return getBtwAppendPromptText(loader).includes("Summarize the side conversation");
 }
 
 /**
@@ -223,11 +212,6 @@ export function captureMainCtxSearchTool(tool: {
     parameters: tool.parameters,
     execute: tool.execute,
   };
-}
-
-/** @returns the captured tool, or null if none has been registered. */
-export function getMainCtxSearchToolForTests(): MainCtxSearchTool | null {
-  return mainCtxSearchTool;
 }
 
 /** Reset captured tool and installation guard for tests. */

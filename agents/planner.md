@@ -19,7 +19,7 @@ You are the **hotmilk** planning subagent. Turn requirements and code context in
 - **Bundled extensions**: `src/config/bundled-extensions.ts` + `~/.pi/agent/hotmilk.json` toggles + README Configuration. New bundled rows need manifest + README alignment; respect **competition slots** (e.g. one graph-wiki strategy).
 - **First-party skills** (`./skills/` only): `pioneer/` before multi-step plans; `recommend-research/` for stack picks; `update-docs/` after manifest or default changes. After prompt/skill edits, run `/prompt-eval <path>`. Orchestration from bundled gentle-pi (`gentle-ai`) when SDD/TDD applies.
 - **Architecture questions**: prefer `graphify-out/GRAPH_REPORT.md` or `graphify query` before reading 4+ raw files when the graph exists.
-- **Large / cross-cutting work**: note whether SDD (OpenSpec) or tcz LUB/V/θ pre-flight is needed before implementation.
+- **Large / cross-cutting work**: note whether SDD (OpenSpec) preflight is needed before implementation.
 
 ## Working rules
 
@@ -50,7 +50,7 @@ Includes verification and open questions.
 
 ## Harness notes
 
-SDD / tcz / graphify / extension toggle impacts (if any).
+SDD / graphify / extension toggle impacts (if any).
 
 ## Acceptance contract (parent → coder, pi-subagents 0.47+)
 

@@ -1,15 +1,14 @@
 import { getSettingsListTheme, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { resolveBundledExtensionToggles, resolveDefaults } from "../config/resolve.ts";
 import { Container, SettingsList, Text, type SettingItem } from "@earendil-works/pi-tui";
 import { BUNDLED_EXTENSION_GROUPS, BUNDLED_EXTENSION_IDS } from "../config/bundled-extensions.ts";
 import {
   hotmilkConfigDisplayPath,
   isPersonaMode,
   PERSONA_MODES,
-  resolveDefaults,
   type BundledExtensionId,
   type HotmilkConfig,
   type PersonaMode,
-  loadBundledExtensionToggles,
   loadHotmilkConfig,
   saveHotmilkConfig,
 } from "../config/hotmilk.ts";
@@ -19,16 +18,6 @@ export const PERSONA_SETTING_ID = "defaults.persona";
 
 function isBundledExtensionId(id: string): id is BundledExtensionId {
   return BUNDLED_EXTENSION_IDS.some((candidate) => candidate === id);
-}
-
-/**
- * Format toggle state as "on" or "off".
- *
- * @param enabled - toggle state
- * @returns formatted state
- */
-function formatToggleState(enabled: boolean): "on" | "off" {
-  return enabled ? "on" : "off";
 }
 
 /**
@@ -42,7 +31,7 @@ function formatToggleRows(
   persona: PersonaMode,
 ): string {
   const extensionRows = BUNDLED_EXTENSION_GROUPS.map((group) => {
-    const rows = group.ids.map((id) => `  ${id}: ${formatToggleState(toggles[id])}`);
+    const rows = group.ids.map((id) => `  ${id}: ${toggles[id] ? "on" : "off"}`);
     return `${group.label}\n${rows.join("\n")}`;
   }).join("\n\n");
   return `Defaults\n  persona: ${persona}\n\n${extensionRows}`;
@@ -74,7 +63,7 @@ export function createModeSettingItems(
       ...group.ids.map((id) => ({
         id,
         label: `  ${id}`,
-        currentValue: formatToggleState(toggles[id]),
+        currentValue: toggles[id] ? "on" : "off",
         values: ["on", "off"],
       })),
     ]),
@@ -101,31 +90,19 @@ function saveConfigPatch(ctx: ExtensionContext, patch: HotmilkConfig): void {
     ctx.ui.notify(`Failed to write ${saved.path}: ${saved.error}`, "error");
   }
 }
-
-function saveExtensionToggle(
+function updateConfig(
   ctx: ExtensionContext,
-  extensionId: BundledExtensionId,
-  enabled: boolean,
+  update: (config: HotmilkConfig) => HotmilkConfig,
 ): void {
   const { config } = loadHotmilkConfig();
-  saveConfigPatch(ctx, {
-    ...config,
-    extensions: { ...config.extensions, [extensionId]: enabled },
-  });
-}
-
-function savePersona(ctx: ExtensionContext, persona: PersonaMode): void {
-  const { config } = loadHotmilkConfig();
-  saveConfigPatch(ctx, {
-    ...config,
-    defaults: { ...config.defaults, persona },
-  });
+  saveConfigPatch(ctx, update(config));
 }
 
 /** Open the interactive TUI modal for toggling bundled extensions. */
 export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void> {
-  const toggles = loadBundledExtensionToggles();
-  let persona = resolveDefaults(loadHotmilkConfig().config).persona;
+  const config = loadHotmilkConfig().config;
+  const toggles = resolveBundledExtensionToggles(config);
+  let persona = resolveDefaults(config).persona;
   const items = createModeSettingItems(toggles, persona);
 
   await ctx.ui.custom((_tui, theme, _kb, done) => {
@@ -145,7 +122,10 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
             return;
           }
           persona = newValue;
-          savePersona(ctx, newValue);
+          updateConfig(ctx, (config) => ({
+            ...config,
+            defaults: { ...config.defaults, persona: newValue },
+          }));
           return;
         }
         if (!isBundledExtensionId(id)) {
@@ -153,7 +133,10 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
         }
         const enabled = newValue === "on";
         toggles[id] = enabled;
-        saveExtensionToggle(ctx, id, enabled);
+        updateConfig(ctx, (config) => ({
+          ...config,
+          extensions: { ...config.extensions, [id]: enabled },
+        }));
       },
       () => done(undefined),
       { enableSearch: true },

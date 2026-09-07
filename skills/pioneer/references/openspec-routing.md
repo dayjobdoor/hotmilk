@@ -6,7 +6,7 @@
 
 **Primary skill — MANDATORY:** load **`/skill:gentle-ai`** for phase chain, `/sdd-status`, `/sdd-continue`, preflight, delegation, and verify/sync/archive rules. This file is a pioneer gate only — not a second copy of gentle-ai.
 
-Diagrams: [`docs/workflow.md`](../../../docs/workflow.md).
+Diagrams and startup flow: [`../../../docs/design.md`](../../../docs/design.md).
 
 ## Pre-SDD checklist (pioneer gate)
 

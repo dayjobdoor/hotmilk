@@ -21,7 +21,6 @@ describe("parseNpmPackageName", () => {
 
 describe("collectInstalledPackageNamesFromPiSettings", () => {
   let tmpHome: string;
-
   beforeEach(() => {
     tmpHome = makeTempDir("hotmilk-global-ext-");
   });
@@ -171,23 +170,27 @@ describe("detectGlobalBundledExtensionSkips", () => {
 });
 
 describe("registerBundledExtensions global skip", () => {
-  it("does not import skipped bundled extensions", { timeout: 30_000 }, async () => {
-    const { registerBundledExtensions } = await import("../src/bootstrap/extensions.ts");
-    const { BUNDLED_EXTENSION_IDS } = await import("../src/config/hotmilk.ts");
+  it(
+    "skips registration for a globally provided bundled extension",
+    { timeout: 30_000 },
+    async () => {
+      const { registerBundledExtensions } = await import("../src/bootstrap/extensions.ts");
+      const { BUNDLED_EXTENSION_IDS } = await import("../src/config/hotmilk.ts");
 
-    // SAFETY: test fixture starts every bundled id at false.
-    const enabled = {} as Record<BundledExtensionId, boolean>;
-    for (const id of BUNDLED_EXTENSION_IDS) {
-      enabled[id] = false;
-    }
-    enabled.graphify = true;
+      // SAFETY: test fixture starts every bundled id at false.
+      const enabled = {} as Record<BundledExtensionId, boolean>;
+      for (const id of BUNDLED_EXTENSION_IDS) {
+        enabled[id] = false;
+      }
+      enabled.graphify = true;
 
-    const { pi, accessed } = recordingPi();
-    const result = await registerBundledExtensions(pi, enabled, {
-      globalSkips: [{ id: "graphify", packageName: "graphify-pi" }],
-    });
+      const { pi, accessed } = recordingPi();
+      const result = await registerBundledExtensions(pi, enabled, {
+        globalSkips: [{ id: "graphify", packageName: "graphify-pi" }],
+      });
 
-    expect(result.globalSkips).toEqual([{ id: "graphify", packageName: "graphify-pi" }]);
-    expect(accessed).toEqual([]);
-  });
+      expect(result.globalSkips).toEqual([{ id: "graphify", packageName: "graphify-pi" }]);
+      expect(accessed).toEqual([]);
+    },
+  );
 });

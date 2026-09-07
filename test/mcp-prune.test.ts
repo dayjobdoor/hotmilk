@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+
 import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import { pruneContextModeFromMcpJsonAt } from "../src/config/mcp.ts";
@@ -43,10 +43,21 @@ describe("pruneContextModeFromMcpJsonAt", () => {
   });
 
   it("returns false when the MCP file is missing", () => {
-    const path = join(tmpdir(), "hotmilk-mcp-missing", "mcp.json");
+    const dir = makeTempDir("hotmilk-mcp-missing-");
+    const path = join(dir, "mcp.json");
     const result = pruneContextModeFromMcpJsonAt(path);
 
     expect(result).toEqual({ pruned: false, path });
+  });
+
+  it("returns false for non-object mcpServers shapes", () => {
+    const cases: JsonObject[] = [{}, { mcpServers: [] }];
+    for (const initial of cases) {
+      const path = tempMcpJson(initial);
+
+      expect(pruneContextModeFromMcpJsonAt(path)).toEqual({ pruned: false, path });
+      expect(parseJsonValue(readFileSync(path, "utf8"))).toEqual(initial);
+    }
   });
 
   it("returns error for invalid JSON instead of throwing", () => {

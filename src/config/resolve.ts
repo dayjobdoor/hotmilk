@@ -4,10 +4,9 @@ import {
   type ExtensionToggleMap,
   type HotmilkConfig,
   isPersonaMode,
-  type ProjectTrustMode,
+  isProjectTrustMode,
   type ResolvedDefaults,
   type ResolvedGraphSettings,
-  type ResolvedMcpSettings,
   type ResolvedProjectTrust,
 } from "./hotmilk.ts";
 
@@ -41,17 +40,6 @@ export function resolveDefaults(config: HotmilkConfig): ResolvedDefaults {
     defaults.language = language;
   }
   return defaults;
-}
-
-/** Resolve MCP settings from user config with bundled defaults fallback. */
-export function resolveMcpSettings(config: HotmilkConfig): ResolvedMcpSettings {
-  return {
-    seedOnStart: config.mcp?.seedOnStart ?? DEFAULT_HOTMILK_CONFIG.mcp.seedOnStart,
-  };
-}
-
-function isProjectTrustMode(value: string | undefined): value is ProjectTrustMode {
-  return value === "delegate" || value === "prompt" || value === "always" || value === "never";
 }
 
 /** Resolve project-trust settings from user config with bundled defaults fallback. */

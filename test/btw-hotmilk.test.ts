@@ -4,10 +4,12 @@ import {
   buildHotmilkBtwAppendPrompt,
   captureMainCtxSearchTool,
   createHotmilkBtwCustomTools,
+  graphifyGraphExists,
   installHotmilkCtxSearchCapture,
   resetMainCtxSearchCaptureForTests,
   resolveHotmilkBtwTools,
   stripHotmilkMainSessionHarness,
+  HOTMILK_BTW_SYSTEM_PROMPT,
   type HotmilkBtwConfig,
 } from "../src/bootstrap/btw.ts";
 import type { BundledExtensionId } from "../src/config/bundled-extensions.ts";
@@ -71,6 +73,30 @@ describe("hotmilk btw prompt", () => {
     expect(stripHotmilkMainSessionHarness(prompt)).toBe("Project rules stay.");
   });
 
+  it.each([
+    "## graphify",
+    "## el Gentleman Orchestrator",
+    "# el Gentleman Identity and Harness",
+    "<context_window_protection>",
+    "IMPORTANT: You are in CAVEMAN MODE.",
+    "## SDD Session Preflight",
+    "<behavioral_directive>",
+  ])("strips each supported harness marker: %s", (marker) => {
+    const prompt = ["Project rules stay.", marker, "harness content", "User rules"].join("\n");
+
+    expect(stripHotmilkMainSessionHarness(prompt)).toBe("Project rules stay.");
+  });
+
+  it("keeps optional routing instructions absent when toggles are off", () => {
+    expect(
+      buildHotmilkBtwAppendPrompt({
+        graphifyEnabled: false,
+        subagentsEnabled: false,
+        contextModeEnabled: false,
+      }),
+    ).toEqual([HOTMILK_BTW_SYSTEM_PROMPT]);
+  });
+
   it("append prompt mentions graphify and subagents routing when enabled", () => {
     const append = buildHotmilkBtwAppendPrompt({
       graphifyEnabled: true,
@@ -95,12 +121,24 @@ describe("hotmilk btw prompt", () => {
     const loader = mockPiBtwLoader([
       "You are having an aside conversation with the user, separate from their main working session.",
     ]);
+
     const upstreamExtensions = loader.getExtensions();
     // SAFETY: test fixture injects an invalid value to prove fallback.
     upstreamExtensions.extensions.push({ id: "context-mode" } as never);
 
     const adapted = adaptBtwResourceLoaderForHotmilk(loader, hotmilkBtwConfig());
     expect(adapted.getExtensions().extensions).toEqual([]);
+  });
+  it("preserves upstream append prompt for BTW summaries", () => {
+    const upstreamAppend = ["Summarize the side conversation", "Keep it concise."];
+    const loader = mockPiBtwLoader(upstreamAppend);
+    const adapted = adaptBtwResourceLoaderForHotmilk(loader, hotmilkBtwConfig());
+
+    expect(adapted.getAppendSystemPrompt()).toEqual(upstreamAppend);
+    expect(adapted.getAppendSystemPromptSources()).toEqual([
+      { path: "/tmp/mock-append-0.md" },
+      { path: "/tmp/mock-append-1.md" },
+    ]);
   });
 });
 
@@ -130,6 +168,15 @@ describe("hotmilk btw tools", () => {
     ).toEqual([]);
   });
 
+  it("adds graphify_query when graphify is enabled and graph data exists", () => {
+    expect(graphifyGraphExists()).toBe(true);
+    const tools = createHotmilkBtwCustomTools(
+      hotmilkBtwConfig({ graphify: true, "context-mode": false }),
+    );
+
+    expect(tools.map((tool) => tool.name)).toEqual(["graphify_query"]);
+  });
+
   it("adds ctx_search proxy when context-mode is on", () => {
     const tools = createHotmilkBtwCustomTools(
       hotmilkBtwConfig({ "context-mode": true, graphify: false }),
@@ -137,33 +184,37 @@ describe("hotmilk btw tools", () => {
     expect(tools.map((t) => t.name)).toEqual(["ctx_search"]);
   });
 
-  it("ctx_search proxy delegates to the main session tool", async () => {
+  it("ctx_search proxy forwards the main session call", async () => {
+    const params = { queries: ["decision"] };
+    const signal = new AbortController().signal;
+    const onUpdate = () => {};
+    const ctx = { cwd: process.cwd() };
+    let received: unknown[] = [];
+
     captureMainCtxSearchTool({
       name: "ctx_search",
       description: "main ctx_search",
       parameters: { type: "object", properties: {} },
-      execute: async () => ({
-        content: [{ type: "text", text: "indexed hit" }],
-        details: { ok: true },
-      }),
+      execute: async (toolCallId, passedParams, passedSignal, passedOnUpdate, passedCtx) => {
+        received = [toolCallId, passedParams, passedSignal, passedOnUpdate, passedCtx];
+        return {
+          content: [{ type: "text", text: "indexed hit" }],
+          details: { ok: true },
+        };
+      },
     });
 
     const [proxy] = createHotmilkBtwCustomTools(
       hotmilkBtwConfig({ "context-mode": true, graphify: false }),
     );
-    const result = await proxy.execute(
-      "call-1",
-      { queries: ["decision"] },
-      undefined,
-      undefined,
-      // SAFETY: test double implements only the cwd field used by execute.
-      { cwd: process.cwd() } as never,
-    );
+    // SAFETY: test context only supplies cwd, which proxy forwards unchanged.
+    const result = await proxy.execute("call-1", params, signal, onUpdate, ctx as never);
 
     expect(result.content[0]).toMatchObject({ type: "text", text: "indexed hit" });
+    expect(received).toEqual(["call-1", params, signal, onUpdate, ctx]);
   });
 
-  it("installHotmilkCtxSearchCapture stores ctx_search from registerTool", () => {
+  it("installHotmilkCtxSearchCapture forwards tools and captures ctx_search once", () => {
     type CapturedTool = {
       name: string;
       description?: string;
@@ -176,15 +227,25 @@ describe("hotmilk btw tools", () => {
         registered.push(tool.name);
       },
     };
+
     // SAFETY: test double implements only registerTool.
     installHotmilkCtxSearchCapture(pi as never);
+    // SAFETY: idempotent installation keeps same registerTool contract.
+    installHotmilkCtxSearchCapture(pi as never);
+    pi.registerTool({
+      name: "other",
+      description: "ignored",
+      parameters: { type: "object", properties: {} },
+      execute: async () => ({ content: [{ type: "text", text: "other" }], details: {} }),
+    });
     pi.registerTool({
       name: "ctx_search",
       description: "captured",
       parameters: { type: "object", properties: {} },
       execute: async () => ({ content: [{ type: "text", text: "ok" }], details: {} }),
     });
-    expect(registered).toEqual(["ctx_search"]);
+
+    expect(registered).toEqual(["other", "ctx_search"]);
     expect(
       createHotmilkBtwCustomTools(hotmilkBtwConfig({ "context-mode": true, graphify: false }))[0]
         ?.description,

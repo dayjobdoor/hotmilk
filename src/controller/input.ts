@@ -1,9 +1,6 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { openModeSettingsModal } from "./mode.ts";
 
-/** Prefix for interrupt commands. */
-const INTERRUPT_PREFIX = "/interrupt ";
-
 /**
  * Handle /stop command input.
  *
@@ -39,20 +36,6 @@ function handleInterruptInput(
     deliverAs: "steer",
   });
   ctx.ui.notify("Interrupt prompt sent.", "info");
-}
-
-/** Route typed slash commands (`/stop`, `/interrupt`, `/mode`) to their handlers. */
-export function routeInputCommand(text: string, pi: ExtensionAPI, ctx: ExtensionContext): void {
-  const normalizedText = text.trim();
-  if (normalizedText === "/stop") {
-    handleStopInput(ctx);
-    return;
-  }
-  if (normalizedText.startsWith(INTERRUPT_PREFIX)) {
-    const interruptPrompt = normalizedText.slice(INTERRUPT_PREFIX.length).trim();
-    handleInterruptInput(interruptPrompt, pi, ctx);
-    return;
-  }
 }
 
 /** Register `/stop`, `/interrupt`, and `/mode` as Pi commands. */

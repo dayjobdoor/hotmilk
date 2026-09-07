@@ -7,7 +7,7 @@ Applies when changing package layout, startup, bundled extensions, or configurat
 - hotmilk is a Pi meta-package. It bundles gentle-pi, context-mode, graphify, subagents, and related extensions.
 - Pi loads only `./src/index.ts` from `package.json` → `pi.extensions`.
 - Toggled bundles load lazily through `BUNDLED_EXTENSION_DEFINITIONS` and `src/bootstrap/extensions.ts`; do not add toggled packages directly to `pi.extensions`.
-- Adding a bundle requires one registry row, a `hotmilk.json` default, a `package.json` dependency, and README documentation.
+- Adding a bundle requires one registry row with its `defaultEnabled` flag, a `package.json` dependency, and README documentation.
 - Keep the registry's normal package module path. Preserve an explicit pre-load hook only when an upstream package requires hotmilk integration before import, as with `pi-btw`.
 
 ## Configuration and trust
@@ -27,7 +27,7 @@ Applies when changing package layout, startup, bundled extensions, or configurat
 - `skills/`: first-party skills discovered through `pi.skills`.
 - `docs/`: architecture and workflow documentation.
 
-Use `docs/design.md` for startup/load order and `docs/directory.md` for the full tree.
+Use [design.md](design.md) for startup/load order and [directory.md](directory.md) for the full tree.
 
 ## Recon
 

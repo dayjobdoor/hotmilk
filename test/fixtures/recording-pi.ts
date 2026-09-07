@@ -1,8 +1,14 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
+export type RecordingPiCall = {
+  method: PropertyKey;
+  args: unknown[];
+};
+
 export type RecordingPi = {
   pi: ExtensionAPI;
   accessed: PropertyKey[];
+  calls: RecordingPiCall[];
 };
 
 /**
@@ -11,13 +17,17 @@ export type RecordingPi = {
  */
 export function recordingPi(): RecordingPi {
   const accessed: PropertyKey[] = [];
+  const calls: RecordingPiCall[] = [];
   const handler: ProxyHandler<object> = {
     get(_target, prop) {
       accessed.push(prop);
-      return () => pi;
+      return (...args: unknown[]) => {
+        calls.push({ method: prop, args });
+        return pi;
+      };
     },
   };
-  // SAFETY: test double; only get trap is used, methods are no-ops.
+  // SAFETY: test double; only get trap is used.
   const pi = new Proxy({}, handler) as ExtensionAPI;
-  return { pi, accessed };
+  return { pi, accessed, calls };
 }

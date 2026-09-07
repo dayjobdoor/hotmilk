@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -9,6 +9,7 @@ import {
   semverAtLeast,
 } from "./fixtures/manifest.ts";
 import { isJsonObject, isJsonString, parseJsonValue } from "../src/bootstrap/json.ts";
+import { makeTempDir } from "./fixtures/tmp.ts";
 
 type NestedInstall = { path: string; name: string; version: string };
 
@@ -19,9 +20,8 @@ type KnownNestedDrift = { name: string; below: string };
 /** Minimum Pi floor for nested @earendil-works supply-chain drift checks. */
 const PI_080_FLOOR = "0.80.0";
 
-/** Declared hotmilk peer target (dev/peer/overrides). */
-const PI_PEER_TARGET = /0\.84/;
-const PI_TOP_FLOOR = "0.84.0";
+/** Declared Pi coding-agent package and version range. */
+const PI_CODING_AGENT_PACKAGE = "@earendil-works/pi-coding-agent";
 
 type BundledPeerRangeExclusion = {
   packageName: string;
@@ -51,9 +51,9 @@ function bundledPiPeerRanges(packageName: string): string[] {
     .map(([, range]) => range);
 }
 
-function collectNestedEarendilInstalls(): NestedInstall[] {
+function collectNestedEarendilInstalls(root = REPO_ROOT): NestedInstall[] {
   const found: NestedInstall[] = [];
-  const nodeModules = join(REPO_ROOT, "node_modules");
+  const nodeModules = join(root, "node_modules");
 
   function collectPackagesInScopeDir(dir: string, pkgDirName: string): void {
     const scopePath = join(dir, pkgDirName);
@@ -99,6 +99,34 @@ function collectNestedEarendilInstalls(): NestedInstall[] {
   return found;
 }
 
+describe("nested dependency scanner", () => {
+  it("finds nested scoped @earendil-works packages", () => {
+    const root = makeTempDir("hotmilk-nested-deps-");
+    const packagePath = join(
+      root,
+      "node_modules",
+      "parent",
+      "node_modules",
+      "@earendil-works",
+      "pi-child",
+    );
+    mkdirSync(packagePath, { recursive: true });
+    writeFileSync(
+      join(packagePath, "package.json"),
+      JSON.stringify({ name: "@earendil-works/pi-child", version: "0.79.0" }),
+      "utf8",
+    );
+
+    expect(collectNestedEarendilInstalls(root)).toEqual([
+      {
+        path: packagePath,
+        name: "@earendil-works/pi-child",
+        version: "0.79.0",
+      },
+    ]);
+  });
+});
+
 describe("third-party risk (hotmilk meta-package)", () => {
   it("resolves gentle-pi at or above the package.json semver floor", () => {
     const floor = PACKAGE_JSON.dependencies?.["gentle-pi"];
@@ -107,32 +135,44 @@ describe("third-party risk (hotmilk meta-package)", () => {
     expect(semverAtLeast(resolved, floor!)).toBe(true);
   });
 
-  it("installs Pi 0.84 coding-agent at the top level", () => {
-    const version = installedPackageVersion("@earendil-works/pi-coding-agent");
-    expect(semverAtLeast(version, PI_TOP_FLOOR)).toBe(true);
+  it("installs Pi coding-agent at its declared devDependency floor", () => {
+    const floor = PACKAGE_JSON.devDependencies?.[PI_CODING_AGENT_PACKAGE];
+    expect(floor).toBeDefined();
+    const version = installedPackageVersion(PI_CODING_AGENT_PACKAGE);
+    expect(semverAtLeast(version, floor!)).toBe(true);
   });
 
-  it("declares permissive Pi peers and pins 0.84 in overrides", () => {
-    for (const [name, range] of Object.entries(PACKAGE_JSON.peerDependencies ?? {})) {
-      if (name.startsWith("@earendil-works/")) {
-        expect(range).toBe("*");
-      }
+  it("keeps Pi peers permissive and aligned to the declared dev range", () => {
+    const declaredRange = PACKAGE_JSON.devDependencies?.[PI_CODING_AGENT_PACKAGE];
+    expect(declaredRange).toBeDefined();
+
+    const peerEntries = Object.entries(PACKAGE_JSON.peerDependencies ?? {}).filter(([name]) =>
+      name.startsWith("@earendil-works/"),
+    );
+    expect(peerEntries.length).toBeGreaterThan(0);
+    for (const [, range] of peerEntries) {
+      expect(range).toBe("*");
     }
 
-    for (const [name, range] of Object.entries(PACKAGE_JSON.overrides ?? {})) {
-      if (name.startsWith("@earendil-works/")) {
-        expect(range).toMatch(PI_PEER_TARGET);
-      }
+    const overrideEntries = Object.entries(PACKAGE_JSON.overrides ?? {}).filter(([name]) =>
+      name.startsWith("@earendil-works/"),
+    );
+    expect(overrideEntries.length).toBeGreaterThan(0);
+    for (const [, range] of overrideEntries) {
+      expect(range).toBe(declaredRange);
     }
 
-    for (const [name, range] of Object.entries(PACKAGE_JSON.devDependencies ?? {})) {
-      if (name.startsWith("@earendil-works/")) {
-        expect(range).toMatch(PI_PEER_TARGET);
-      }
+    const devEntries = Object.entries(PACKAGE_JSON.devDependencies ?? {}).filter(([name]) =>
+      name.startsWith("@earendil-works/"),
+    );
+    expect(devEntries.length).toBeGreaterThan(0);
+    for (const [, range] of devEntries) {
+      expect(range).toBe(declaredRange);
     }
   });
 
   it("tracks bundled deps whose peer ranges still exclude Pi 0.80", () => {
+    expect(BUNDLED_PEER_RANGES_EXCLUDING_PI_080.length).toBeGreaterThan(0);
     for (const exclusion of BUNDLED_PEER_RANGES_EXCLUDING_PI_080) {
       const ranges = bundledPiPeerRanges(exclusion.packageName);
       expect(ranges.length).toBeGreaterThan(0);

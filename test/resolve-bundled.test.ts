@@ -2,50 +2,50 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  bundledImportUrl,
-  parseBundledModulePath,
-  resolveBundledModule,
-} from "../src/bootstrap/resolve-bundled.ts";
+import { parseBundledModulePath, resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
 
 describe("parseBundledModulePath", () => {
-  it("parses scoped package paths", () => {
-    expect(parseBundledModulePath("@haispeed/pi-obsidian/extensions/obsidian-cli.ts")).toEqual({
-      pkgName: "@haispeed/pi-obsidian",
-      subpath: "extensions/obsidian-cli.ts",
-    });
-  });
+  it("parses supported bundled module path shapes", () => {
+    const cases = [
+      [
+        "@haispeed/pi-obsidian/extensions/obsidian-cli.ts",
+        { pkgName: "@haispeed/pi-obsidian", subpath: "extensions/obsidian-cli.ts" },
+      ],
+      [
+        "context-mode/build/adapters/pi/extension.js",
+        { pkgName: "context-mode", subpath: "build/adapters/pi/extension.js" },
+      ],
+      ["gentle-pi", { pkgName: "gentle-pi", subpath: "index.ts" }],
+      ["hotmilk/src/index.ts", { pkgName: "hotmilk", subpath: "src/index.ts" }],
+    ] as const;
 
-  it("parses unscoped package paths", () => {
-    expect(parseBundledModulePath("context-mode/build/adapters/pi/extension.js")).toEqual({
-      pkgName: "context-mode",
-      subpath: "build/adapters/pi/extension.js",
-    });
-  });
-
-  it("parses the pi-btw extension path like other package modules", () => {
-    expect(parseBundledModulePath("pi-btw/extensions/btw.ts")).toEqual({
-      pkgName: "pi-btw",
-      subpath: "extensions/btw.ts",
-    });
+    for (const [input, expected] of cases) {
+      expect(parseBundledModulePath(input)).toEqual(expected);
+    }
   });
 });
 
 describe("resolveBundledModule", () => {
-  it("resolves pi-btw from node_modules", () => {
-    const resolved = resolveBundledModule("pi-btw/extensions/btw.ts", import.meta.url);
-    expect(resolved).toMatch(/node_modules[/\\]pi-btw[/\\]extensions[/\\]btw\.ts$/);
-    expect(existsSync(resolved)).toBe(true);
-  });
-
   it("resolves nested node_modules in dev layout", () => {
+    const tempDir = makeTempDir("hotmilk-resolve-nested-");
+    const hotmilkRoot = join(tempDir, "node_modules", "hotmilk");
+    const bootstrapDir = join(hotmilkRoot, "src", "bootstrap");
+    const modulePath = "context-mode/build/adapters/pi/extension.js";
+    const nestedFile = join(hotmilkRoot, "node_modules", modulePath);
+
+    mkdirSync(bootstrapDir, { recursive: true });
+    mkdirSync(dirname(nestedFile), { recursive: true });
+    writeFileSync(join(hotmilkRoot, "package.json"), JSON.stringify({ name: "hotmilk" }));
+    writeFileSync(join(bootstrapDir, "extensions.ts"), "");
+    writeFileSync(nestedFile, "");
+
     const resolved = resolveBundledModule(
-      "context-mode/build/adapters/pi/extension.js",
-      import.meta.url,
+      modulePath,
+      pathToFileURL(join(bootstrapDir, "extensions.ts")).href,
     );
-    expect(resolved).toContain("node_modules");
-    expect(resolved).toMatch(/context-mode[/\\]build[/\\]adapters[/\\]pi[/\\]extension\.js$/);
+
+    expect(resolved).toBe(nestedFile);
     expect(existsSync(resolved)).toBe(true);
   });
 
@@ -73,10 +73,14 @@ describe("resolveBundledModule", () => {
     expect(existsSync(resolved)).toBe(true);
   });
 
-  it("returns a file URL that resolves to an existing module", () => {
-    const modulePath = "gentle-pi/extensions/gentle-ai.ts";
-    const url = bundledImportUrl(modulePath);
-    expect(url.startsWith("file://")).toBe(true);
-    expect(existsSync(resolveBundledModule(modulePath, import.meta.url))).toBe(true);
+  it("throws when a bundled module cannot be resolved", () => {
+    const tempDir = makeTempDir("hotmilk-resolve-missing-");
+    const fromModule = join(tempDir, "src", "bootstrap", "extensions.ts");
+    mkdirSync(join(tempDir, "src", "bootstrap"), { recursive: true });
+    writeFileSync(fromModule, "");
+
+    expect(() =>
+      resolveBundledModule("missing-package/extension.js", pathToFileURL(fromModule).href),
+    ).toThrow('Cannot resolve bundled module "missing-package/extension.js" from hotmilk');
   });
 });

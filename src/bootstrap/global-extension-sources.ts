@@ -8,11 +8,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import {
-  detectGlobalProviderForBundledExtension,
-  HOTMILK_PACKAGE_NAME,
-} from "../config/bundled-package-registry.ts";
-import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmilk.ts";
+  BUNDLED_EXTENSION_DEFINITIONS,
+  type BundledExtensionId,
+} from "../config/bundled-extensions.ts";
 import { isJsonObject, isJsonString, parseJsonValue, type JsonValue } from "./json.ts";
+
+const HOTMILK_PACKAGE_NAME = "hotmilk";
 
 const PI_PROJECT_CONFIG_DIR = ".pi";
 
@@ -202,10 +203,10 @@ export function detectGlobalBundledExtensionSkips(
   const installed = collectInstalledPackageNamesFromPiSettings(options);
   const skips: GlobalBundledExtensionSkip[] = [];
 
-  for (const id of BUNDLED_EXTENSION_IDS) {
-    const packageName = detectGlobalProviderForBundledExtension(id, installed);
-    if (packageName) {
-      skips.push({ id, packageName });
+  for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
+    const packageName = definition.packageName;
+    if (installed.has(packageName)) {
+      skips.push({ id: definition.id, packageName });
     }
   }
 

@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vite-plus/test";
-import { formatFooterTime, footerModelRuntimeFromContext } from "../src/ui/footer.ts";
+import {
+  initTheme,
+  type ReadonlyFooterDataProvider,
+  type Theme,
+} from "@earendil-works/pi-coding-agent";
+import type { TUI } from "@earendil-works/pi-tui";
+import {
+  formatFooterTime,
+  footerModelRuntimeFromContext,
+  setupHotmilkFooter,
+} from "../src/ui/footer.ts";
 
 type FooterModelCandidate = { provider: string };
 
@@ -22,9 +32,92 @@ type FooterProviderMap = {
 };
 
 describe("formatFooterTime", () => {
-  it("formats as HH:mm:ss in 24-hour style", () => {
+  it("formats as a locale-independent HH:mm:ss string", () => {
     const formatted = formatFooterTime(new Date(2026, 4, 29, 14, 5, 9));
-    expect(formatted).toMatch(/14:05:09/);
+    expect(formatted).toBe("14:05:09");
+  });
+});
+
+describe("setupHotmilkFooter", () => {
+  it("does not install a footer when UI is unavailable", () => {
+    let setFooterCalls = 0;
+    const ctx = {
+      hasUI: false,
+      ui: { setFooter: () => setFooterCalls++ },
+    };
+
+    // SAFETY: test context only exercises the hasUI guard before UI access.
+    setupHotmilkFooter(ctx as never, "ghostty");
+
+    expect(setFooterCalls).toBe(0);
+  });
+});
+describe("footer lifecycle", () => {
+  it("renders extension statuses and unsubscribes on dispose", () => {
+    type FooterFactory = (
+      tui: TUI,
+      theme: Theme,
+      footerData: ReadonlyFooterDataProvider,
+    ) => {
+      render(width: number): string[];
+      dispose?(): void;
+    };
+    let footerFactory: FooterFactory | undefined;
+    let unsubscribeCalls = 0;
+    const ctx = {
+      hasUI: true,
+      model: undefined,
+      thinkingLevel: "off",
+      sessionManager: {
+        getEntries: () => [],
+        getCwd: () => "/tmp/hotmilk",
+        getSessionName: () => undefined,
+      },
+      getContextUsage: () => ({ contextWindow: 1000, percent: 0 }),
+      ui: {
+        setFooter: (factory: typeof footerFactory) => {
+          footerFactory = factory;
+        },
+      },
+    };
+    const footerData: ReadonlyFooterDataProvider = {
+      getGitBranch: () => "main",
+      getExtensionStatuses: () =>
+        new Map([
+          ["z-status", " zeta\nstatus "],
+          ["a-status", " alpha\tstatus "],
+        ]),
+      getAvailableProviderCount: () => 1,
+      onBranchChange: () => () => {
+        unsubscribeCalls++;
+      },
+    };
+
+    // SAFETY: test context supplies every field read by setupHotmilkFooter.
+    initTheme(undefined, false);
+    // SAFETY: test context covers only footer setup contract.
+    setupHotmilkFooter(ctx as never, "ghostty");
+    expect(footerFactory).toEqual(expect.any(Function));
+
+    // SAFETY: footer render only uses TUI methods through component contract.
+    const tui = {} as TUI;
+    // SAFETY: footer render only uses fg and bold through theme contract.
+    const theme = {
+      fg: (_color: string, text: string) => text,
+      bold: (text: string) => text,
+    } as Theme;
+    const component = footerFactory!(tui, theme, footerData);
+
+    const lines = component.render(200);
+
+    expect(lines.join("\n")).toContain("alpha status");
+    expect(lines.join("\n")).toContain("zeta status");
+    expect(lines.join("\n").indexOf("alpha status")).toBeLessThan(
+      lines.join("\n").indexOf("zeta status"),
+    );
+
+    component.dispose?.();
+    expect(unsubscribeCalls).toBe(1);
   });
 });
 

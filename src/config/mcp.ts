@@ -1,65 +1,17 @@
-/**
- * MCP config seeding and legacy context-mode cleanup.
- *
- * Seeds the agent `mcp.json` from the bundled template and prunes duplicate
- * `context-mode` MCP server entries because context-mode exposes `ctx_*`
- * through its own extension bridge.
- */
+/** MCP config cleanup for duplicate context-mode server entries. */
 
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import {
-  formatCaughtError,
-  isJsonObject,
-  parseJsonValue,
-  type JsonObject,
-  type JsonValue,
-} from "../bootstrap/json.ts";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { formatCaughtError, isJsonObject, parseJsonValue } from "../bootstrap/json.ts";
 
-const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
-const MCP_TEMPLATE_PATH = join(PACKAGE_ROOT, "mcp.json");
 const CONTEXT_MODE_MCP_SERVER_ID = "context-mode";
-
-type MutableJsonObject = { [key: string]: JsonValue };
-
-export type SeedMcpResult = {
-  seeded: boolean;
-  path: string;
-};
 
 export type PruneMcpResult = {
   pruned: boolean;
   path: string;
   error?: string;
 };
-
-function toMutableJsonObject(value: JsonObject) {
-  const next: MutableJsonObject = {};
-  for (const key of Object.keys(value)) {
-    next[key] = value[key];
-  }
-  return next;
-}
-
-/**
- * Copy the bundled `mcp.json` template into the agent directory when absent.
- *
- * @returns seed result
- */
-export function seedAgentMcpJsonIfMissing(): SeedMcpResult {
-  const agentMcpPath = join(getAgentDir(), "mcp.json");
-  if (existsSync(agentMcpPath)) {
-    return { seeded: false, path: agentMcpPath };
-  }
-  if (!existsSync(MCP_TEMPLATE_PATH)) {
-    return { seeded: false, path: agentMcpPath };
-  }
-  mkdirSync(dirname(agentMcpPath), { recursive: true });
-  copyFileSync(MCP_TEMPLATE_PATH, agentMcpPath);
-  return { seeded: true, path: agentMcpPath };
-}
 
 /**
  * Remove the legacy `context-mode` MCP server entry from a given `mcp.json`.
@@ -83,10 +35,9 @@ export function pruneContextModeFromMcpJsonAt(mcpJsonPath: string): PruneMcpResu
     if (parsed.mcpServers[CONTEXT_MODE_MCP_SERVER_ID] === undefined) {
       return { pruned: false, path: mcpJsonPath };
     }
-    const mcpServers = toMutableJsonObject(parsed.mcpServers);
+    const mcpServers = { ...parsed.mcpServers };
     delete mcpServers[CONTEXT_MODE_MCP_SERVER_ID];
-    const next = toMutableJsonObject(parsed);
-    next.mcpServers = mcpServers;
+    const next = { ...parsed, mcpServers };
     writeFileSync(mcpJsonPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
     return { pruned: true, path: mcpJsonPath };
   } catch (error) {

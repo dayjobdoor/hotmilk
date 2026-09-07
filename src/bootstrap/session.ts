@@ -1,7 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { applyContextStackOnSessionStart } from "./context-stack.ts";
 import { detectGlobalBundledExtensionSkips } from "./global-extension-sources.ts";
-import { seedAgentMcpJsonIfMissing } from "../config/mcp.ts";
 import { hotmilkConfigDisplayPath, seedHotmilkConfigIfMissing } from "../config/hotmilk.ts";
 import type { HotmilkRuntime } from "../config/runtime.ts";
 import { setupHotmilkFooter } from "../ui/footer.ts";
@@ -24,58 +23,28 @@ const HOTMILK_SEEDED_MESSAGE = (path: string): string =>
  */
 const HOTMILK_PARSE_ERROR_MESSAGE = (path: string, error: string): string =>
   `Failed to parse ${path}: ${error}. Using default extension toggles.`;
-/**
- * Message shown when MCP config is seeded.
- *
- * @param path - seeded MCP config path
- * @returns formatted message
- */
-const MCP_SEEDED_MESSAGE = (path: string): string =>
-  `Created ${path} from hotmilk MCP template (add servers for pi-mcp-adapter; context-mode uses the extension bridge).`;
 
-/**
- * Format message for project trust skips.
- *
- * @param skips - global extension skips
- * @returns formatted message or undefined if no skips
- */
-function formatProjectTrustSkipMessage(
+/** Format an extension-skip notification. */
+function formatExtensionSkipsMessage(
   skips: HotmilkRuntime["globalExtensionSkips"],
+  scope: "global" | "project",
+  prefix: string,
 ): string | undefined {
   if (skips.length === 0) {
     return undefined;
   }
-  const rows = skips.map((skip) => `${skip.id}: project ${skip.packageName}`).join("\n");
-  return `Project settings also provide bundled packages (run /reload to dedupe):\n${rows}`;
+  const rows = skips.map((skip) => `${skip.id}: ${scope} ${skip.packageName}`).join("\n");
+  return `${prefix}\n${rows}`;
 }
 
 /**
- * Detect bundled extensions that are provided only by project settings.
- *
- * @param cwd - current working directory
- * @returns project-only bundled extension skips
+ * Detect bundled extensions provided only by project settings.
  */
 function detectProjectOnlyBundledSkips(cwd: string): HotmilkRuntime["globalExtensionSkips"] {
   const globalOnly = detectGlobalBundledExtensionSkips({ cwd, includeProjectSettings: false });
   const withProject = detectGlobalBundledExtensionSkips({ cwd, includeProjectSettings: true });
   const globalIds = new Set(globalOnly.map((skip) => skip.id));
   return withProject.filter((skip) => !globalIds.has(skip.id));
-}
-
-/**
- * Format message for global extension skips.
- *
- * @param skips - global extension skips
- * @returns formatted message or undefined if no skips
- */
-function formatGlobalExtensionSkipsMessage(
-  skips: HotmilkRuntime["globalExtensionSkips"],
-): string | undefined {
-  if (skips.length === 0) {
-    return undefined;
-  }
-  const rows = skips.map((skip) => `${skip.id}: global ${skip.packageName}`).join("\n");
-  return `Bundled extensions skipped (Pi settings already provide the package):\n${rows}`;
 }
 
 /** Register hotmilk session-start handlers (seed config, footer, context stack, MCP). */
@@ -102,14 +71,20 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
 
     applyContextStackOnSessionStart(runtime, uiNotify);
 
-    const globalSkipMessage = formatGlobalExtensionSkipsMessage(runtime.globalExtensionSkips);
+    const globalSkipMessage = formatExtensionSkipsMessage(
+      runtime.globalExtensionSkips,
+      "global",
+      "Bundled extensions skipped (Pi settings already provide the package):",
+    );
     if (globalSkipMessage) {
       uiNotify(globalSkipMessage, "info");
     }
 
     if (ctx.isProjectTrusted()) {
-      const projectSkipMessage = formatProjectTrustSkipMessage(
+      const projectSkipMessage = formatExtensionSkipsMessage(
         detectProjectOnlyBundledSkips(ctx.cwd),
+        "project",
+        "Project settings also provide bundled packages (run /reload to dedupe):",
       );
       if (projectSkipMessage) {
         uiNotify(projectSkipMessage, "warning");
@@ -122,13 +97,6 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
 
     if (runtime.extensionToggles.kanagawa) {
       uiNotify(KANAGAWA_FOOTER_WARNING, "warning");
-    }
-
-    if (runtime.mcp.seedOnStart) {
-      const mcpSeed = seedAgentMcpJsonIfMissing();
-      if (mcpSeed.seeded) {
-        uiNotify(MCP_SEEDED_MESSAGE(mcpSeed.path), "info");
-      }
     }
   });
 }

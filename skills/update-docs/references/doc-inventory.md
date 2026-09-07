@@ -4,11 +4,11 @@
 
 **Do NOT load when:** Post-ship route already names the row (read that row here only if unsure), or the user scoped a single file you already know.
 
-Code and config win. Docs below are reconciliation targets. **Adapt rows to the repo** — skip rows that do not exist.
+Code and config win. Docs below are reconciliation targets. **Adapt rows to the repo** — skip rows that do not exist. There is no required filename catalog; preserve the repository's existing document layout.
 
 ## Detect project type (Phase 0)
 
-Read one manifest first, then use the matching rows:
+Enumerate every supported manifest family at the repository root and, when applicable, workspace/package directories. Use matching rows for each. If none exists, skip manifest-specific rows, use source-layout and CI rows, and report project type as unknown rather than inventing commands.
 
 | Signal file                   | Project type   |
 | ----------------------------- | -------------- |
@@ -59,11 +59,11 @@ When the user changed code recently, scan **only** rows touched by the change:
 
 ## Common drifts (quick scan)
 
-| Symptom                                        | Likely fix                                                                    |
-| ---------------------------------------------- | ----------------------------------------------------------------------------- |
-| README command does not exist in manifest      | Align with manifest scripts/targets                                           |
-| Doc paths point to removed modules             | Update layout table from current tree                                         |
-| Config sample shows stale defaults             | Copy from repo config template after confirming code                          |
-| Doc lists a feature not in manifest/config     | Remove or mark as external/optional                                           |
-| Duplicate facts disagree across two docs       | Pick one canonical source; link from the other                                |
-| Doc, manifest, and CI disagree on same command | Apply precedence (CI > manifest > source); report conflict if still ambiguous |
+| Symptom                                        | Likely fix                                                                                                                          |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| README command does not exist in manifest      | Align with manifest scripts/targets                                                                                                 |
+| Doc paths point to removed modules             | Update layout table from current tree                                                                                               |
+| Config sample shows stale defaults             | Copy from repo config template after confirming code                                                                                |
+| Doc lists a feature not in manifest/config     | Remove or mark as external/optional                                                                                                 |
+| Duplicate facts disagree across two docs       | Pick one canonical source; link from the other                                                                                      |
+| Doc, manifest, and CI disagree on same command | Apply precedence (CI > manifest > source), record resolved mismatch in `Drifts fixed`, and report in `Gaps` only if still ambiguous |

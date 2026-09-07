@@ -1,4 +1,4 @@
-import { chmodSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -28,19 +28,28 @@ describe("context-stack", () => {
     expect(buildHotmilkRtkConfig(false).mode).toBe("rewrite");
   });
 
-  it("seedRtkConfigIfMissing writes config once", () => {
+  it("seeds RTK config when missing", () => {
     const agentDir = makeTempDir("hotmilk-rtk-");
     const configPath = join(agentDir, "config.json");
 
-    const first = seedRtkConfigIfMissing(true, configPath);
-    const second = seedRtkConfigIfMissing(true, configPath);
+    const result = seedRtkConfigIfMissing(true, configPath);
 
-    expect(first.seeded).toBe(true);
-    expect(second.seeded).toBe(false);
-
+    expect(result).toEqual({ seeded: true, path: configPath });
     const written = readWrittenRtkConfig(configPath);
     expect(written.mode).toBe("suggest");
     expect(written.outputCompaction.readCompaction.enabled).toBe(false);
+  });
+
+  it("preserves an existing RTK config", () => {
+    const agentDir = makeTempDir("hotmilk-rtk-existing-");
+    const configPath = join(agentDir, "config.json");
+    const existing = { mode: "rewrite", custom: { keep: true } };
+    writeFileSync(configPath, `${JSON.stringify(existing)}\n`, "utf8");
+
+    const result = seedRtkConfigIfMissing(true, configPath);
+
+    expect(result).toEqual({ seeded: false, path: configPath });
+    expect(parseJsonValue(readFileSync(configPath, "utf8"))).toEqual(existing);
   });
 
   it("syncRtkConfigForContextStack updates stale mode when context-mode is on", () => {
@@ -49,7 +58,7 @@ describe("context-stack", () => {
 
     writeFileSync(
       configPath,
-      `${JSON.stringify({ mode: "rewrite", outputCompaction: { readCompaction: { enabled: true } } }, null, 2)}\n`,
+      `${JSON.stringify({ mode: "rewrite", outputCompaction: { readCompaction: { enabled: true } }, custom: { keep: true } }, null, 2)}\n`,
       "utf8",
     );
 
@@ -60,6 +69,19 @@ describe("context-stack", () => {
     expect(result.seeded).toBe(false);
     expect(written.mode).toBe("suggest");
     expect(written.outputCompaction.readCompaction.enabled).toBe(false);
+    expect(parseJsonValue(readFileSync(configPath, "utf8"))).toMatchObject({
+      custom: { keep: true },
+    });
+  });
+
+  it("seeds missing config through sync", () => {
+    const agentDir = makeTempDir("hotmilk-rtk-sync-missing-");
+    const configPath = join(agentDir, "config.json");
+
+    const result = syncRtkConfigForContextStack(true, true, configPath);
+
+    expect(result).toEqual({ updated: true, seeded: true, path: configPath });
+    expect(readWrittenRtkConfig(configPath).mode).toBe("suggest");
   });
 
   it("syncRtkConfigForContextStack leaves rewrite mode when context-mode is off", () => {
@@ -107,18 +129,12 @@ describe("context-stack", () => {
     expect(result.error).toEqual(expect.any(String));
   });
 
-  it("seedRtkConfigIfMissing reports error when config dir is not writable", () => {
-    // Skip on Windows where chmod semantics differ.
-    if (process.platform === "win32") {
-      return;
-    }
+  it("seedRtkConfigIfMissing reports error when config ancestor is a file", () => {
+    const agentDir = makeTempDir("hotmilk-rtk-error-");
+    const fileAncestor = join(agentDir, "not-a-directory");
+    writeFileSync(fileAncestor, "", "utf8");
 
-    const agentDir = makeTempDir("hotmilk-rtk-ro-");
-    const configPath = join(agentDir, "nested", "config.json");
-
-    chmodSync(agentDir, 0o555);
-
-    const result = seedRtkConfigIfMissing(true, configPath);
+    const result = seedRtkConfigIfMissing(true, join(fileAncestor, "config.json"));
 
     expect(result.seeded).toBe(false);
     expect(result.error).toEqual(expect.any(String));

@@ -1,20 +1,15 @@
-/** npm package name(s) that provide a bundled extension when installed via Pi settings. */
-export type BundledPackageSpec = {
-  /** Primary npm package for `npm:<name>` entries and bundled loader resolution. */
-  packageName: string;
-  /** Extra package names that satisfy the same bundled id (for provider aliases). */
-  aliases?: readonly string[];
-};
+/** npm package name that provides a bundled extension when installed via Pi settings. */
 
 export type BundledExtensionLoadPhase = "context-stack" | "parallel";
 
 export type BundledExtensionDefinition = {
   readonly id: string;
-  readonly package: BundledPackageSpec;
+  readonly packageName: string;
   /** Path passed to `loadBundled()` / `bundledImportUrl()`. */
   readonly module: string;
   /** `/mode` section label — must appear in {@link BUNDLED_EXTENSION_GROUP_ORDER}. */
   readonly group: BundledExtensionGroupLabel;
+  readonly defaultEnabled?: boolean;
   readonly loadPhase?: BundledExtensionLoadPhase;
 };
 
@@ -33,195 +28,226 @@ export type BundledExtensionGroupLabel = (typeof BUNDLED_EXTENSION_GROUP_ORDER)[
 
 /**
  * Single registry for bundled Pi extensions.
- * Adding an extension: one row here + `hotmilk.json` default + `package.json` dep + README.
+ * Adding an extension: one row here with its default, `package.json` dep, and README.
  */
 export const BUNDLED_EXTENSION_DEFINITIONS = [
   {
     id: "skill-registry",
-    package: { packageName: "gentle-pi" },
+    packageName: "gentle-pi",
     module: "gentle-pi/extensions/skill-registry.ts",
     group: "Harness",
+    defaultEnabled: true,
   },
   {
     id: "sdd-init",
-    package: { packageName: "gentle-pi" },
+    packageName: "gentle-pi",
     module: "gentle-pi/extensions/sdd-init.ts",
     group: "Harness",
+    defaultEnabled: true,
   },
   {
     id: "gentle-ai",
-    package: { packageName: "gentle-pi" },
+    packageName: "gentle-pi",
     module: "gentle-pi/extensions/gentle-ai.ts",
     group: "Harness",
+    defaultEnabled: true,
   },
   {
     id: "context-mode",
-    package: { packageName: "context-mode" },
+    packageName: "context-mode",
     module: "context-mode/build/adapters/pi/extension.js",
     group: "Context & performance",
+    defaultEnabled: true,
     loadPhase: "context-stack",
   },
   {
+    id: "context-view",
+    packageName: "pi-context-view",
+    module: "pi-context-view/src/index.ts",
+    group: "Context & performance",
+  },
+  {
+    id: "vcc",
+    packageName: "@sting8k/pi-vcc",
+    module: "@sting8k/pi-vcc/index.ts",
+    group: "Context & performance",
+  },
+  {
     id: "ask-user",
-    package: { packageName: "@juicesharp/rpiv-ask-user-question" },
+    packageName: "@juicesharp/rpiv-ask-user-question",
     module: "@juicesharp/rpiv-ask-user-question/index.ts",
     group: "Agent tools",
+    defaultEnabled: true,
   },
   {
     id: "todo",
-    package: { packageName: "@juicesharp/rpiv-todo" },
+    packageName: "@juicesharp/rpiv-todo",
     module: "@juicesharp/rpiv-todo/index.ts",
     group: "Agent tools",
+    defaultEnabled: true,
   },
   {
     id: "graphify",
-    package: { packageName: "graphify-pi" },
+    packageName: "graphify-pi",
     module: "graphify-pi/extensions/graphify.ts",
     group: "Agent tools",
+    defaultEnabled: true,
   },
   {
     id: "shazam",
-    package: { packageName: "pi-shazam" },
+    packageName: "pi-shazam",
     module: "pi-shazam/dist/index.js",
     group: "Agent tools",
   },
   {
     id: "prompt-template-model",
-    package: { packageName: "pi-prompt-template-model" },
+    packageName: "pi-prompt-template-model",
     module: "pi-prompt-template-model/index.ts",
     group: "Agent tools",
   },
   {
     id: "subagents",
-    package: { packageName: "pi-subagents-j0k3r" },
+    packageName: "pi-subagents-j0k3r",
     module: "pi-subagents-j0k3r/index.ts",
     group: "Agent tools",
+    defaultEnabled: true,
   },
   {
     id: "herdr-squad",
-    package: { packageName: "pi-herdr-squad" },
+    packageName: "pi-herdr-squad",
     module: "pi-herdr-squad/index.ts",
     group: "Agent tools",
   },
   {
     id: "lens",
-    package: { packageName: "pi-lens" },
+    packageName: "pi-lens",
     module: "pi-lens/dist/index.js",
     group: "Agent tools",
+    defaultEnabled: true,
   },
   {
     id: "goal",
-    package: { packageName: "pi-goal" },
+    packageName: "pi-goal",
     module: "pi-goal/.pi/extensions/pi-goal/index.ts",
     group: "Integrations",
   },
   {
     id: "docparser",
-    package: { packageName: "pi-docparser" },
+    packageName: "pi-docparser",
     module: "pi-docparser/extensions/docparser/index.ts",
     group: "Integrations",
+    defaultEnabled: true,
   },
   {
     id: "obsidian",
-    package: { packageName: "@haispeed/pi-obsidian" },
+    packageName: "@haispeed/pi-obsidian",
     module: "@haispeed/pi-obsidian/extensions/obsidian-cli.ts",
     group: "Integrations",
+    defaultEnabled: true,
   },
   {
     id: "btw",
-    package: { packageName: "pi-btw" },
+    packageName: "pi-btw",
     module: "pi-btw/extensions/btw.ts",
     group: "Integrations",
+    defaultEnabled: true,
   },
   {
     id: "intercom",
-    package: { packageName: "pi-intercom" },
+    packageName: "pi-intercom",
     module: "pi-intercom/index.ts",
     group: "Integrations",
+    defaultEnabled: true,
   },
   {
     id: "simplify",
-    package: { packageName: "pi-simplify" },
+    packageName: "pi-simplify",
     module: "pi-simplify/dist/index.js",
     group: "Context & performance",
+    defaultEnabled: true,
   },
   {
     id: "rtk-optimizer",
-    package: { packageName: "pi-rtk-optimizer" },
+    packageName: "pi-rtk-optimizer",
     module: "pi-rtk-optimizer/index.ts",
     group: "Context & performance",
     loadPhase: "context-stack",
   },
   {
     id: "observational-memory",
-    package: { packageName: "pi-observational-memory" },
+    packageName: "pi-observational-memory",
     module: "pi-observational-memory/src/index.ts",
     group: "Context & performance",
   },
   {
     id: "engram",
-    package: { packageName: "gentle-engram" },
+    packageName: "gentle-engram",
     module: "gentle-engram/index.ts",
     group: "Context & performance",
+    defaultEnabled: true,
   },
   {
     id: "mcp-adapter",
-    package: { packageName: "pi-mcp-adapter" },
+    packageName: "pi-mcp-adapter",
     module: "pi-mcp-adapter/index.ts",
     group: "Integrations",
+    defaultEnabled: true,
   },
   {
     id: "planning-with-files",
-    package: { packageName: "@tomxprime/planning-with-files" },
+    packageName: "@tomxprime/planning-with-files",
     module: "@tomxprime/planning-with-files/extensions/planning-with-files/index.ts",
     group: "Workflow",
   },
   {
     id: "plannotator",
-    package: { packageName: "@plannotator/pi-extension" },
+    packageName: "@plannotator/pi-extension",
     module: "@plannotator/pi-extension/index.ts",
     group: "Workflow",
   },
   {
     id: "caveman",
-    package: { packageName: "pi-caveman" },
+    packageName: "pi-caveman",
     module: "pi-caveman/extensions/caveman.ts",
     group: "Output",
+    defaultEnabled: true,
   },
   {
     id: "ponytail",
-    package: { packageName: "@dietrichgebert/ponytail" },
+    packageName: "@dietrichgebert/ponytail",
     module: "@dietrichgebert/ponytail/pi-extension/index.js",
     group: "Output",
+    defaultEnabled: true,
   },
   {
     id: "red-green",
-    package: { packageName: "pi-red-green" },
+    packageName: "pi-red-green",
     module: "pi-red-green/dist/index.js",
     group: "Workflow",
   },
   {
     id: "autoresearch",
-    package: { packageName: "pi-autoresearch" },
+    packageName: "pi-autoresearch",
     module: "pi-autoresearch/extensions/pi-autoresearch/index.ts",
     group: "Experiments",
   },
   {
     id: "web-access",
-    package: { packageName: "pi-web-access" },
+    packageName: "pi-web-access",
     module: "pi-web-access/index.ts",
     group: "Agent tools",
+    defaultEnabled: true,
   },
   {
     id: "fff",
-    package: { packageName: "@ff-labs/pi-fff" },
+    packageName: "@ff-labs/pi-fff",
     module: "@ff-labs/pi-fff/src/index.ts",
     group: "Agent tools",
   },
   {
     id: "kanagawa",
-    package: { packageName: "pi-kanagawa" },
-    module: "pi-kanagawa/index.ts",
+    packageName: "pi-kanagawa",
+    module: "hotmilk/src/bundled/kanagawa.ts",
     group: "Output",
   },
 ] as const satisfies readonly BundledExtensionDefinition[];
@@ -235,12 +261,6 @@ export const BUNDLED_EXTENSION_IDS: BundledExtensionId[] = BUNDLED_EXTENSION_DEF
 /** Complete on/off map for every bundled extension id. */
 export type ExtensionToggleMap = { [K in BundledExtensionId]: boolean };
 
-export const BUNDLED_EXTENSION_PACKAGES: Record<BundledExtensionId, BundledPackageSpec> =
-  // SAFETY: every BundledExtensionId is present because we map BUNDLED_EXTENSION_DEFINITIONS.
-  Object.fromEntries(
-    BUNDLED_EXTENSION_DEFINITIONS.map((definition) => [definition.id, definition.package]),
-  ) as Record<BundledExtensionId, BundledPackageSpec>;
-
 export const CONTEXT_STACK_EXTENSION_IDS = BUNDLED_EXTENSION_DEFINITIONS.filter(
   (definition) => "loadPhase" in definition && definition.loadPhase === "context-stack",
 ).map((definition) => definition.id);
@@ -250,41 +270,13 @@ export type BundledExtensionGroup = {
   ids: BundledExtensionId[];
 };
 
-export function buildBundledExtensionGroups(): BundledExtensionGroup[] {
-  const idsByGroup = new Map<BundledExtensionGroupLabel, BundledExtensionId[]>();
-  for (const label of BUNDLED_EXTENSION_GROUP_ORDER) {
-    idsByGroup.set(label, []);
-  }
-
-  for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
-    const group = definition.group;
-    if (!idsByGroup.has(group)) {
-      throw new Error(
-        `Bundled extension ${definition.id} uses unknown group "${definition.group}" — add it to BUNDLED_EXTENSION_GROUP_ORDER`,
-      );
-    }
-    idsByGroup.get(group)!.push(definition.id);
-  }
-
+function buildBundledExtensionGroups(): BundledExtensionGroup[] {
   return BUNDLED_EXTENSION_GROUP_ORDER.map((label) => ({
     label,
-    ids: idsByGroup.get(label)!,
+    ids: BUNDLED_EXTENSION_DEFINITIONS.filter((definition) => definition.group === label).map(
+      (definition) => definition.id,
+    ),
   }));
 }
 
 export const BUNDLED_EXTENSION_GROUPS = buildBundledExtensionGroups();
-
-const groupedIds = new Set(BUNDLED_EXTENSION_GROUPS.flatMap((group) => group.ids));
-for (const id of BUNDLED_EXTENSION_IDS) {
-  if (!groupedIds.has(id)) {
-    throw new Error(`BUNDLED_EXTENSION_GROUPS is missing extension id: ${id}`);
-  }
-}
-
-const seenIds = new Set<string>();
-for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
-  if (seenIds.has(definition.id)) {
-    throw new Error(`Duplicate bundled extension id: ${definition.id}`);
-  }
-  seenIds.add(definition.id);
-}

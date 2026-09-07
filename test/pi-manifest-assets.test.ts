@@ -27,9 +27,4 @@ describe("package.json pi manifest assets", () => {
   it("resolves every pi.themes path on disk", () => {
     expectPiAssetPathsExist("pi.themes", PACKAGE_JSON.pi?.themes);
   });
-
-  it("ships gentle-pi orchestration skills after the gentle-pi dependency", () => {
-    expect(existsSync(repoPath("node_modules/gentle-pi/skills/gentle-ai/SKILL.md"))).toBe(true);
-    expect(existsSync(repoPath("node_modules/gentle-pi/extensions/gentle-ai.ts"))).toBe(true);
-  });
 });

@@ -15,7 +15,7 @@ sequenceDiagram
   Pi->>Index: load pi.extensions
   Index->>Runtime: read hotmilk.json once
   Index->>Index: project_trust handler
-  Index->>Index: session logo + ctx_search capture
+  Index->>Index: ctx_search capture
   Index->>Index: prepareContextStack
   Ext->>Ext: enabled toggles
   Note over Ext: includeProjectSettings false — global settings only at startup
@@ -50,7 +50,6 @@ flowchart TB
   runtime --> toggles[extensionToggles]
   runtime --> trust[projectTrust]
   runtime --> graph[graph.warnOnStale]
-  runtime --> mcp[mcp.seedOnStart]
   runtime --> defaults[defaults.persona]
   mode["/mode"] --> user
   user --> reload["/reload to apply extension changes"]
@@ -62,7 +61,7 @@ flowchart TB
 
 1. `package.json` `dependencies` (do not add `bundleDependencies`).
 2. One row in `BUNDLED_EXTENSION_DEFINITIONS` (`id`, `package`, `module`, `group`, optional `loadPhase`).
-3. Default in repo `hotmilk.json`.
+3. Set its `defaultEnabled` flag in `BUNDLED_EXTENSION_DEFINITIONS`.
 4. Document the toggle in [README.md](../README.md).
 
 Do not append toggled packages to `pi.extensions`.

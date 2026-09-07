@@ -5,7 +5,7 @@
  * `~/.pi/agent`) and derives in-memory defaults from the bundled template.
  */
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,8 +18,11 @@ import {
   parseJsonValue,
   type JsonValue,
 } from "../bootstrap/json.ts";
-import { resolveBundledExtensionToggles } from "./resolve.ts";
-import { BUNDLED_EXTENSION_IDS, type ExtensionToggleMap } from "./bundled-extensions.ts";
+import {
+  BUNDLED_EXTENSION_DEFINITIONS,
+  BUNDLED_EXTENSION_IDS,
+  type ExtensionToggleMap,
+} from "./bundled-extensions.ts";
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const BUNDLED_TEMPLATE_PATH = join(PACKAGE_ROOT, "hotmilk.json");
@@ -34,7 +37,9 @@ export function isPersonaMode(value: string | undefined): value is PersonaMode {
   return PERSONA_MODES.some((mode) => mode === value);
 }
 
-function isProjectTrustMode(value: JsonValue | string | undefined): value is ProjectTrustMode {
+export function isProjectTrustMode(
+  value: JsonValue | string | undefined,
+): value is ProjectTrustMode {
   return value === "delegate" || value === "prompt" || value === "always" || value === "never";
 }
 
@@ -71,9 +76,6 @@ function parseHotmilkConfig(value: JsonValue): HotmilkConfig {
       config.defaults.persona = value.defaults.persona;
     }
   }
-  if (isJsonObject(value.mcp) && isJsonBoolean(value.mcp.seedOnStart)) {
-    config.mcp = { seedOnStart: value.mcp.seedOnStart };
-  }
   if (isJsonObject(value.projectTrust)) {
     config.projectTrust = {};
     if (isProjectTrustMode(value.projectTrust.mode)) {
@@ -94,21 +96,20 @@ type DefaultHotmilkConfig = {
   extensions: ExtensionToggleMap;
   graph: ResolvedGraphSettings;
   defaults: ResolvedDefaults;
-  mcp: ResolvedMcpSettings;
   projectTrust: ResolvedProjectTrust;
 };
 
 function buildDefaultConfigFromTemplate(template: HotmilkConfig): DefaultHotmilkConfig {
-  const extensions: Partial<ExtensionToggleMap> = {};
-  for (const id of BUNDLED_EXTENSION_IDS) {
-    const value = template.extensions?.[id];
-    if (value !== true && value !== false) {
-      throw new Error(`hotmilk.json template missing extensions.${id}`);
-    }
-    extensions[id] = value;
-  }
-
+  const extensions = Object.fromEntries(
+    BUNDLED_EXTENSION_DEFINITIONS.map((definition) => [
+      definition.id,
+      "defaultEnabled" in definition && definition.defaultEnabled === true,
+    ]),
+  );
+  // SAFETY: registry ids are unique and cover every BundledExtensionId.
+  const typedExtensions = extensions as ExtensionToggleMap;
   const language = template.defaults?.language?.trim();
+
   const persona = template.defaults?.persona;
   const defaults: ResolvedDefaults = {
     persona: isPersonaMode(persona) ? persona : "neutral",
@@ -117,17 +118,13 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): DefaultHotmilk
     defaults.language = language;
   }
 
-  // SAFETY: every BundledExtensionId is assigned from BUNDLED_EXTENSION_IDS above.
   return {
-    extensions: extensions as ExtensionToggleMap,
+    extensions: typedExtensions,
     graph: {
       warnOnStale: template.graph?.warnOnStale ?? true,
       autoSuggestUpdate: template.graph?.autoSuggestUpdate ?? true,
     },
     defaults,
-    mcp: {
-      seedOnStart: template.mcp?.seedOnStart ?? false,
-    },
     projectTrust: {
       mode: isProjectTrustMode(template.projectTrust?.mode)
         ? template.projectTrust.mode
@@ -163,9 +160,6 @@ export type HotmilkConfig = {
     language?: string;
     persona?: PersonaMode;
   };
-  mcp?: {
-    seedOnStart?: boolean;
-  };
   projectTrust?: {
     mode?: ProjectTrustMode;
     remember?: boolean;
@@ -197,13 +191,8 @@ export type ResolvedDefaults = {
   persona: PersonaMode;
 };
 
-/** Resolved MCP bootstrap settings. */
-export type ResolvedMcpSettings = {
-  seedOnStart: boolean;
-};
-
 /**
- * In-memory default config derived from the bundled `hotmilk.json` template.
+ * In-memory default config derived from the bundled template and extension registry.
  *
  * This is the single source of truth for bundled defaults.
  */
@@ -263,18 +252,17 @@ function writeHotmilkConfigFile(path: string, config: HotmilkConfig): void {
 }
 
 /**
- * Copy the bundled `hotmilk.json` template to the agent config directory.
+ * Write the resolved defaults to the agent config directory when missing.
  *
  * @param configRoot - explicit config root override
- * @returns seed result, with `error` set on filesystem failure
+ * @returns seed result
  */
 export function seedHotmilkConfigIfMissing(configRoot?: string): SeedHotmilkConfigResult {
   const configPath = getHotmilkConfigPath(configRoot);
   if (existsSync(configPath)) {
     return { seeded: false, path: configPath };
   }
-  ensureConfigDir(configPath);
-  copyFileSync(BUNDLED_TEMPLATE_PATH, configPath);
+  writeHotmilkConfigFile(configPath, DEFAULT_HOTMILK_CONFIG);
   return { seeded: true, path: configPath };
 }
 
@@ -312,22 +300,5 @@ export function saveHotmilkConfig(config: HotmilkConfig, configRoot?: string): C
     return { path: configPath, error: formatCaughtError(error) };
   }
 }
-
-/**
- * Load and resolve bundled-extension toggle state.
- *
- * @param configRoot - explicit config root override
- */
-export function loadBundledExtensionToggles(configRoot?: string): ExtensionToggleMap {
-  return resolveBundledExtensionToggles(loadHotmilkConfig(configRoot).config);
-}
-
-export {
-  resolveBundledExtensionToggles,
-  resolveDefaults,
-  resolveGraphSettings,
-  resolveMcpSettings,
-  resolveProjectTrust,
-} from "./resolve.ts";
 
 export type { ExtensionToggleMap } from "./bundled-extensions.ts";

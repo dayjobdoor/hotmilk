@@ -1,23 +1,35 @@
-import { existsSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  buildSubagentsDoctorReport,
-  PI_SUBAGENTS_MODULE,
-} from "../src/bootstrap/subagents-doctor.ts";
-import { resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
+import { buildSubagentsDoctorReport } from "../src/bootstrap/subagents-doctor.ts";
+import { makeTempDir } from "./fixtures/tmp.ts";
 
 describe("subagents doctor", () => {
-  it("resolves the j0k3r extension entry", () => {
-    const resolved = resolveBundledModule(PI_SUBAGENTS_MODULE, import.meta.url);
-    expect(resolved.replaceAll("\\", "/")).toContain(PI_SUBAGENTS_MODULE);
-    expect(existsSync(resolved)).toBe(true);
-  });
+  it("reports exact runtime, config, and project diagnostic statuses", () => {
+    const globalDir = makeTempDir("hotmilk-doctor-global-");
+    const cwd = makeTempDir("hotmilk-doctor-project-");
+    const previousAgentDir = process.env.PI_CODING_AGENT_DIR;
+    process.env.PI_CODING_AGENT_DIR = globalDir;
+    mkdirSync(join(globalDir, "agents"));
+    writeFileSync(join(globalDir, "subagents.json"), "{}", "utf8");
 
-  it("reports runtime and project agent paths", () => {
-    const report = buildSubagentsDoctorReport(process.cwd(), "test-session");
-    expect(report).toContain("Subagents doctor report");
-    expect(report).toContain("pi-subagents-j0k3r");
-    expect(report).toContain("project agents:");
-    expect(report).toContain("session: test-session");
+    try {
+      const lines = buildSubagentsDoctorReport(cwd, "test-session").split("\n");
+      const runtimeLine = lines.find((line) => line.startsWith("runtime:"));
+
+      expect(lines).toContain("Subagents doctor report");
+      expect(runtimeLine).toMatch(
+        /^runtime: pi-subagents-j0k3r \(.*node_modules[/\\]pi-subagents-j0k3r[/\\]index\.ts\)$/,
+      );
+      expect(lines).toContain(`config: ${join(globalDir, "subagents.json")} (ok)`);
+      expect(lines).toContain(`global agents: ${join(globalDir, "agents")} (ok)`);
+      expect(lines).toContain(`project agents: ${join(cwd, ".pi", "agents")} (missing)`);
+      expect(lines).toContain(`project subagents: ${join(cwd, ".pi", "subagents")} (missing)`);
+      expect(lines).toContain("session: test-session");
+      expect(lines.find((line) => line.startsWith("loader:"))).toMatch(/^loader: file:\/\//);
+    } finally {
+      if (previousAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
+      else process.env.PI_CODING_AGENT_DIR = previousAgentDir;
+    }
   });
 });

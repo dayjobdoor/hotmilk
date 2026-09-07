@@ -15,4 +15,4 @@ Pins from [package.json](../package.json) and [.github/workflows/publish.yml](..
 | CI                         | push `main` → lint + test → publish when npm package version is new               |
 | License                    | MIT                                                                               |
 
-Default extension toggles: [hotmilk.json](../hotmilk.json). Adding a bundled row: [docs/design.md](design.md#adding-a-bundled-extension).
+Default extension toggles: `defaultEnabled` in [`src/config/bundled-extensions.ts`](../src/config/bundled-extensions.ts). Adding a bundled row: [docs/design.md](design.md#adding-a-bundled-extension).

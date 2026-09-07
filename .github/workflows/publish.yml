@@ -33,39 +33,38 @@ jobs:
           bun-version: "1.3.14"
 
       - name: Check whether npm publish is needed
-        id: should_publish
+        id: publish_check
         run: |
-          LOCAL=$(node -p "require('./package.json').version")
+          VERSION=$(node -p "require('./package.json').version")
           # Exact-version check: latest-only compare can mis-skip or collide on re-runs.
-          if npm view "hotmilk@$LOCAL" version >/dev/null 2>&1; then
-            echo "need=false" >> "$GITHUB_OUTPUT"
-            echo "npm already has hotmilk@$LOCAL — skipping publish"
+          if npm view "hotmilk@$VERSION" version >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "npm already has hotmilk@$VERSION — skipping publish"
           else
-            echo "need=true" >> "$GITHUB_OUTPUT"
-            echo "will publish hotmilk@$LOCAL (npm latest: $(npm view hotmilk version 2>/dev/null || echo none))"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "will publish hotmilk@$VERSION (npm latest: $(npm view hotmilk version 2>/dev/null || echo none))"
           fi
 
       - run: bun install --frozen-lockfile
-        if: steps.should_publish.outputs.need == 'true'
+        if: steps.publish_check.outputs.publish == 'true'
 
       # Rely on the `test` job (`needs: test`) for lint/test; pack only here.
       - name: Pack dry-run
-        if: steps.should_publish.outputs.need == 'true'
+        if: steps.publish_check.outputs.publish == 'true'
         run: npm pack --dry-run
 
       - uses: actions/setup-node@v7
-        if: steps.should_publish.outputs.need == 'true'
+        if: steps.publish_check.outputs.publish == 'true'
         with:
           registry-url: https://registry.npmjs.org
       - run: npm publish --provenance --access public
-        if: steps.should_publish.outputs.need == 'true'
+        if: steps.publish_check.outputs.publish == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Ensure git release tag
         if: |
-          steps.should_publish.outputs.need == 'false' ||
-          (steps.should_publish.outputs.need == 'true' && success())
+          steps.publish_check.outputs.publish == 'false' || success()
         run: |
           VERSION=$(node -p "require('./package.json').version")
           TAG="v$VERSION"
@@ -83,7 +82,7 @@ jobs:
             TAG_COMMIT="$GITHUB_SHA"
           fi
 
-          REMOTE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')
+          REMOTE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG^{}" | awk '{print $1}')
           if [ "$REMOTE_SHA" = "$TAG_COMMIT" ]; then
             echo "Tag $TAG already points to $TAG_COMMIT on origin"
             exit 0

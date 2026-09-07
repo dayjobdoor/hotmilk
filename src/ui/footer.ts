@@ -2,15 +2,9 @@ import {
   FooterComponent,
   type ExtensionContext,
   type ReadonlyFooterDataProvider,
-  type Theme,
 } from "@earendil-works/pi-coding-agent";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import {
-  type GithubFooterContext,
-  isGithubRepoOwner,
-  resolveGithubFooterContextAsync,
-} from "./github-user.ts";
 
 /**
  * Pure footer clock formatting (no pi-coding-agent imports — safe for unit tests).
@@ -19,12 +13,8 @@ import {
  * @returns formatted time string in HH:mm:ss format
  */
 export function formatFooterTime(date: Date): string {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(date);
+  const twoDigits = (value: number): string => String(value).padStart(2, "0");
+  return `${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}:${twoDigits(date.getSeconds())}`;
 }
 
 /**
@@ -212,50 +202,14 @@ function createHotmilkFooterComponent(
   return new FooterComponent(footerSessionFromContext(ctx) as never, footerData);
 }
 
-/**
- * Decorate the pwd line with GitHub user handle if available.
- *
- * @param pwdLine - current working directory line
- * @param githubUser - resolved GitHub user
- * @param repoOwner - repo owner
- * @param width - terminal width
- * @param theme - Pi theme
- * @returns decorated pwd line
- */
-function decoratePwdLine(
-  pwdLine: string,
-  githubUser: string | undefined,
-  repoOwner: string | undefined,
-  width: number,
-  theme: Theme,
-): string {
-  if (!githubUser) {
-    return pwdLine;
-  }
-
-  const handle = `@${githubUser}`;
-  const handleColor = isGithubRepoOwner(githubUser, repoOwner) ? "success" : "accent";
-  const handleStyled = theme.fg(handleColor, handle);
-  const decorated = pwdLine + theme.fg("dim", " · ") + handleStyled;
-  return truncateToWidth(decorated, width, theme.fg("dim", "..."));
-}
-
-/**
- * Install the hotmilk footer with GitHub user, clock, and extension status lines.
- *
- * @param ctx - extension context
- * @param termProgram - terminal program identifier
- */
+/** Install the hotmilk footer with clock and extension status lines. */
 export function setupHotmilkFooter(ctx: ExtensionContext, termProgram: string): void {
   if (!ctx.hasUI) {
     return;
   }
 
   ctx.ui.setFooter((tui, theme, footerData: ReadonlyFooterDataProvider) => {
-    let githubContext: GithubFooterContext | null = null;
-    let resolveStarted = false;
     let disposed = false;
-
     const base = createHotmilkFooterComponent(ctx, footerData);
     const unsubBranch = footerData.onBranchChange(() => {
       if (disposed) return;
@@ -277,26 +231,12 @@ export function setupHotmilkFooter(ctx: ExtensionContext, termProgram: string): 
         base.invalidate();
       },
       render(width: number): string[] {
-        if (!resolveStarted) {
-          resolveStarted = true;
-          void resolveGithubFooterContextAsync({ cwd: ctx.cwd }).then((resolved) => {
-            if (disposed) return;
-            githubContext = resolved;
-            tui.requestRender();
-          });
-        }
-
-        const githubUser = githubContext?.githubUser;
-        const repoOwner = githubContext?.repoOwner;
         const baseLines = base.render(width);
         const [pwdLine, statsLine] = baseLines;
         const dim = (text: string) => theme.fg("dim", text);
         const ellipsis = theme.fg("dim", "...");
         const coreLines = pwdLine
-          ? [
-              decoratePwdLine(pwdLine, githubUser, repoOwner, width, theme),
-              ...(statsLine === undefined ? [] : [statsLine]),
-            ]
+          ? [pwdLine, ...(statsLine === undefined ? [] : [statsLine])]
           : baseLines.slice(0, 2);
         const statusLines = extensionStatusLines(footerData, width, dim, ellipsis);
         const meta = truncateToWidth(

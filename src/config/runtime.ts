@@ -2,23 +2,19 @@ import type { GlobalBundledExtensionSkip } from "../bootstrap/global-extension-s
 import {
   loadHotmilkConfig,
   type BundledExtensionId,
-  type HotmilkConfig,
   type ResolvedDefaults,
   type ResolvedGraphSettings,
-  type ResolvedMcpSettings,
   type ResolvedProjectTrust,
 } from "./hotmilk.ts";
 import {
   resolveBundledExtensionToggles,
   resolveDefaults,
   resolveGraphSettings,
-  resolveMcpSettings,
   resolveProjectTrust,
 } from "./resolve.ts";
 
 /** Aggregated hotmilk configuration and resolved runtime settings. */
 export type HotmilkRuntime = {
-  config: HotmilkConfig;
   configPath: string;
   configError?: string;
   extensionToggles: Record<BundledExtensionId, boolean>;
@@ -26,7 +22,6 @@ export type HotmilkRuntime = {
   globalExtensionSkips: GlobalBundledExtensionSkip[];
   defaults: ResolvedDefaults;
   graph: ResolvedGraphSettings;
-  mcp: ResolvedMcpSettings;
   projectTrust: ResolvedProjectTrust;
 };
 
@@ -34,14 +29,12 @@ export type HotmilkRuntime = {
 export function createHotmilkRuntime(configRoot?: string): HotmilkRuntime {
   const loaded = loadHotmilkConfig(configRoot);
   return {
-    config: loaded.config,
     configPath: loaded.path,
     configError: loaded.error,
     extensionToggles: resolveBundledExtensionToggles(loaded.config),
     globalExtensionSkips: [],
     defaults: resolveDefaults(loaded.config),
     graph: resolveGraphSettings(loaded.config),
-    mcp: resolveMcpSettings(loaded.config),
     projectTrust: resolveProjectTrust(loaded.config),
   };
 }
