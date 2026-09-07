@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   adaptBtwResourceLoaderForHotmilk,
@@ -17,6 +19,7 @@ import { BUNDLED_EXTENSION_IDS } from "../src/config/hotmilk.ts";
 import { createExtensionRuntime } from "@earendil-works/pi-coding-agent";
 import type { ResourceLoader } from "@earendil-works/pi-coding-agent";
 import type { JsonObject } from "../src/bootstrap/json.ts";
+import { makeTempDir } from "./fixtures/tmp.ts";
 
 function hotmilkBtwConfig(
   overrides: Partial<Record<BundledExtensionId, boolean>> = {},
@@ -169,9 +172,14 @@ describe("hotmilk btw tools", () => {
   });
 
   it("adds graphify_query when graphify is enabled and graph data exists", () => {
-    expect(graphifyGraphExists()).toBe(true);
+    const cwd = makeTempDir("hotmilk-btw-graph-");
+    mkdirSync(join(cwd, "graphify-out"), { recursive: true });
+    writeFileSync(join(cwd, "graphify-out", "graph.json"), "{}", "utf8");
+
+    expect(graphifyGraphExists(cwd)).toBe(true);
     const tools = createHotmilkBtwCustomTools(
       hotmilkBtwConfig({ graphify: true, "context-mode": false }),
+      cwd,
     );
 
     expect(tools.map((tool) => tool.name)).toEqual(["graphify_query"]);

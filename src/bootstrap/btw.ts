@@ -326,15 +326,19 @@ function createCtxSearchProxyTool(mainTool: MainCtxSearchTool | null): ToolDefin
  * Build BTW custom tools (`ctx_search` proxy, `graphify_query`) based on toggles.
  *
  * @param config - hotmilk toggle config
+ * @param cwd - working directory containing graphify-out (default: `process.cwd()`)
  */
-export function createHotmilkBtwCustomTools(config: HotmilkBtwConfig): ToolDefinition[] {
+export function createHotmilkBtwCustomTools(
+  config: HotmilkBtwConfig,
+  cwd = process.cwd(),
+): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
 
   if (config.extensionToggles["context-mode"] === true) {
     tools.push(createCtxSearchProxyTool(mainCtxSearchTool));
   }
 
-  if (config.extensionToggles.graphify !== true || !graphifyGraphExists()) {
+  if (config.extensionToggles.graphify !== true || !graphifyGraphExists(cwd)) {
     return tools;
   }
 
