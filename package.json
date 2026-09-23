@@ -98,6 +98,12 @@
     "typebox": "^1.3.34",
     "vite-plus": "^0.3.3"
   },
+  "overrides": {
+    "@earendil-works/pi-agent-core": "^0.87.1",
+    "@earendil-works/pi-ai": "^0.87.1",
+    "@earendil-works/pi-coding-agent": "^0.87.1",
+    "@earendil-works/pi-tui": "^0.87.1"
+  },
   "peerDependencies": {
     "@earendil-works/pi-agent-core": "*",
     "@earendil-works/pi-ai": "*",

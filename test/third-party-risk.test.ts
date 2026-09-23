@@ -152,7 +152,7 @@ describe("third-party risk (hotmilk meta-package)", () => {
     }
   });
 
-  it("keeps Pi peers permissive and aligned to the declared dev range", () => {
+  it("keeps Pi peers permissive and overrides aligned to the declared dev range", () => {
     const declaredRange = PACKAGE_JSON.devDependencies?.[PI_CODING_AGENT_PACKAGE];
     expect(declaredRange).toBeDefined();
 
@@ -164,9 +164,15 @@ describe("third-party risk (hotmilk meta-package)", () => {
       expect(range).toBe("*");
     }
 
-    // No npm overrides: extension imports are virtualized to the host Pi, so
-    // version pins only add inert nested copies (verified by install experiment).
-    expect(Object.keys(PACKAGE_JSON.overrides ?? {})).toEqual([]);
+    // Overrides flatten bundled runtime deps to one Pi line (gentle-pi pins
+    // pi-tui as a dependency; without the override it nests an older copy).
+    const overrideEntries = Object.entries(PACKAGE_JSON.overrides ?? {}).filter(([name]) =>
+      name.startsWith("@earendil-works/"),
+    );
+    expect(overrideEntries.length).toBeGreaterThan(0);
+    for (const [, range] of overrideEntries) {
+      expect(range).toBe(declaredRange);
+    }
 
     const devEntries = Object.entries(PACKAGE_JSON.devDependencies ?? {}).filter(([name]) =>
       name.startsWith("@earendil-works/"),
