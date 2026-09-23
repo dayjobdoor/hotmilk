@@ -1,8 +1,6 @@
 /** MCP config cleanup for duplicate context-mode server entries. */
 
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { formatCaughtError, isJsonObject, parseJsonValue } from "../bootstrap/json.ts";
 
 const CONTEXT_MODE_MCP_SERVER_ID = "context-mode";
@@ -47,13 +45,4 @@ export function pruneContextModeFromMcpJsonAt(mcpJsonPath: string): PruneMcpResu
       error: formatCaughtError(error),
     };
   }
-}
-
-/**
- * Prune legacy `context-mode` MCP server entry from the agent `mcp.json`.
- *
- * @returns prune result
- */
-export function pruneContextModeMcpServerFromAgentConfig(): PruneMcpResult {
-  return pruneContextModeFromMcpJsonAt(join(getAgentDir(), "mcp.json"));
 }

@@ -7,7 +7,7 @@ export const HOTMILK_AUTORESEARCH_FULLSCREEN_SHORTCUT = "ctrl+shift+y";
 
 const CONFIG_FILE_NAME = "pi-autoresearch.json";
 
-export type SeedAutoresearchShortcutsResult = {
+type SeedAutoresearchShortcutsResult = {
   seeded: boolean;
   path: string;
 };

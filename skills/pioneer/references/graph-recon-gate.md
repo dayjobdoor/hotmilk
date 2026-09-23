@@ -8,15 +8,17 @@
 2. `graphify-out/GRAPH_REPORT.md` — god nodes, surprising connections, suggested questions
 3. `graphify-out/graph.json` — fallback for paths and communities
 
-## Graph commands
+## Graph tools
 
-Full CLI: `/skill:graphify`.
+The bundled `graphify` extension (@runecraft/graphify-pi) registers agent tools over the graphify CLI:
 
-| Question type            | Command                                                 |
-| ------------------------ | ------------------------------------------------------- |
-| How does X relate to Y?  | `graphify query "…" --graph graphify-out/graph.json`    |
-| Shortest dependency path | `graphify path "A" "B" --graph graphify-out/graph.json` |
-| What is node X?          | `graphify explain "X" --graph graphify-out/graph.json`  |
+| Question type            | Tool                      |
+| ------------------------ | ------------------------- |
+| How does X relate to Y?  | `graphify_query "…"`      |
+| Shortest dependency path | `graphify_path "A" "B"`   |
+| What is node X?          | `graphify_explain "X"`    |
+
+Raw CLI (`graphify query/path/explain --graph graphify-out/graph.json`) stays available when the extension is off.
 
 ## Rules
 
@@ -47,4 +49,4 @@ Offer `graphify .` only if the user wants a map built first.
 
 ## Graph + grill
 
-Use GRAPH_REPORT god nodes / surprising connections as grill fuel ("this edge implies X — is that still true?").
+Use GRAPH_REPORT god nodes / surprising connections in grill ("this edge implies X — is that still true?").

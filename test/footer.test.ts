@@ -51,8 +51,7 @@ describe("setupHotmilkFooter", () => {
 
     expect(setFooterCalls).toBe(0);
   });
-});
-describe("footer lifecycle", () => {
+
   it("renders extension statuses and unsubscribes on dispose", () => {
     type FooterFactory = (
       tui: TUI,
@@ -122,24 +121,52 @@ describe("footer lifecycle", () => {
 });
 
 describe("footerModelRuntimeFromContext", () => {
-  it("returns OAuth status for the current provider", () => {
-    const model: FooterModelStub = { provider: "anthropic", id: "claude" };
-    const modelRegistry = {
-      isUsingOAuth: (candidate: FooterModelCandidate) => candidate.provider === "anthropic",
-      getAll: () => [],
-    };
+  it("resolves OAuth status from the current model or the registry fallback", () => {
+    const anthropicModel: FooterModelStub = { provider: "anthropic", id: "claude" };
+    const openaiModel: FooterModelStub = { provider: "openai", id: "gpt" };
+
+    // Current model wins when it matches the provider.
     const runtime = footerModelRuntimeFromContext({
       model:
         // SAFETY: test double implements only the footer runtime methods.
-        model as never,
+        anthropicModel as never,
       modelRegistry:
         // SAFETY: test double implements only the footer runtime methods.
-        modelRegistry as never,
+        {
+          isUsingOAuth: (candidate: FooterModelCandidate) => candidate.provider === "anthropic",
+          getAll: () => [openaiModel],
+        } as never,
     });
-
     expect(runtime.isUsingOAuth("anthropic")).toBe(true);
     expect(runtime.isUsingOAuth("openai")).toBe(false);
+
+    // A differing current model falls back to the registry list.
+    const fallbackRuntime = footerModelRuntimeFromContext({
+      model:
+        // SAFETY: test double implements only the footer runtime methods.
+        anthropicModel as never,
+      modelRegistry:
+        // SAFETY: test double implements only the footer runtime methods.
+        {
+          isUsingOAuth: (candidate: FooterModelCandidate) => candidate.provider === "openai",
+          getAll: () => [openaiModel],
+        } as never,
+    });
+    expect(fallbackRuntime.isUsingOAuth("openai")).toBe(true);
+
+    // No matching model at all reports false.
+    const emptyRuntime = footerModelRuntimeFromContext({
+      model: undefined,
+      modelRegistry:
+        // SAFETY: test double implements only the footer runtime methods.
+        {
+          isUsingOAuth: () => true,
+          getAll: () => [],
+        } as never,
+    });
+    expect(emptyRuntime.isUsingOAuth("anthropic")).toBe(false);
   });
+
   it("marks only OAuth providers with subscription auth as subscriptions", () => {
     const subscriptionModel: FooterModelStub = { provider: "anthropic", id: "claude" };
     const oauthModel: FooterModelStub = { provider: "openai", id: "codex" };
@@ -149,6 +176,7 @@ describe("footerModelRuntimeFromContext", () => {
       openai: { auth: { oauth: { isSubscription: false } } },
       groq: { auth: { apiKey: {} } },
     };
+
     const runtime = footerModelRuntimeFromContext({
       model:
         // SAFETY: test double implements only the footer runtime methods.
@@ -169,37 +197,5 @@ describe("footerModelRuntimeFromContext", () => {
     expect(runtime.isUsingSubscription("anthropic")).toBe(true);
     expect(runtime.isUsingSubscription("openai")).toBe(false);
     expect(runtime.isUsingSubscription("groq")).toBe(false);
-  });
-
-  it("returns OAuth status from a registry model when provider differs", () => {
-    const match: FooterModelStub = { provider: "openai", id: "gpt" };
-    const modelRegistry = {
-      isUsingOAuth: (candidate: FooterModelCandidate) => candidate.provider === "openai",
-      getAll: () => [match],
-    };
-
-    const runtime = footerModelRuntimeFromContext({
-      model:
-        // SAFETY: test double implements only the footer runtime methods.
-        { provider: "anthropic", id: "claude" } as never,
-      modelRegistry:
-        // SAFETY: test double implements only the footer runtime methods.
-        modelRegistry as never,
-    });
-
-    expect(runtime.isUsingOAuth("openai")).toBe(true);
-  });
-  it("returns false when no current or registry model matches", () => {
-    const runtime = footerModelRuntimeFromContext({
-      model: undefined,
-      modelRegistry:
-        // SAFETY: test double implements only the footer runtime methods.
-        {
-          isUsingOAuth: () => true,
-          getAll: () => [],
-        } as never,
-    });
-
-    expect(runtime.isUsingOAuth("anthropic")).toBe(false);
   });
 });

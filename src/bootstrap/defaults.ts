@@ -1,11 +1,11 @@
 /**
  * Persona / language defaults bootstrap.
  *
- * Seeds a project-level Gentle AI persona file from hotmilk config and injects
- * a language hint into the system prompt when `defaults.language` is set.
+ * Reconciles a project-level Gentle AI persona file with hotmilk config and
+ * injects a language hint into the system prompt when `defaults.language` is set.
  */
 
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { ResolvedDefaults } from "../config/hotmilk.ts";
@@ -32,19 +32,33 @@ export const KANAGAWA_FOOTER_WARNING =
   "kanagawa is on — it replaces the hotmilk footer. Turn off kanagawa (/mode) if you want the hotmilk status footer back.";
 
 /**
- * Write the project persona marker used by gentle-pi when no override exists.
+ * Reconcile the project persona marker used by gentle-pi with hotmilk config.
  *
- * gentle-pi currently accepts only `gentleman` and `neutral`. Custom hotmilk
- * personas are applied by `applyHotmilkPersonaPrompt`, so store the nearest
- * compatible upstream mode and retain the hotmilk choice in a separate field.
+ * gentle-pi accepts only `gentleman` and `neutral`; custom hotmilk personas map
+ * to the nearest upstream mode and are applied by `applyHotmilkPersonaPrompt`.
+ * hotmilk.json stays the source of truth at session start: a stale `mode`
+ * (e.g. from `/gentle:persona` or an older hotmilk version) is rewritten, and
+ * runtime persona changes re-sync on the next session. A missing marker is
+ * only written for `neutral`, because `gentleman` is already the gentle-pi
+ * fallback when the file is absent.
  */
-export function seedPersonaFromDefaults(cwd: string, defaults: ResolvedDefaults): void {
+export function syncPersonaFileFromDefaults(cwd: string, defaults: ResolvedDefaults): void {
+  const upstreamMode = defaults.persona === "gentleman" ? "gentleman" : "neutral";
   const path = join(cwd, ".pi", "gentle-ai", "persona.json");
   if (existsSync(path)) {
+    try {
+      // SAFETY: JSON.parse returns any; only `mode` is read and compared by equality.
+      const parsed = JSON.parse(readFileSync(path, "utf8")) as { mode?: unknown };
+      if (parsed.mode === upstreamMode) {
+        return;
+      }
+    } catch {
+      // Unreadable marker: fall through and rewrite it.
+    }
+  } else if (upstreamMode === "gentleman") {
     return;
   }
   mkdirSync(dirname(path), { recursive: true });
-  const upstreamMode = defaults.persona === "gentleman" ? "gentleman" : "neutral";
   writeFileSync(
     path,
     `${JSON.stringify({ mode: upstreamMode, hotmilkMode: defaults.persona }, null, 2)}\n`,

@@ -1,12 +1,12 @@
 # Tech stack
 
-Pins from [package.json](../package.json) and [.github/workflows/publish.yml](../.github/workflows/publish.yml).
+Pins come from [package.json](../package.json) and [.github/workflows/publish.yml](../.github/workflows/publish.yml).
 
 | Layer                      | Truth                                                                             |
 | -------------------------- | --------------------------------------------------------------------------------- |
-| Package                    | `hotmilk`, ESM (`"type": "module"`) — version in [package.json](../package.json)  |
-| Runtime                    | Node — see `engines.node` in [package.json](../package.json)                      |
-| Install / test (this repo) | Bun — CI pin in [.github/workflows/publish.yml](../.github/workflows/publish.yml) |
+| Package                    | `hotmilk`, ESM (`"type": "module"`); version in [package.json](../package.json)  |
+| Runtime                    | Node; see `engines.node` in [package.json](../package.json)                      |
+| Install / test (this repo) | Bun; CI pin in [.github/workflows/publish.yml](../.github/workflows/publish.yml) |
 | Scripts                    | [package.json](../package.json) scripts (`lint`, `format`, `test`, `check`)       |
 | Pi peers                   | `@earendil-works/pi-coding-agent` and matching `pi-*` peers in `peerDependencies` |
 | Orchestration              | `gentle-pi` in `dependencies`                                                     |
@@ -15,4 +15,4 @@ Pins from [package.json](../package.json) and [.github/workflows/publish.yml](..
 | CI                         | push `main` → lint + test → publish when npm package version is new               |
 | License                    | MIT                                                                               |
 
-Default extension toggles: `defaultEnabled` in [`src/config/bundled-extensions.ts`](../src/config/bundled-extensions.ts). Adding a bundled row: [docs/design.md](design.md#adding-a-bundled-extension).
+Default extension toggles: `defaultEnabled` in [`src/config/bundled-extensions.ts`](../src/config/bundled-extensions.ts). To add a bundled row, follow [docs/architecture.md](architecture.md#adding-a-bundled-extension).

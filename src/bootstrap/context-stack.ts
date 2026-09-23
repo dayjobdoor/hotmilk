@@ -16,9 +16,9 @@ import {
   parseJsonValue,
   type JsonValue,
 } from "./json.ts";
-import { pruneContextModeMcpServerFromAgentConfig } from "../config/mcp.ts";
+import { pruneContextModeFromMcpJsonAt } from "../config/mcp.ts";
 import type { HotmilkRuntime } from "../config/runtime.ts";
-import type { BundledExtensionId } from "../config/hotmilk.ts";
+import type { BundledExtensionId } from "../config/bundled-extensions.ts";
 
 const RTK_EXTENSION_DIR = "pi-rtk-optimizer";
 const RTK_CONFIG_FILENAME = "config.json";
@@ -60,23 +60,23 @@ export type HotmilkRtkConfig = {
   };
 };
 
-export type SeedRtkResult = {
+type SeedRtkResult = {
   seeded: boolean;
   path: string;
   error?: string;
 };
 
-export type SyncRtkResult = {
+type SyncRtkResult = {
   updated: boolean;
   seeded: boolean;
   path: string;
   error?: string;
 };
 
-type MutableJsonObject = { [key: string]: JsonValue };
+type RtkConfigRecord = { [key: string]: JsonValue };
 
 /**
- * Build the default pi-rtk-optimizer config shaped for hotmilk.
+ * Build the default pi-rtk-optimizer config tailored for hotmilk.
  *
  * @param contextModeEnabled - whether context-mode is toggled on
  */
@@ -105,7 +105,7 @@ export function buildHotmilkRtkConfig(contextModeEnabled: boolean): HotmilkRtkCo
   };
 }
 
-function writeRtkConfig(configPath: string, config: HotmilkRtkConfig | MutableJsonObject): void {
+function writeRtkConfig(configPath: string, config: HotmilkRtkConfig | RtkConfigRecord): void {
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
 }
 
@@ -114,18 +114,18 @@ function parseRtkConfigRecord(text: string) {
   if (!isJsonObject(parsed)) {
     throw new Error("rtk config must be an object");
   }
-  const config: MutableJsonObject = {};
+  const config: RtkConfigRecord = {};
   for (const key of Object.keys(parsed)) {
     config[key] = parsed[key];
   }
   return config;
 }
 
-function rtkModeOf(config: MutableJsonObject): string | undefined {
+function rtkModeOf(config: RtkConfigRecord): string | undefined {
   return isJsonString(config.mode) ? config.mode : undefined;
 }
 
-function readCompactionEnabled(config: MutableJsonObject): boolean | undefined {
+function readCompactionEnabled(config: RtkConfigRecord): boolean | undefined {
   if (!isJsonObject(config.outputCompaction)) {
     return undefined;
   }
@@ -159,7 +159,7 @@ export function seedRtkConfigIfMissing(
 
 /** Hotmilk-managed fields only — does not touch Pi auto-compaction (settings.json). */
 function alignRtkConfigWithContextMode(
-  config: MutableJsonObject,
+  config: RtkConfigRecord,
   contextModeEnabled: boolean,
 ): boolean {
   let changed = false;
@@ -256,7 +256,7 @@ export function applyContextStackOnSessionStart(
     return;
   }
 
-  const mcpPrune = pruneContextModeMcpServerFromAgentConfig();
+  const mcpPrune = pruneContextModeFromMcpJsonAt(`${getAgentDir()}/mcp.json`);
   if (mcpPrune.pruned) {
     notify(MCP_PRUNED_MESSAGE(mcpPrune.path), "info");
   }

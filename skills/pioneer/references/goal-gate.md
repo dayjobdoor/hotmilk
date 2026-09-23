@@ -27,18 +27,20 @@ Before Phase 2 or 3:
 
 1. If `extensions.goal: true` and goal tools are available → call `get_goal`
 2. Active goal → align grill topics and plan steps to it; do not replace unless user asks
-3. Work complete → `update_goal({ status: "complete" })` only with verify evidence per pi-goal
+3. Work complete → `update_goal({ status: "complete" })` only with verify evidence per pi-goal-x
 
 ## Commands
 
-Full CLI: bundled **pi-goal** docs.
+Full CLI: bundled **pi-goal-x** docs. Budgets are agreed inside the guided draft, not via a flag.
 
-| Action         | Command                                                 |
-| -------------- | ------------------------------------------------------- |
-| Set / replace  | `/goal <objective>` or `/goal --tokens 50k <objective>` |
-| Read state     | `/goal status` or `get_goal` tool                       |
-| Pause / resume | `/goal pause`, `/goal resume`                           |
-| Clear          | `/goal clear`                                           |
+| Action         | Command                          |
+| -------------- | -------------------------------- |
+| Set / replace  | `/goal <objective>` (guided draft) |
+| Start immediately | `/goal-direct <objective>`    |
+| Read state     | `/goal-status` or `get_goal` tool |
+| Pause / resume | `/goal-pause`, `/goal-resume`    |
+| Clear          | `/goal-clear`                    |
+| Ordered plan   | `/sisyphus <steps>`              |
 
 ## Fallback when goal is off
 

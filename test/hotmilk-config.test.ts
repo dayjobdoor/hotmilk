@@ -1,86 +1,58 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
+import { BUNDLED_EXTENSION_IDS } from "../src/config/bundled-extensions.ts";
 import {
   AGENT_HOTMILK_CONFIG_LABEL,
-  BUNDLED_EXTENSION_IDS,
   DEFAULT_HOTMILK_CONFIG,
   getHotmilkConfigPath,
   hotmilkConfigDisplayPath,
   loadHotmilkConfig,
-  resolveHotmilkConfigRoot,
-  seedHotmilkConfigIfMissing,
-} from "../src/config/hotmilk.ts";
-import {
   resolveBundledExtensionToggles,
   resolveDefaults,
   resolveGraphSettings,
+  resolveHotmilkConfigRoot,
   resolveProjectTrust,
-} from "../src/config/resolve.ts";
+  seedHotmilkConfigIfMissing,
+} from "../src/config/hotmilk.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
+import { withConfigEnv } from "./fixtures/runtime.ts";
 import { parseJsonValue } from "../src/bootstrap/json.ts";
 
 function tempConfigDir(): string {
   return makeTempDir("hotmilk-test-");
 }
-
-function withConfigEnv<T>(
-  hotmilkRoot: string | undefined,
-  piRoot: string | undefined,
-  callback: () => T,
-): T {
-  const previousHotmilk = process.env.HOTMILK_CONFIG_ROOT;
-  const previousPi = process.env.PI_CODING_AGENT_DIR;
-  if (hotmilkRoot === undefined) delete process.env.HOTMILK_CONFIG_ROOT;
-  else process.env.HOTMILK_CONFIG_ROOT = hotmilkRoot;
-  if (piRoot === undefined) delete process.env.PI_CODING_AGENT_DIR;
-  else process.env.PI_CODING_AGENT_DIR = piRoot;
-  try {
-    return callback();
-  } finally {
-    if (previousHotmilk === undefined) delete process.env.HOTMILK_CONFIG_ROOT;
-    else process.env.HOTMILK_CONFIG_ROOT = previousHotmilk;
-    if (previousPi === undefined) delete process.env.PI_CODING_AGENT_DIR;
-    else process.env.PI_CODING_AGENT_DIR = previousPi;
-  }
-}
 describe("resolveBundledExtensionToggles", () => {
-  it("falls back to registry defaults for every bundled id", () => {
-    const toggles = resolveBundledExtensionToggles({
-      extensions: { "ask-user": false },
-    });
-
+  it("resolves every bundled id to its registry default and honors explicit overrides", () => {
+    const toggles = resolveBundledExtensionToggles({});
     for (const id of BUNDLED_EXTENSION_IDS) {
-      const expected = id === "ask-user" ? false : DEFAULT_HOTMILK_CONFIG.extensions[id];
-      expect(toggles[id]).toBe(expected);
+      expect(toggles[id], `${id} must match its registry default`).toBe(
+        DEFAULT_HOTMILK_CONFIG.extensions?.[id],
+      );
     }
-  });
-
-  it("honors explicit override values for every bundled id", () => {
-    for (const value of [true, false] as const) {
-      for (const id of BUNDLED_EXTENSION_IDS) {
-        const toggles = resolveBundledExtensionToggles({ extensions: { [id]: value } });
-        expect(toggles[id]).toBe(value);
-      }
+    // An explicit override flips only its own id; siblings keep their defaults.
+    const withOverride = resolveBundledExtensionToggles({ extensions: { "context-mode": false } });
+    expect(withOverride["context-mode"]).toBe(false);
+    for (const id of BUNDLED_EXTENSION_IDS) {
+      if (id === "context-mode") continue;
+      expect(withOverride[id], `${id} unaffected by sibling override`).toBe(
+        DEFAULT_HOTMILK_CONFIG.extensions?.[id],
+      );
     }
+    expect(resolveBundledExtensionToggles({ extensions: { graphify: true } }).graphify).toBe(true);
   });
 });
 
 describe("resolveGraphSettings", () => {
-  it("defaults warnOnStale and autoSuggestUpdate to true", () => {
+  it("defaults graph settings to warn-on and honors explicit disables", () => {
     expect(resolveGraphSettings({})).toEqual({
       warnOnStale: true,
       autoSuggestUpdate: true,
     });
-  });
-
-  it("allows disabling stale warnings", () => {
     expect(resolveGraphSettings({ graph: { warnOnStale: false } })).toEqual({
       warnOnStale: false,
       autoSuggestUpdate: true,
     });
-  });
-
-  it("allows disabling auto-suggest update", () => {
     expect(resolveGraphSettings({ graph: { autoSuggestUpdate: false } })).toEqual({
       warnOnStale: true,
       autoSuggestUpdate: false,
@@ -89,18 +61,12 @@ describe("resolveGraphSettings", () => {
 });
 
 describe("resolveDefaults", () => {
-  it("defaults persona to neutral without language", () => {
+  it("defaults persona, trims language, and passes supported personas through", () => {
     expect(resolveDefaults({})).toEqual({ persona: "neutral" });
-  });
-
-  it("trims language overrides", () => {
     expect(resolveDefaults({ defaults: { language: "  ja  ", persona: "neutral" } })).toEqual({
       language: "ja",
       persona: "neutral",
     });
-  });
-
-  it("keeps every supported persona at runtime", () => {
     for (const persona of ["gentleman", "gyal", "raiden"] as const) {
       expect(resolveDefaults({ defaults: { persona } })).toEqual({ persona });
     }
@@ -108,18 +74,12 @@ describe("resolveDefaults", () => {
 });
 
 describe("resolveProjectTrust", () => {
-  it("defaults to delegate without remember", () => {
+  it("resolves trust settings with fallbacks for invalid values", () => {
     expect(resolveProjectTrust({})).toEqual({ mode: "delegate", remember: false });
-  });
-
-  it("honors explicit projectTrust settings", () => {
     expect(resolveProjectTrust({ projectTrust: { mode: "always", remember: true } })).toEqual({
       mode: "always",
       remember: true,
     });
-  });
-
-  it("falls back to delegate for invalid projectTrust mode", () => {
     expect(
       resolveProjectTrust({
         projectTrust: {
@@ -129,9 +89,6 @@ describe("resolveProjectTrust", () => {
         },
       }),
     ).toEqual({ mode: "delegate", remember: true });
-  });
-
-  it("falls back to default remember for non-boolean remember", () => {
     expect(
       resolveProjectTrust({
         projectTrust: {
@@ -145,53 +102,47 @@ describe("resolveProjectTrust", () => {
 });
 
 describe("resolveHotmilkConfigRoot", () => {
-  it("uses an explicit configRoot over env vars", () => {
+  it("resolves the config root through the explicit > HOTMILK_CONFIG_ROOT > PI_CODING_AGENT_DIR chain", async () => {
     const explicit = tempConfigDir();
-    expect(
-      withConfigEnv(tempConfigDir(), tempConfigDir(), () => resolveHotmilkConfigRoot(explicit)),
-    ).toBe(explicit);
-  });
-
-  it("prefers HOTMILK_CONFIG_ROOT over PI_CODING_AGENT_DIR", () => {
     const hotmilkRoot = tempConfigDir();
-    expect(withConfigEnv(hotmilkRoot, tempConfigDir(), () => resolveHotmilkConfigRoot())).toBe(
-      hotmilkRoot,
-    );
-  });
-
-  it("uses PI_CODING_AGENT_DIR when HOTMILK_CONFIG_ROOT is unset", () => {
     const agentDir = tempConfigDir();
-    withConfigEnv(undefined, agentDir, () => {
+
+    const explicitResolved = await withConfigEnv(tempConfigDir(), tempConfigDir(), () =>
+      resolveHotmilkConfigRoot(explicit),
+    );
+    expect(explicitResolved).toBe(explicit);
+
+    const envResolved = await withConfigEnv(hotmilkRoot, agentDir, () =>
+      resolveHotmilkConfigRoot(),
+    );
+    expect(envResolved).toBe(hotmilkRoot);
+
+    await withConfigEnv(undefined, agentDir, () => {
       expect(resolveHotmilkConfigRoot()).toBe(agentDir);
       expect(hotmilkConfigDisplayPath()).toBe(getHotmilkConfigPath());
     });
-  });
 
-  it("keeps the conventional label for the default agent path", () => {
-    expect(withConfigEnv(undefined, undefined, () => hotmilkConfigDisplayPath())).toBe(
-      AGENT_HOTMILK_CONFIG_LABEL,
-    );
+    // With no env at all, the display path keeps the conventional ~/.pi/agent label.
+    await withConfigEnv(undefined, undefined, () => {
+      expect(hotmilkConfigDisplayPath()).toBe(AGENT_HOTMILK_CONFIG_LABEL);
+    });
   });
 });
+
 describe("seedHotmilkConfigIfMissing", () => {
-  it("creates hotmilk.json when missing", () => {
+  it("seeds the default config only when hotmilk.json is missing", () => {
     const configRoot = tempConfigDir();
 
-    const result = seedHotmilkConfigIfMissing(configRoot);
+    const seeded = seedHotmilkConfigIfMissing(configRoot);
+    expect(seeded.seeded).toBe(true);
+    expect(parseJsonValue(readFileSync(getHotmilkConfigPath(configRoot), "utf8"))).toEqual(
+      DEFAULT_HOTMILK_CONFIG,
+    );
 
-    expect(result.seeded).toBe(true);
-    const written = parseJsonValue(readFileSync(getHotmilkConfigPath(configRoot), "utf8"));
-    expect(written).toEqual(DEFAULT_HOTMILK_CONFIG);
-  });
-
-  it("does not overwrite an existing hotmilk.json", () => {
-    const configRoot = tempConfigDir();
-    const configPath = getHotmilkConfigPath(configRoot);
+    const configPath = getHotmilkConfigPath(tempConfigDir());
     writeFileSync(configPath, '{"extensions":{"ask-user":false}}', "utf8");
-
-    const result = seedHotmilkConfigIfMissing(configRoot);
-
-    expect(result.seeded).toBe(false);
+    const preserved = seedHotmilkConfigIfMissing(dirname(configPath));
+    expect(preserved.seeded).toBe(false);
     expect(parseJsonValue(readFileSync(configPath, "utf8"))).toEqual({
       extensions: { "ask-user": false },
     });
@@ -199,37 +150,26 @@ describe("seedHotmilkConfigIfMissing", () => {
 });
 
 describe("loadHotmilkConfig", () => {
-  it("reads hotmilk.json when present", () => {
-    const configRoot = tempConfigDir();
+  it("loads the file, falls back to defaults, and never writes", async () => {
+    const withFile = tempConfigDir();
     writeFileSync(
-      getHotmilkConfigPath(configRoot),
+      getHotmilkConfigPath(withFile),
       '{"extensions":{"context-mode":false}}',
       "utf8",
     );
-
-    const loaded = loadHotmilkConfig(configRoot);
-
+    const loaded = loadHotmilkConfig(withFile);
     expect(loaded.config.extensions?.["context-mode"]).toBe(false);
-    expect(loaded.path).toBe(getHotmilkConfigPath(configRoot));
-  });
+    expect(loaded.path).toBe(getHotmilkConfigPath(withFile));
 
-  it("falls back to defaults and reports malformed JSON", () => {
-    const configRoot = tempConfigDir();
-    writeFileSync(getHotmilkConfigPath(configRoot), "{not json", "utf8");
+    const malformed = tempConfigDir();
+    writeFileSync(getHotmilkConfigPath(malformed), "{not json", "utf8");
+    const failed = loadHotmilkConfig(malformed);
+    expect(failed.config).toEqual(DEFAULT_HOTMILK_CONFIG);
+    expect(failed.error).toEqual(expect.any(String));
 
-    const loaded = loadHotmilkConfig(configRoot);
-
-    expect(loaded.config).toEqual(DEFAULT_HOTMILK_CONFIG);
-    expect(loaded.path).toBe(getHotmilkConfigPath(configRoot));
-    expect(loaded.error).toEqual(expect.any(String));
-  });
-
-  it("uses in-memory defaults when no config file exists", () => {
-    const configRoot = tempConfigDir();
-
-    const loaded = loadHotmilkConfig(configRoot);
-
-    expect(loaded.config.extensions).toEqual(DEFAULT_HOTMILK_CONFIG.extensions);
-    expect(existsSync(getHotmilkConfigPath(configRoot))).toBe(false);
+    const missing = tempConfigDir();
+    const empty = loadHotmilkConfig(missing);
+    expect(empty.config.extensions).toEqual(DEFAULT_HOTMILK_CONFIG.extensions);
+    expect(existsSync(getHotmilkConfigPath(missing))).toBe(false);
   });
 });

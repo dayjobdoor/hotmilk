@@ -16,7 +16,7 @@ type WrittenRtkConfig = {
 };
 
 function readWrittenRtkConfig(configPath: string): WrittenRtkConfig {
-  // SAFETY: test wrote this file with WrittenRtkConfig shape.
+  // SAFETY: test wrote this file with WrittenRtkConfig layout.
   return parseJsonValue(readFileSync(configPath, "utf8")) as WrittenRtkConfig;
 }
 
@@ -28,115 +28,100 @@ describe("context-stack", () => {
     expect(buildHotmilkRtkConfig(false).mode).toBe("rewrite");
   });
 
-  it("seeds RTK config when missing", () => {
+  it("seedRtkConfigIfMissing seeds only when the config is missing", () => {
     const agentDir = makeTempDir("hotmilk-rtk-");
     const configPath = join(agentDir, "config.json");
 
-    const result = seedRtkConfigIfMissing(true, configPath);
-
-    expect(result).toEqual({ seeded: true, path: configPath });
+    const seeded = seedRtkConfigIfMissing(true, configPath);
+    expect(seeded).toEqual({ seeded: true, path: configPath });
     const written = readWrittenRtkConfig(configPath);
     expect(written.mode).toBe("suggest");
     expect(written.outputCompaction.readCompaction.enabled).toBe(false);
-  });
 
-  it("preserves an existing RTK config", () => {
-    const agentDir = makeTempDir("hotmilk-rtk-existing-");
-    const configPath = join(agentDir, "config.json");
+    const existingDir = makeTempDir("hotmilk-rtk-existing-");
+    const existingPath = join(existingDir, "config.json");
     const existing = { mode: "rewrite", custom: { keep: true } };
-    writeFileSync(configPath, `${JSON.stringify(existing)}\n`, "utf8");
+    writeFileSync(existingPath, `${JSON.stringify(existing)}\n`, "utf8");
 
-    const result = seedRtkConfigIfMissing(true, configPath);
-
-    expect(result).toEqual({ seeded: false, path: configPath });
-    expect(parseJsonValue(readFileSync(configPath, "utf8"))).toEqual(existing);
+    expect(seedRtkConfigIfMissing(true, existingPath)).toEqual({
+      seeded: false,
+      path: existingPath,
+    });
+    expect(parseJsonValue(readFileSync(existingPath, "utf8"))).toEqual(existing);
   });
 
-  it("syncRtkConfigForContextStack updates stale mode when context-mode is on", () => {
-    const agentDir = makeTempDir("hotmilk-rtk-sync-");
-    const configPath = join(agentDir, "config.json");
+  it("syncRtkConfigForContextStack updates stale mode and seeds missing config", () => {
+    const staleDir = makeTempDir("hotmilk-rtk-sync-");
+    const stalePath = join(staleDir, "config.json");
 
     writeFileSync(
-      configPath,
+      stalePath,
       `${JSON.stringify({ mode: "rewrite", outputCompaction: { readCompaction: { enabled: true } }, custom: { keep: true } }, null, 2)}\n`,
       "utf8",
     );
 
-    const result = syncRtkConfigForContextStack(true, true, configPath);
-    const written = readWrittenRtkConfig(configPath);
+    const staleResult = syncRtkConfigForContextStack(true, true, stalePath);
+    const staleWritten = readWrittenRtkConfig(stalePath);
 
-    expect(result.updated).toBe(true);
-    expect(result.seeded).toBe(false);
-    expect(written.mode).toBe("suggest");
-    expect(written.outputCompaction.readCompaction.enabled).toBe(false);
-    expect(parseJsonValue(readFileSync(configPath, "utf8"))).toMatchObject({
+    expect(staleResult.updated).toBe(true);
+    expect(staleResult.seeded).toBe(false);
+    expect(staleWritten.mode).toBe("suggest");
+    expect(staleWritten.outputCompaction.readCompaction.enabled).toBe(false);
+    expect(parseJsonValue(readFileSync(stalePath, "utf8"))).toMatchObject({
       custom: { keep: true },
     });
+
+    // A missing config is seeded with the same call.
+    const missingPath = join(makeTempDir("hotmilk-rtk-sync-missing-"), "config.json");
+    expect(syncRtkConfigForContextStack(true, true, missingPath)).toEqual({
+      updated: true,
+      seeded: true,
+      path: missingPath,
+    });
+    expect(readWrittenRtkConfig(missingPath).mode).toBe("suggest");
   });
 
-  it("seeds missing config through sync", () => {
-    const agentDir = makeTempDir("hotmilk-rtk-sync-missing-");
-    const configPath = join(agentDir, "config.json");
-
-    const result = syncRtkConfigForContextStack(true, true, configPath);
-
-    expect(result).toEqual({ updated: true, seeded: true, path: configPath });
-    expect(readWrittenRtkConfig(configPath).mode).toBe("suggest");
-  });
-
-  it("syncRtkConfigForContextStack leaves rewrite mode when context-mode is off", () => {
-    const agentDir = makeTempDir("hotmilk-rtk-off-");
-    const configPath = join(agentDir, "config.json");
-
+  it("syncRtkConfigForContextStack leaves configs untouched when context-mode or the rtk toggle is off", () => {
+    // context-mode off → rewrite mode stays, readCompaction untouched.
+    const contextOffPath = join(makeTempDir("hotmilk-rtk-off-"), "config.json");
     writeFileSync(
-      configPath,
+      contextOffPath,
       `${JSON.stringify({ mode: "rewrite", outputCompaction: { readCompaction: { enabled: true } } }, null, 2)}\n`,
       "utf8",
     );
 
-    const result = syncRtkConfigForContextStack(false, true, configPath);
-    const written = readWrittenRtkConfig(configPath);
+    const result = syncRtkConfigForContextStack(false, true, contextOffPath);
+    const written = readWrittenRtkConfig(contextOffPath);
 
     expect(result.updated).toBe(false);
     expect(result.seeded).toBe(false);
     expect(written.mode).toBe("rewrite");
     expect(written.outputCompaction.readCompaction.enabled).toBe(true);
+
+    // rtk toggle off → the file is not touched at all.
+    const rtkOffPath = join(makeTempDir("hotmilk-rtk-disabled-"), "config.json");
+    writeFileSync(rtkOffPath, `${JSON.stringify({ mode: "rewrite" }, null, 2)}\n`, "utf8");
+
+    const rtkOffResult = syncRtkConfigForContextStack(true, false, rtkOffPath);
+
+    expect(rtkOffResult.updated).toBe(false);
+    expect(rtkOffResult.seeded).toBe(false);
+    expect(parseJsonValue(readFileSync(rtkOffPath, "utf8"))).toEqual({ mode: "rewrite" });
   });
 
-  it("syncRtkConfigForContextStack no-ops when rtk toggle is off", () => {
-    const agentDir = makeTempDir("hotmilk-rtk-disabled-");
-    const configPath = join(agentDir, "config.json");
+  it("reports errors instead of throwing for unwritable paths and corrupted JSON", () => {
+    const corruptDir = makeTempDir("hotmilk-rtk-corrupt-");
+    const corruptPath = join(corruptDir, "config.json");
+    writeFileSync(corruptPath, "not json", "utf8");
+    const corruptResult = syncRtkConfigForContextStack(true, true, corruptPath);
+    expect(corruptResult.updated).toBe(false);
+    expect(corruptResult.seeded).toBe(false);
+    expect(corruptResult.error).toEqual(expect.any(String));
 
-    writeFileSync(configPath, `${JSON.stringify({ mode: "rewrite" }, null, 2)}\n`, "utf8");
-
-    const result = syncRtkConfigForContextStack(true, false, configPath);
-
-    expect(result.updated).toBe(false);
-    expect(result.seeded).toBe(false);
-    expect(parseJsonValue(readFileSync(configPath, "utf8"))).toEqual({ mode: "rewrite" });
-  });
-
-  it("syncRtkConfigForContextStack reports error for corrupted JSON instead of throwing", () => {
-    const agentDir = makeTempDir("hotmilk-rtk-corrupt-");
-    const configPath = join(agentDir, "config.json");
-
-    writeFileSync(configPath, "not json", "utf8");
-
-    const result = syncRtkConfigForContextStack(true, true, configPath);
-
-    expect(result.updated).toBe(false);
-    expect(result.seeded).toBe(false);
-    expect(result.error).toEqual(expect.any(String));
-  });
-
-  it("seedRtkConfigIfMissing reports error when config ancestor is a file", () => {
-    const agentDir = makeTempDir("hotmilk-rtk-error-");
-    const fileAncestor = join(agentDir, "not-a-directory");
+    const fileAncestor = join(makeTempDir("hotmilk-rtk-error-"), "not-a-directory");
     writeFileSync(fileAncestor, "", "utf8");
-
-    const result = seedRtkConfigIfMissing(true, join(fileAncestor, "config.json"));
-
-    expect(result.seeded).toBe(false);
-    expect(result.error).toEqual(expect.any(String));
+    const ancestorResult = seedRtkConfigIfMissing(true, join(fileAncestor, "config.json"));
+    expect(ancestorResult.seeded).toBe(false);
+    expect(ancestorResult.error).toEqual(expect.any(String));
   });
 });

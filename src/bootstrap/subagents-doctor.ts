@@ -9,8 +9,8 @@ import { bundledImportUrl, resolveBundledModule } from "./resolve-bundled.ts";
 /** Public bundled entry used by the j0k3r subagent extension. */
 export const PI_SUBAGENTS_MODULE = "pi-subagents-j0k3r/index.ts";
 
-function status(value: string): string {
-  return fs.existsSync(value) ? "ok" : "missing";
+function formatPathPresence(path: string): string {
+  return fs.existsSync(path) ? "ok" : "missing";
 }
 
 export function buildSubagentsDoctorReport(cwd: string, sessionId: string | null): string {
@@ -24,10 +24,10 @@ export function buildSubagentsDoctorReport(cwd: string, sessionId: string | null
     "Subagents doctor report",
     "",
     `runtime: pi-subagents-j0k3r (${modulePath})`,
-    `config: ${config} (${status(config)})`,
-    `global agents: ${path.join(globalDir, "agents")} (${status(path.join(globalDir, "agents"))})`,
-    `project agents: ${projectAgents} (${status(projectAgents)})`,
-    `project subagents: ${projectSubagents} (${status(projectSubagents)})`,
+    `config: ${config} (${formatPathPresence(config)})`,
+    `global agents: ${path.join(globalDir, "agents")} (${formatPathPresence(path.join(globalDir, "agents"))})`,
+    `project agents: ${projectAgents} (${formatPathPresence(projectAgents)})`,
+    `project subagents: ${projectSubagents} (${formatPathPresence(projectSubagents)})`,
     `session: ${sessionId ?? "unavailable"}`,
     `loader: ${bundledImportUrl(PI_SUBAGENTS_MODULE)}`,
   ].join("\n");

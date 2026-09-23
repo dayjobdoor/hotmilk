@@ -12,7 +12,7 @@ Route work to one plan authority, then execute and verify it.
 | Signal                                                | Route                                               |
 | ----------------------------------------------------- | --------------------------------------------------- |
 | One-file typo or known single-file fix                | Chat Plan, then direct execution                    |
-| Medium scope with human approval as primary goal      | Plannotator                                         |
+| Medium scope; approval before execution               | Plannotator                                         |
 | Heavy research, parallel tracks, or `/clear` recovery | planning-with-files                                 |
 | Large, ambiguous, cross-cutting, or explicit SDD work | OpenSpec SDD via `/skill:gentle-ai`                 |
 | Measurable optimize/benchmark loop                    | `/skill:autoresearch-create` instead of a plan path |
@@ -39,15 +39,18 @@ missing tools or claim unavailable verification.
 
 1. **Recon:** use graphify before broad architecture search; read
    [`graph-recon-gate.md`](references/graph-recon-gate.md) when applicable.
-2. **Goal:** use pi-goal only when a multi-turn objective is useful; see
+2. **Goal:** use pi-goal-x only when a multi-turn objective is useful; see
    [`goal-gate.md`](references/goal-gate.md).
 3. **Clarify:** grill only unresolved terms; one blocking question at a time.
-4. **Plan:** choose Chat Plan, Plannotator, planning-with-files, or OpenSpec.
-   Read that path's reference before starting it:
-   [`chat-plan.md`](references/chat-plan.md),
-   [`plannotator-routing.md`](references/plannotator-routing.md),
-   [`openspec-routing.md`](references/openspec-routing.md), or the bundled
-   planning-with-files skill.
+4. **Plan:** choose one plan authority, then **MANDATORY — read that path's
+   reference entirely** before planning:
+   - Chat Plan → [`chat-plan.md`](references/chat-plan.md)
+   - Plannotator → [`plannotator-routing.md`](references/plannotator-routing.md)
+   - planning-with-files →
+     [`planning-with-files-routing.md`](references/planning-with-files-routing.md)
+     then bundled `@tomxprime/planning-with-files` SKILL.md
+   - OpenSpec SDD → [`openspec-routing.md`](references/openspec-routing.md) then
+     **`/skill:gentle-ai`**
 5. **Execute:** use gentle-ai and subagents when enabled. Run
    `shazam_impact` before shared-module edits and `shazam_verify` after them
    when shazam is enabled.
@@ -67,8 +70,8 @@ to `package.json` → `pi.extensions`.
 ## OpenSpec guard
 
 OpenSpec requires `gentle-ai`. If an active change loses gentle-ai, stop
-apply/verify/sync/archive and resume through `/sdd-status` and
-`/sdd-continue` after re-enabling it. Do not re-plan the same change in chat.
+apply/verify/archive and resume through `/gentle-sdd-status` and
+`/gentle-sdd-continue` after re-enabling it. Do not re-plan the same change in chat.
 Read [`openspec-routing.md`](references/openspec-routing.md) for recovery.
 
 ## Non-negotiable rules

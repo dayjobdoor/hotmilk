@@ -1,17 +1,15 @@
 import type { GlobalBundledExtensionSkip } from "../bootstrap/global-extension-sources.ts";
+import type { BundledExtensionId } from "./bundled-extensions.ts";
 import {
   loadHotmilkConfig,
-  type BundledExtensionId,
-  type ResolvedDefaults,
-  type ResolvedGraphSettings,
-  type ResolvedProjectTrust,
-} from "./hotmilk.ts";
-import {
   resolveBundledExtensionToggles,
   resolveDefaults,
   resolveGraphSettings,
   resolveProjectTrust,
-} from "./resolve.ts";
+  type ResolvedDefaults,
+  type ResolvedGraphSettings,
+  type ResolvedProjectTrust,
+} from "./hotmilk.ts";
 
 /** Aggregated hotmilk configuration and resolved runtime settings. */
 export type HotmilkRuntime = {

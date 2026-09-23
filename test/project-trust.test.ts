@@ -28,71 +28,53 @@ function trustContext(hasUI: boolean, confirm: () => Promise<boolean>): ProjectT
 }
 
 describe("resolveProjectTrustDecision", () => {
-  it("delegates to Pi when mode is delegate", async () => {
+  it.each([
+    ["delegate", false, { trusted: "undecided" }],
+    ["always", true, { trusted: "yes", remember: true }],
+    ["never", true, { trusted: "no", remember: true }],
+  ] as const)("resolves %s mode to %j", async (mode, remember, expected) => {
     const result = await resolveProjectTrustDecision(
-      resolvedProjectTrust("delegate"),
-      trustContext(true, vi.fn()),
-      "/tmp/project",
-    );
-    expect(result).toEqual({ trusted: "undecided" });
-  });
-
-  it("auto-trusts when mode is always", async () => {
-    const result = await resolveProjectTrustDecision(
-      resolvedProjectTrust("always", true),
+      resolvedProjectTrust(mode, remember),
       trustContext(false, vi.fn()),
       "/tmp/project",
     );
-    expect(result).toEqual({ trusted: "yes", remember: true });
+    expect(result).toEqual(expected);
   });
 
-  it("declines when mode is never", async () => {
-    const result = await resolveProjectTrustDecision(
-      resolvedProjectTrust("never", true),
-      trustContext(false, vi.fn()),
-      "/tmp/project",
-    );
-    expect(result).toEqual({ trusted: "no", remember: true });
-  });
-
-  it("prompts when mode is prompt and UI is available", async () => {
-    const confirm = vi.fn().mockResolvedValue(true);
-    const result = await resolveProjectTrustDecision(
+  it("prompt mode asks once via UI and defers to Pi without UI", async () => {
+    const approvedConfirm = vi.fn().mockResolvedValue(true);
+    const approved = await resolveProjectTrustDecision(
       resolvedProjectTrust("prompt"),
-      trustContext(true, confirm),
+      trustContext(true, approvedConfirm),
       "/tmp/project",
     );
-    expect(confirm).toHaveBeenCalledOnce();
-    expect(result).toEqual({ trusted: "yes", remember: false });
-  });
+    expect(approvedConfirm).toHaveBeenCalledOnce();
+    expect(approved).toEqual({ trusted: "yes", remember: false });
 
-  it("passes remember preference through prompt approval", async () => {
-    const confirm = vi.fn().mockResolvedValue(true);
-    const result = await resolveProjectTrustDecision(
+    const remembered = await resolveProjectTrustDecision(
       resolvedProjectTrust("prompt", true),
-      trustContext(true, confirm),
+      trustContext(true, approvedConfirm),
       "/tmp/project",
     );
-    expect(result).toEqual({ trusted: "yes", remember: true });
-  });
+    expect(remembered).toEqual({ trusted: "yes", remember: true });
 
-  it("declines prompt approval when the user rejects trust", async () => {
-    const confirm = vi.fn().mockResolvedValue(false);
-    const result = await resolveProjectTrustDecision(
+    const declinedConfirm = vi.fn().mockResolvedValue(false);
+    const declined = await resolveProjectTrustDecision(
       resolvedProjectTrust("prompt", true),
-      trustContext(true, confirm),
+      trustContext(true, declinedConfirm),
       "/tmp/project",
     );
-    expect(result).toEqual({ trusted: "no", remember: false });
-  });
+    expect(declinedConfirm).toHaveBeenCalledOnce();
+    expect(declined).toEqual({ trusted: "no", remember: false });
 
-  it("defers to Pi when mode is prompt without UI", async () => {
-    const result = await resolveProjectTrustDecision(
+    const noUiConfirm = vi.fn();
+    const deferred = await resolveProjectTrustDecision(
       resolvedProjectTrust("prompt"),
-      trustContext(false, vi.fn()),
+      trustContext(false, noUiConfirm),
       "/tmp/project",
     );
-    expect(result).toEqual({ trusted: "undecided" });
+    expect(noUiConfirm).not.toHaveBeenCalled();
+    expect(deferred).toEqual({ trusted: "undecided" });
   });
 });
 

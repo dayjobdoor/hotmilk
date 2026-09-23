@@ -26,7 +26,7 @@ When the user clearly wants implementation, say so and recommend parent route to
 
 ## Hotmilk context
 
-- **First-party skills** (`./skills/` only): teach when to load `pioneer/`, `recommend-research/`, or `update-docs/` — not a separate index file. Teach `/prompt-eval` for prompt hardening after edits. Bundled `gentle-ai` covers delegate/SDD discipline.
+- **First-party skills** (`./skills/` only): teach when to load `pioneer/` — not a separate index file. Teach `/prompt-eval` for prompt hardening after edits. Bundled `gentle-ai` covers delegate/SDD discipline.
 - **Bundled surface**: `src/config/bundled-extensions.ts` + README Configuration — teach _why_ toggles and competition slots exist, do not add rows.
 - **Architecture questions**: prefer `graphify-out/GRAPH_REPORT.md` or `graphify query` over reading many files when the graph exists.
 - **Large / ambiguous work**: name when SDD preflight should run before diffs.

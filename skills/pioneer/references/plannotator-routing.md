@@ -12,11 +12,11 @@
 | ---------------------------------------------------------------------- | --------------------------- |
 | Medium scope, bounded checklist, human must approve plan before writes | Plannotator                 |
 | User asks for plan review in browser, `/plannotator`, or `--plan`      | Plannotator                 |
-| Gray zone where approval matters more than spec artifacts              | Plannotator over Chat Plan  |
+| Approval over spec artifacts (gray zone)                               | Plannotator over Chat Plan  |
 | Cross-cutting, >400 changed lines, proposal/spec needed                | OpenSpec instead            |
 | Heavy research, `/clear` recovery, findings/progress split             | planning-with-files instead |
 
-**Tie-breaker vs OpenSpec:** approval is the primary goal → Plannotator; spec/design/tasks contract is the primary goal → OpenSpec.
+**Tie-breaker vs OpenSpec:** approval before execution → Plannotator; spec/design/tasks contract → OpenSpec.
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ After browser approval, load **`/skill:gentle-ai`** and follow its Work Routing 
 - `extensions.subagents: false` → inline execute; say delegation skipped
 - `extensions.gentle-ai: false` → inline execute after approval; no SDD mid-flow
 
-**Verify:** per-step checks in plan + **`AGENTS.md`** (`bun test`, `bun run check`).
+**Verify:** per-step checks in plan + [docs/testing.md](../../../docs/testing.md) Verification (`bun run test`, `bun run lint`, `bun run check`).
 
 ## SDD combination (optional)
 
@@ -78,6 +78,6 @@ SDD artifacts remain authoritative; Plannotator is the execution gate only.
 | Do not                                                    | Do instead                                         |
 | --------------------------------------------------------- | -------------------------------------------------- |
 | Start Plannotator mid-active SDD as second plan authority | Finish or pause SDD; use plan-review on tasks only |
-| Share `task_plan.md` with Plannotator                     | Separate paths: `.planning/` vs `plans/`           |
+| Share `task_plan.md` with Plannotator                     | Separate paths: project root vs `plans/`           |
 | Chat Plan then switch to Plannotator same task            | Pick one plan path at Phase 3                      |
 | Skip browser approval and write source in planning phase  | Stay in planning until Approve                     |

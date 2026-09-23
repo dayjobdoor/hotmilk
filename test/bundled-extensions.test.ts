@@ -18,10 +18,12 @@ describe("bundled extension manifest", () => {
     }
   });
 
-  it("lists npm dependencies for every primary package", () => {
+  it("lists npm dependencies for every external bundled package", () => {
     const deps = new Set(Object.keys(PACKAGE_JSON.dependencies ?? {}));
     for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
-      expect(deps.has(definition.packageName)).toBe(true);
+      // Self-owned modules (hotmilk/src/…) ship inside hotmilk — no external dep.
+      if (definition.module.startsWith("hotmilk/")) continue;
+      expect(deps.has(definition.packageName), `${definition.id} dep`).toBe(true);
     }
   });
 
@@ -32,7 +34,7 @@ describe("bundled extension manifest", () => {
     }
   });
 
-  it("orders context stack from loadPhase", () => {
+  it("orders the context stack: context-mode before rtk-optimizer", () => {
     expect(CONTEXT_STACK_EXTENSION_IDS).toEqual(["context-mode", "rtk-optimizer"]);
   });
 });

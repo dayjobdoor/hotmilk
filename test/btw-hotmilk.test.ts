@@ -9,13 +9,13 @@ import {
   graphifyGraphExists,
   installHotmilkCtxSearchCapture,
   resetMainCtxSearchCaptureForTests,
-  resolveHotmilkBtwTools,
+  resolveHotmilkBtwToolNames,
   stripHotmilkMainSessionHarness,
   HOTMILK_BTW_SYSTEM_PROMPT,
   type HotmilkBtwConfig,
 } from "../src/bootstrap/btw.ts";
 import type { BundledExtensionId } from "../src/config/bundled-extensions.ts";
-import { BUNDLED_EXTENSION_IDS } from "../src/config/hotmilk.ts";
+import { allExtensionsDisabled } from "./fixtures/runtime.ts";
 import { createExtensionRuntime } from "@earendil-works/pi-coding-agent";
 import type { ResourceLoader } from "@earendil-works/pi-coding-agent";
 import type { JsonObject } from "../src/bootstrap/json.ts";
@@ -24,14 +24,9 @@ import { makeTempDir } from "./fixtures/tmp.ts";
 function hotmilkBtwConfig(
   overrides: Partial<Record<BundledExtensionId, boolean>> = {},
 ): HotmilkBtwConfig {
-  // SAFETY: test fixture starts every bundled id at false.
-  const extensionToggles = {} as Record<BundledExtensionId, boolean>;
-  for (const id of BUNDLED_EXTENSION_IDS) {
-    extensionToggles[id] = false;
-  }
   return {
     extensionToggles: {
-      ...extensionToggles,
+      ...allExtensionsDisabled(),
       btw: true,
       subagents: true,
       graphify: true,
@@ -64,33 +59,37 @@ beforeEach(() => {
 });
 
 describe("hotmilk btw prompt", () => {
-  it("strips harness sections inherited from the main session", () => {
-    const prompt = [
+  it("strips every supported harness marker section", () => {
+    const markers = [
+      "## graphify",
+      "## el Gentleman Orchestrator",
+      "# el Gentleman Identity and Harness",
+      "<context_window_protection>",
+      "IMPORTANT: You are in CAVEMAN MODE.",
+      "## SDD Session Preflight",
+      "<behavioral_directive>",
+    ];
+    for (const marker of markers) {
+      const prompt = ["Project rules stay.", marker, "harness content", "User rules"].join("\n");
+
+      expect(stripHotmilkMainSessionHarness(prompt), `marker: ${marker}`).toBe(
+        "Project rules stay.",
+      );
+    }
+
+    // Real main-session prompts stack several harness sections; stripping starts
+    // at the first one.
+    const stacked = [
       "Project rules stay.",
       "## graphify",
       "Read graphify-out first.",
       "## el Gentleman Orchestrator",
       "Delegate everything.",
     ].join("\n");
-
-    expect(stripHotmilkMainSessionHarness(prompt)).toBe("Project rules stay.");
+    expect(stripHotmilkMainSessionHarness(stacked)).toBe("Project rules stay.");
   });
 
-  it.each([
-    "## graphify",
-    "## el Gentleman Orchestrator",
-    "# el Gentleman Identity and Harness",
-    "<context_window_protection>",
-    "IMPORTANT: You are in CAVEMAN MODE.",
-    "## SDD Session Preflight",
-    "<behavioral_directive>",
-  ])("strips each supported harness marker: %s", (marker) => {
-    const prompt = ["Project rules stay.", marker, "harness content", "User rules"].join("\n");
-
-    expect(stripHotmilkMainSessionHarness(prompt)).toBe("Project rules stay.");
-  });
-
-  it("keeps optional routing instructions absent when toggles are off", () => {
+  it("append prompt adds routing only for enabled toggles", () => {
     expect(
       buildHotmilkBtwAppendPrompt({
         graphifyEnabled: false,
@@ -98,26 +97,45 @@ describe("hotmilk btw prompt", () => {
         contextModeEnabled: false,
       }),
     ).toEqual([HOTMILK_BTW_SYSTEM_PROMPT]);
-  });
 
-  it("append prompt mentions graphify and subagents routing when enabled", () => {
+    // Discriminating phrases from each toggle's own line; the base prompt always
+    // mentions ctx_search/subagents, so bare tokens cannot prove the toggle wiring.
     const append = buildHotmilkBtwAppendPrompt({
       graphifyEnabled: true,
       subagentsEnabled: true,
       contextModeEnabled: true,
     }).join("\n");
+    expect(append).toContain("Prefer ctx_search(queries:");
     expect(append).toContain("graphify_query");
-    expect(append).toContain("subagents");
-    expect(append).toContain("ctx_search");
+    expect(append).toContain("/btw:inject");
+
+    // Graphify alone must not pull in the other two routing lines.
+    const graphifyOnly = buildHotmilkBtwAppendPrompt({
+      graphifyEnabled: true,
+      subagentsEnabled: false,
+      contextModeEnabled: false,
+    }).join("\n");
+    expect(graphifyOnly).toContain("graphify_query");
+    expect(graphifyOnly).not.toContain("Prefer ctx_search(queries:");
+    expect(graphifyOnly).not.toContain("/btw:inject");
   });
 
-  it("adaptBtwResourceLoader strips harness and replaces BTW append", () => {
-    const loader = mockPiBtwLoader([
+  it("adaptBtwResourceLoader strips the harness, replaces the main-session append, and preserves the BTW summarize append", () => {
+    const mainLoader = mockPiBtwLoader([
       "You are having an aside conversation with the user, separate from their main working session.",
     ]);
-    const adapted = adaptBtwResourceLoaderForHotmilk(loader, hotmilkBtwConfig());
-    expect(adapted.getSystemPrompt()).toBe("Project rules stay.");
-    expect(adapted.getAppendSystemPrompt().join("\n")).toContain("hotmilk routing");
+    const mainAdapted = adaptBtwResourceLoaderForHotmilk(mainLoader, hotmilkBtwConfig());
+    expect(mainAdapted.getSystemPrompt()).toBe("Project rules stay.");
+    expect(mainAdapted.getAppendSystemPrompt().join("\n")).toContain("hotmilk routing");
+
+    const summarizeAppend = ["Summarize the side conversation", "Keep it concise."];
+    const summarizeLoader = mockPiBtwLoader(summarizeAppend);
+    const summarizeAdapted = adaptBtwResourceLoaderForHotmilk(summarizeLoader, hotmilkBtwConfig());
+    expect(summarizeAdapted.getAppendSystemPrompt()).toEqual(summarizeAppend);
+    expect(summarizeAdapted.getAppendSystemPromptSources()).toEqual([
+      { path: "/tmp/mock-append-0.md" },
+      { path: "/tmp/mock-append-1.md" },
+    ]);
   });
 
   it("adaptBtwResourceLoader never exposes bundled extensions even if upstream loader had them", () => {
@@ -132,64 +150,41 @@ describe("hotmilk btw prompt", () => {
     const adapted = adaptBtwResourceLoaderForHotmilk(loader, hotmilkBtwConfig());
     expect(adapted.getExtensions().extensions).toEqual([]);
   });
-  it("preserves upstream append prompt for BTW summaries", () => {
-    const upstreamAppend = ["Summarize the side conversation", "Keep it concise."];
-    const loader = mockPiBtwLoader(upstreamAppend);
-    const adapted = adaptBtwResourceLoaderForHotmilk(loader, hotmilkBtwConfig());
-
-    expect(adapted.getAppendSystemPrompt()).toEqual(upstreamAppend);
-    expect(adapted.getAppendSystemPromptSources()).toEqual([
-      { path: "/tmp/mock-append-0.md" },
-      { path: "/tmp/mock-append-1.md" },
-    ]);
-  });
 });
 
 describe("hotmilk btw tools", () => {
-  it("uses read-biased tools when subagents are on", () => {
-    expect(resolveHotmilkBtwTools(hotmilkBtwConfig({ subagents: true }))).toEqual([
+  it("tool surface follows the toggles: built-in set from subagents, custom tools from graphify and context-mode", () => {
+    expect(resolveHotmilkBtwToolNames(hotmilkBtwConfig({ subagents: true }))).toEqual([
       "read",
       "grep",
       "find",
       "ls",
       "bash",
     ]);
-  });
-
-  it("keeps upstream coding tools when subagents are off", () => {
-    expect(resolveHotmilkBtwTools(hotmilkBtwConfig({ subagents: false }))).toEqual([
+    expect(resolveHotmilkBtwToolNames(hotmilkBtwConfig({ subagents: false }))).toEqual([
       "read",
       "bash",
       "edit",
       "write",
     ]);
-  });
-
-  it("skips graphify_query custom tool when graphify toggle is off", () => {
     expect(
       createHotmilkBtwCustomTools(hotmilkBtwConfig({ graphify: false, "context-mode": false })),
     ).toEqual([]);
-  });
+    expect(
+      createHotmilkBtwCustomTools(hotmilkBtwConfig({ "context-mode": true, graphify: false })).map(
+        (tool) => tool.name,
+      ),
+    ).toEqual(["ctx_search"]);
 
-  it("adds graphify_query when graphify is enabled and graph data exists", () => {
     const cwd = makeTempDir("hotmilk-btw-graph-");
     mkdirSync(join(cwd, "graphify-out"), { recursive: true });
     writeFileSync(join(cwd, "graphify-out", "graph.json"), "{}", "utf8");
-
     expect(graphifyGraphExists(cwd)).toBe(true);
-    const tools = createHotmilkBtwCustomTools(
-      hotmilkBtwConfig({ graphify: true, "context-mode": false }),
-      cwd,
-    );
-
-    expect(tools.map((tool) => tool.name)).toEqual(["graphify_query"]);
-  });
-
-  it("adds ctx_search proxy when context-mode is on", () => {
-    const tools = createHotmilkBtwCustomTools(
-      hotmilkBtwConfig({ "context-mode": true, graphify: false }),
-    );
-    expect(tools.map((t) => t.name)).toEqual(["ctx_search"]);
+    expect(
+      createHotmilkBtwCustomTools(hotmilkBtwConfig({ graphify: true, "context-mode": false }), cwd).map(
+        (tool) => tool.name,
+      ),
+    ).toEqual(["graphify_query"]);
   });
 
   it("ctx_search proxy forwards the main session call", async () => {

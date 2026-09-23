@@ -1,12 +1,15 @@
 import { getSettingsListTheme, type ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { resolveBundledExtensionToggles, resolveDefaults } from "../config/resolve.ts";
+import { resolveBundledExtensionToggles, resolveDefaults } from "../config/hotmilk.ts";
 import { Container, SettingsList, Text, type SettingItem } from "@earendil-works/pi-tui";
-import { BUNDLED_EXTENSION_GROUPS, BUNDLED_EXTENSION_IDS } from "../config/bundled-extensions.ts";
+import {
+  BUNDLED_EXTENSION_GROUPS,
+  BUNDLED_EXTENSION_IDS,
+  type BundledExtensionId,
+} from "../config/bundled-extensions.ts";
 import {
   hotmilkConfigDisplayPath,
   isPersonaMode,
   PERSONA_MODES,
-  type BundledExtensionId,
   type HotmilkConfig,
   type PersonaMode,
   loadHotmilkConfig,
@@ -21,12 +24,12 @@ function isBundledExtensionId(id: string): id is BundledExtensionId {
 }
 
 /**
- * Format toggle rows for notification display.
+ * Format mode config rows for notification display.
  *
  * @param toggles - extension toggle states
  * @returns formatted toggle rows
  */
-function formatToggleRows(
+function formatModeConfigRows(
   toggles: Record<BundledExtensionId, boolean>,
   persona: PersonaMode,
 ): string {
@@ -81,11 +84,11 @@ function notifyCurrentConfig(
   toggles: Record<BundledExtensionId, boolean>,
   persona: PersonaMode,
 ): void {
-  ctx.ui.notify(`${hotmilkConfigDisplayPath()}\n${formatToggleRows(toggles, persona)}`, "info");
+  ctx.ui.notify(`${hotmilkConfigDisplayPath()}\n${formatModeConfigRows(toggles, persona)}`, "info");
 }
 
-function saveConfigPatch(ctx: ExtensionContext, patch: HotmilkConfig): void {
-  const saved = saveHotmilkConfig(patch);
+function saveConfigFile(ctx: ExtensionContext, nextConfig: HotmilkConfig): void {
+  const saved = saveHotmilkConfig(nextConfig);
   if (saved.error) {
     ctx.ui.notify(`Failed to write ${saved.path}: ${saved.error}`, "error");
   }
@@ -95,7 +98,7 @@ function updateConfig(
   update: (config: HotmilkConfig) => HotmilkConfig,
 ): void {
   const { config } = loadHotmilkConfig();
-  saveConfigPatch(ctx, update(config));
+  saveConfigFile(ctx, update(config));
 }
 
 /** Open the interactive TUI modal for toggling bundled extensions. */

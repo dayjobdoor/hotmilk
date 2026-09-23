@@ -7,14 +7,10 @@ import {
   detectGlobalBundledExtensionSkips,
   type GlobalBundledExtensionSkip,
 } from "./global-extension-sources.ts";
+import type { ExtensionModule } from "./extension-module.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
-import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/hotmilk.ts";
+import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/bundled-extensions.ts";
 import { formatCaughtError } from "./json.ts";
-
-type ExtensionFactory = (pi: ExtensionAPI) => void | Promise<void>;
-
-/** Bundled deps may type against @mariozechner/pi-coding-agent; hotmilk uses @earendil-works. */
-type ExtensionModule = { default: ExtensionFactory };
 
 function loadBundled(relativePath: string): () => Promise<ExtensionModule> {
   return () => import(bundledImportUrl(relativePath));
@@ -30,8 +26,9 @@ const BUNDLED_EXTENSION_LOADERS = Object.fromEntries(
 ) as Record<BundledExtensionId, () => Promise<ExtensionModule>>;
 
 async function registerOne(pi: ExtensionAPI, id: BundledExtensionId): Promise<void> {
+  const load = BUNDLED_EXTENSION_LOADERS[id];
   try {
-    const mod = await BUNDLED_EXTENSION_LOADERS[id]();
+    const mod = await load();
     const factory = mod.default;
     if (factory instanceof Function) {
       await factory(pi);
@@ -53,17 +50,12 @@ export type RegisterBundledExtensionsOptions = {
   includeProjectSettings?: boolean;
 };
 
-/** Result of bundled-extension registration, including skipped ids. */
-export type RegisterBundledExtensionsResult = {
-  globalSkips: GlobalBundledExtensionSkip[];
-};
-
 /** Register all enabled bundled extensions with the Pi extension API. */
 export async function registerBundledExtensions(
   pi: ExtensionAPI,
   enabled: Record<BundledExtensionId, boolean>,
   options: RegisterBundledExtensionsOptions = {},
-): Promise<RegisterBundledExtensionsResult> {
+): Promise<{ globalSkips: GlobalBundledExtensionSkip[] }> {
   const globalSkips =
     options.globalSkips ??
     detectGlobalBundledExtensionSkips({

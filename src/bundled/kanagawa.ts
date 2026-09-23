@@ -1,11 +1,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { bundledImportUrl } from "../bootstrap/resolve-bundled.ts";
-
-type ExtensionFactory = (pi: ExtensionAPI) => void | Promise<void>;
-type ExtensionModule = { default: ExtensionFactory };
+import type { ExtensionFactory, ExtensionModule } from "../bootstrap/extension-module.ts";
 
 function loadKanagawaFactory(): Promise<ExtensionModule> {
-  return import(bundledImportUrl("pi-kanagawa/index.ts"));
+  return import("./kanagawa-extension.ts");
 }
 
 function registerCommandWithoutThinking(

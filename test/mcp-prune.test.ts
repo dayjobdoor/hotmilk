@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
@@ -14,7 +14,7 @@ function tempMcpJson(initial: JsonObject): string {
 }
 
 describe("pruneContextModeFromMcpJsonAt", () => {
-  it("removes context-mode server entry", () => {
+  it("removes only the context-mode entry and no-ops otherwise", () => {
     const path = tempMcpJson({
       mcpServers: {
         "context-mode": { command: "context-mode" },
@@ -32,32 +32,36 @@ describe("pruneContextModeFromMcpJsonAt", () => {
     }
     expect(parsed.mcpServers["context-mode"]).toBeUndefined();
     expect(parsed.mcpServers.other).toEqual({ command: "other" });
-  });
 
-  it("returns false when context-mode is absent", () => {
-    const path = tempMcpJson({ mcpServers: {} });
-    const result = pruneContextModeFromMcpJsonAt(path);
-    expect(result.pruned).toBe(false);
-    expect(result.path).toBe(path);
-    expect(result.error).toBeUndefined();
-  });
+    // Without a context-mode entry the file is left untouched.
+    const withoutEntry = tempMcpJson({ mcpServers: {} });
+    expect(pruneContextModeFromMcpJsonAt(withoutEntry)).toEqual({
+      pruned: false,
+      path: withoutEntry,
+    });
+    expect(parseJsonValue(readFileSync(withoutEntry, "utf8"))).toEqual({ mcpServers: {} });
 
-  it("returns false when the MCP file is missing", () => {
-    const dir = makeTempDir("hotmilk-mcp-missing-");
-    const path = join(dir, "mcp.json");
-    const result = pruneContextModeFromMcpJsonAt(path);
+    const nonObjectServers = tempMcpJson({ mcpServers: [] });
+    expect(pruneContextModeFromMcpJsonAt(nonObjectServers)).toEqual({
+      pruned: false,
+      path: nonObjectServers,
+    });
+    expect(parseJsonValue(readFileSync(nonObjectServers, "utf8"))).toEqual({ mcpServers: [] });
 
-    expect(result).toEqual({ pruned: false, path });
-  });
+    // A valid object with no mcpServers key at all is left untouched.
+    const noServersKey = tempMcpJson({});
+    expect(pruneContextModeFromMcpJsonAt(noServersKey)).toEqual({
+      pruned: false,
+      path: noServersKey,
+    });
+    expect(parseJsonValue(readFileSync(noServersKey, "utf8"))).toEqual({});
 
-  it("returns false for non-object mcpServers shapes", () => {
-    const cases: JsonObject[] = [{}, { mcpServers: [] }];
-    for (const initial of cases) {
-      const path = tempMcpJson(initial);
-
-      expect(pruneContextModeFromMcpJsonAt(path)).toEqual({ pruned: false, path });
-      expect(parseJsonValue(readFileSync(path, "utf8"))).toEqual(initial);
-    }
+    const missingPath = join(makeTempDir("hotmilk-mcp-missing-"), "mcp.json");
+    expect(pruneContextModeFromMcpJsonAt(missingPath)).toEqual({
+      pruned: false,
+      path: missingPath,
+    });
+    expect(existsSync(missingPath)).toBe(false);
   });
 
   it("returns error for invalid JSON instead of throwing", () => {

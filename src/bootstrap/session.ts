@@ -7,7 +7,7 @@ import { setupHotmilkFooter } from "../ui/footer.ts";
 import {
   CAVEMAN_JA_CONFLICT_MESSAGE,
   KANAGAWA_FOOTER_WARNING,
-  seedPersonaFromDefaults,
+  syncPersonaFileFromDefaults,
   shouldWarnCavemanJaConflict,
 } from "./defaults.ts";
 
@@ -66,7 +66,7 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
     }
 
     if (runtime.extensionToggles["gentle-ai"] && ctx.isProjectTrusted()) {
-      seedPersonaFromDefaults(ctx.cwd, runtime.defaults);
+      syncPersonaFileFromDefaults(ctx.cwd, runtime.defaults);
     }
 
     applyContextStackOnSessionStart(runtime, uiNotify);

@@ -1,9 +1,8 @@
-/** npm package name that provides a bundled extension when installed via Pi settings. */
-
 export type BundledExtensionLoadPhase = "context-stack" | "parallel";
 
 export type BundledExtensionDefinition = {
   readonly id: string;
+  /** npm package name that provides a bundled extension when installed via Pi settings. */
   readonly packageName: string;
   /** Path passed to `loadBundled()` / `bundledImportUrl()`. */
   readonly module: string;
@@ -88,8 +87,8 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
   },
   {
     id: "graphify",
-    packageName: "graphify-pi",
-    module: "graphify-pi/extensions/graphify.ts",
+    packageName: "@runecraft/graphify-pi",
+    module: "@runecraft/graphify-pi/extensions/index.ts",
     group: "Agent tools",
     defaultEnabled: true,
   },
@@ -127,21 +126,14 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
   },
   {
     id: "goal",
-    packageName: "pi-goal",
-    module: "pi-goal/.pi/extensions/pi-goal/index.ts",
+    packageName: "pi-goal-x",
+    module: "pi-goal-x/extensions/goal.ts",
     group: "Integrations",
   },
   {
     id: "docparser",
     packageName: "pi-docparser",
     module: "pi-docparser/extensions/docparser/index.ts",
-    group: "Integrations",
-    defaultEnabled: true,
-  },
-  {
-    id: "obsidian",
-    packageName: "@haispeed/pi-obsidian",
-    module: "@haispeed/pi-obsidian/extensions/obsidian-cli.ts",
     group: "Integrations",
     defaultEnabled: true,
   },
@@ -191,12 +183,24 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     packageName: "pi-mcp-adapter",
     module: "pi-mcp-adapter/index.ts",
     group: "Integrations",
+  },
+  {
+    id: "codemcp",
+    packageName: "pi-codemcp",
+    module: "pi-codemcp/extensions/index.ts",
+    group: "Integrations",
     defaultEnabled: true,
   },
   {
     id: "planning-with-files",
     packageName: "@tomxprime/planning-with-files",
     module: "@tomxprime/planning-with-files/extensions/planning-with-files/index.ts",
+    group: "Workflow",
+  },
+  {
+    id: "openspec-context",
+    packageName: "pi-openspec-context",
+    module: "pi-openspec-context/dist/index.js",
     group: "Workflow",
   },
   {
@@ -218,12 +222,6 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     module: "@dietrichgebert/ponytail/pi-extension/index.js",
     group: "Output",
     defaultEnabled: true,
-  },
-  {
-    id: "red-green",
-    packageName: "pi-red-green",
-    module: "pi-red-green/dist/index.js",
-    group: "Workflow",
   },
   {
     id: "autoresearch",

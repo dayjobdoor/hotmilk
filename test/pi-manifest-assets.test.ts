@@ -11,20 +11,12 @@ function expectPiAssetPathsExist(label: string, paths: string[] | undefined): vo
 }
 
 describe("package.json pi manifest assets", () => {
-  it("lists only the hotmilk extension entrypoint", () => {
+  it("declares only the hotmilk entrypoint and resolvable asset paths", () => {
     expect(PACKAGE_JSON.pi?.extensions).toEqual(["./src/index.ts"]);
     expect(existsSync(repoPath("./src/index.ts"))).toBe(true);
-  });
 
-  it("resolves every pi.prompts path on disk", () => {
     expectPiAssetPathsExist("pi.prompts", PACKAGE_JSON.pi?.prompts);
-  });
-
-  it("resolves every pi.skills path on disk", () => {
     expectPiAssetPathsExist("pi.skills", PACKAGE_JSON.pi?.skills);
-  });
-
-  it("resolves every pi.themes path on disk", () => {
     expectPiAssetPathsExist("pi.themes", PACKAGE_JSON.pi?.themes);
   });
 });

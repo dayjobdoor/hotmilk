@@ -9,7 +9,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import * as piSdk from "@earendil-works/pi-coding-agent";
 import {
   createExtensionRuntime,
@@ -134,7 +134,7 @@ function isPiBtwResourceLoader(loader: ResourceLoader): boolean {
   return PI_BTW_APPEND_MARKERS.some((marker) => text.includes(marker));
 }
 
-function isBtwSummarizeSession(loader: ResourceLoader): boolean {
+function isBtwSummarizeLoader(loader: ResourceLoader): boolean {
   return getBtwAppendPromptText(loader).includes("Summarize the side conversation");
 }
 
@@ -160,7 +160,7 @@ export function adaptBtwResourceLoaderForHotmilk(
     reload: async () => {},
   };
 
-  if (isBtwSummarizeSession(loader)) {
+  if (isBtwSummarizeLoader(loader)) {
     return {
       ...sharedLoader,
       getSystemPrompt: () => stripHotmilkMainSessionHarness(loader.getSystemPrompt() ?? ""),
@@ -265,7 +265,7 @@ const CTX_SEARCH_FALLBACK_PARAMS = Type.Object({
   ),
   contentType: Type.Optional(
     Type.Union([Type.Literal("code"), Type.Literal("prose")], {
-      description: "Filter by content shape.",
+      description: "Filter by content kind (code vs prose).",
     }),
   ),
   sort: Type.Optional(
@@ -281,13 +281,13 @@ export function graphifyGraphExists(cwd = process.cwd()): boolean {
 }
 
 /**
- * Choose the base tool set exposed in BTW.
+ * Choose the tool names exposed in BTW.
  *
  * Read-biased when subagents are enabled; otherwise keeps edit/write tools.
  *
  * @param config - hotmilk toggle config
  */
-export function resolveHotmilkBtwTools(config: HotmilkBtwConfig): string[] {
+export function resolveHotmilkBtwToolNames(config: HotmilkBtwConfig): string[] {
   if (config.extensionToggles.subagents === true) {
     return ["read", "grep", "find", "ls", "bash"];
   }
@@ -400,14 +400,14 @@ function patchHotmilkBtwSessionOptions(
   }
 
   const config = getHotmilkBtwConfig();
-  const summarize = isBtwSummarizeSession(loader);
+  const isSummarizeLoader = isBtwSummarizeLoader(loader);
   const next: CreateAgentSessionOptions = {
     ...options,
     resourceLoader: adaptBtwResourceLoaderForHotmilk(loader, config),
   };
 
-  if (!summarize) {
-    next.tools = resolveHotmilkBtwTools(config);
+  if (!isSummarizeLoader) {
+    next.tools = resolveHotmilkBtwToolNames(config);
     next.customTools = createHotmilkBtwCustomTools(config);
   }
 

@@ -17,14 +17,14 @@ You are the **hotmilk** planning subagent. Turn requirements and code context in
 ## Hotmilk context
 
 - **Bundled extensions**: `src/config/bundled-extensions.ts` + `~/.pi/agent/hotmilk.json` toggles + README Configuration. New bundled rows need manifest + README alignment; respect **competition slots** (e.g. one graph-wiki strategy).
-- **First-party skills** (`./skills/` only): `pioneer/` before multi-step plans; `recommend-research/` for stack picks; `update-docs/` after manifest or default changes. After prompt/skill edits, run `/prompt-eval <path>`. Orchestration from bundled gentle-pi (`gentle-ai`) when SDD/TDD applies.
+- **First-party skills** (`./skills/` only): `pioneer/` before multi-step plans. After prompt/skill edits, run `/prompt-eval <path>`. Orchestration from bundled gentle-pi (`gentle-ai`) when SDD/TDD applies. Documentation drift: read `docs/` and `DESIGN.md`; OpenSpec stays local.
 - **Architecture questions**: prefer `graphify-out/GRAPH_REPORT.md` or `graphify query` before reading 4+ raw files when the graph exists.
 - **Large / cross-cutting work**: note whether SDD (OpenSpec) preflight is needed before implementation.
 
 ## Working rules
 
 - Read supplied `context.md` and any scout handoff first.
-- Name exact files, ordered tasks, acceptance checks (`bun test`, `bun run check` when TS changes).
+- Name exact files, ordered tasks, acceptance checks (`bun run test`, `bun run check` when TS changes).
 - Surface ambiguity in the plan — do not guess product or manifest decisions.
 - Call out risks: npm peer alignment (`package.json`), project trust gates (`.pi` / `.agents/skills`), lazy extension load, reviewer load (>400 lines → chained PR).
 
@@ -58,7 +58,7 @@ List what the parent should pass as structured `acceptance` when launching `code
 
 - **criteria**: numbered, testable outcomes
 - **evidence**: e.g. `changed-files`, `commands-run`, `validation-output`
-- **verify**: shell commands (`bun test`, `bun run check`) when TS/config touched
+- **verify**: shell commands (`bun run test`, `bun run check`) when TS/config touched
 - **stopRules**: no manifest/default toggles unless in scope; escalate unapproved architecture
 
 Another agent must execute this plan without guessing.

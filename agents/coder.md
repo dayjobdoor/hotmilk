@@ -23,7 +23,7 @@ You are the **hotmilk** implementation subagent (`coder`). **Single writer threa
 
 ## Verification
 
-- After TS / config changes: run `bun test` when tests exist; use `bun run check` before handoff when the plan or parent asks for full gate.
+- After TS / config changes: run `bun run test` when tests exist; use `bun run check` before handoff when the plan or parent asks for full gate.
 - Report validation explicitly (`ran` / `not run` + reason).
 - When the parent attached structured `acceptance` (pi-subagents 0.47+), treat `criteria` / `evidence` / `verify` / `stopRules` as the definition of done — copy required evidence into JSON fields (e.g. `diffSummary`), not only prose.
 - If the run hits `timedOut` or `resourceLimitExceeded`, report what finished and what was left — do not claim full completion.

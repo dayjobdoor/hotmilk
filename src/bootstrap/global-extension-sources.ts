@@ -212,3 +212,99 @@ export function detectGlobalBundledExtensionSkips(
 
   return skips;
 }
+
+const HOTMILK_PROJECT_ENTRY = "./src/index.ts";
+
+/**
+ * Detect whether project settings reference a hotmilk copy inside the project.
+ * Pi resolves project `packages`/`extensions` entries relative to `<cwd>/.pi`;
+ * the copy loads only through the package root, the entry dir, or the entry
+ * file, so other in-repo paths (e.g. a plain project extension) do not count.
+ * npm:/git:/URL specs are skipped explicitly — path resolution alone would
+ * place "npm:hotmilk" inside `<cwd>/.pi` and wrongly match. A fresh clone
+ * without `.pi/settings.json` loads no project copy: no yield.
+ */
+function projectSettingsReferenceCopy(cwd: string): boolean {
+  try {
+    const settingsPath = path.join(cwd, PI_PROJECT_CONFIG_DIR, "settings.json");
+    if (!fs.existsSync(settingsPath)) {
+      return false;
+    }
+    const parsed = parseJsonValue(fs.readFileSync(settingsPath, "utf-8"));
+    if (!isJsonObject(parsed)) {
+      return false;
+    }
+    const baseDir = path.join(cwd, PI_PROJECT_CONFIG_DIR);
+    const copyPaths = [cwd, path.join(cwd, "src"), path.join(cwd, "src", "index.ts")];
+    for (const entry of [
+      ...toStringArray(parsed.packages),
+      ...toStringArray(parsed.extensions),
+    ]) {
+      if (/^(npm:|git:|github:|http:|https:|ssh:)/.test(entry.trim())) {
+        continue;
+      }
+      if (copyPaths.includes(path.resolve(baseDir, entry))) {
+        return true;
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Detect a project-local hotmilk package that Pi loads from project settings
+ * (`<cwd>/.pi/settings.json` referencing `cwd/package.json` `pi.extensions`).
+ * The npm-installed copy reads only these manifests — not skills, prompts, or
+ * other project state — to yield to the project copy (see docs/security.md).
+ */
+export function detectProjectHotmilkEntry(cwd: string): boolean {
+  try {
+    const pkgPath = path.join(cwd, "package.json");
+    if (!fs.existsSync(pkgPath)) {
+      return false;
+    }
+    const parsed = parseJsonValue(fs.readFileSync(pkgPath, "utf-8"));
+    if (!isJsonObject(parsed) || parsed.name !== HOTMILK_PACKAGE_NAME) {
+      return false;
+    }
+    if (!isJsonObject(parsed.pi)) {
+      return false;
+    }
+    if (!toStringArray(parsed.pi.extensions).includes(HOTMILK_PROJECT_ENTRY)) {
+      return false;
+    }
+    return projectSettingsReferenceCopy(cwd);
+  } catch {
+    return false;
+  }
+}
+
+function isGlobalPackageCopy(selfPath: string, packageDir?: string): boolean {
+  // Pi installs managed global packages at <agentDir>/npm/node_modules/<name>
+  // (getManagedNpmInstallPath). PI_PACKAGE_DIR is Pi's own asset dir, not this.
+  const root = packageDir ?? path.join(getAgentDir(), "npm");
+  return selfPath.startsWith(path.join(root, "node_modules", HOTMILK_PACKAGE_NAME) + path.sep);
+}
+
+/**
+ * Decide whether this entry copy should skip registration because the cwd
+ * package is hotmilk itself. Pi runs global-package extensions in the
+ * pre-trust pass and project packages after trust, so the npm-installed copy
+ * yields and the project copy owns registration (project → user precedence).
+ *
+ * @param selfPath - absolute path of the entry module being loaded
+ * @param cwd - Pi session cwd
+ * @param options - packageDir override for tests
+ */
+export function shouldYieldToProjectEntry(
+  selfPath: string,
+  cwd: string,
+  options: { packageDir?: string } = {},
+): boolean {
+  if (!isGlobalPackageCopy(selfPath, options.packageDir)) {
+    return false;
+  }
+  return detectProjectHotmilkEntry(cwd);
+}

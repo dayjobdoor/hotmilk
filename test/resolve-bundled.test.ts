@@ -6,11 +6,11 @@ import { parseBundledModulePath, resolveBundledModule } from "../src/bootstrap/r
 import { makeTempDir } from "./fixtures/tmp.ts";
 
 describe("parseBundledModulePath", () => {
-  it("parses supported bundled module path shapes", () => {
+  it("parses supported bundled module path formats", () => {
     const cases = [
       [
-        "@haispeed/pi-obsidian/extensions/obsidian-cli.ts",
-        { pkgName: "@haispeed/pi-obsidian", subpath: "extensions/obsidian-cli.ts" },
+        "@runecraft/graphify-pi/extensions/index.ts",
+        { pkgName: "@runecraft/graphify-pi", subpath: "extensions/index.ts" },
       ],
       [
         "context-mode/build/adapters/pi/extension.js",
@@ -27,50 +27,42 @@ describe("parseBundledModulePath", () => {
 });
 
 describe("resolveBundledModule", () => {
-  it("resolves nested node_modules in dev layout", () => {
-    const tempDir = makeTempDir("hotmilk-resolve-nested-");
-    const hotmilkRoot = join(tempDir, "node_modules", "hotmilk");
-    const bootstrapDir = join(hotmilkRoot, "src", "bootstrap");
+  it("resolves bundled modules from nested and hoisted node_modules layouts", () => {
     const modulePath = "context-mode/build/adapters/pi/extension.js";
-    const nestedFile = join(hotmilkRoot, "node_modules", modulePath);
 
-    mkdirSync(bootstrapDir, { recursive: true });
+    const nestedDir = makeTempDir("hotmilk-resolve-nested-");
+    const nestedHotmilkRoot = join(nestedDir, "node_modules", "hotmilk");
+    const nestedBootstrapDir = join(nestedHotmilkRoot, "src", "bootstrap");
+    const nestedFile = join(nestedHotmilkRoot, "node_modules", modulePath);
+    mkdirSync(nestedBootstrapDir, { recursive: true });
     mkdirSync(dirname(nestedFile), { recursive: true });
-    writeFileSync(join(hotmilkRoot, "package.json"), JSON.stringify({ name: "hotmilk" }));
-    writeFileSync(join(bootstrapDir, "extensions.ts"), "");
+    writeFileSync(join(nestedHotmilkRoot, "package.json"), JSON.stringify({ name: "hotmilk" }));
+    writeFileSync(join(nestedBootstrapDir, "extensions.ts"), "");
     writeFileSync(nestedFile, "");
-
-    const resolved = resolveBundledModule(
+    const nestedResolved = resolveBundledModule(
       modulePath,
-      pathToFileURL(join(bootstrapDir, "extensions.ts")).href,
+      pathToFileURL(join(nestedBootstrapDir, "extensions.ts")).href,
     );
+    expect(nestedResolved).toBe(nestedFile);
+    expect(existsSync(nestedResolved)).toBe(true);
 
-    expect(resolved).toBe(nestedFile);
-    expect(existsSync(resolved)).toBe(true);
-  });
-
-  it("resolves hoisted sibling packages next to hotmilk", () => {
-    const tempDir = makeTempDir("hotmilk-resolve-bundled-");
-
-    const hotmilkRoot = join(tempDir, "node_modules", "hotmilk");
-    const bootstrapDir = join(hotmilkRoot, "src", "bootstrap");
-    mkdirSync(bootstrapDir, { recursive: true });
-    writeFileSync(join(hotmilkRoot, "package.json"), JSON.stringify({ name: "hotmilk" }));
-    writeFileSync(join(bootstrapDir, "extensions.ts"), "");
-
-    const modulePath = "context-mode/build/adapters/pi/extension.js";
-    const siblingFile = join(tempDir, "node_modules", modulePath);
+    const hoistedDir = makeTempDir("hotmilk-resolve-bundled-");
+    const hoistedHotmilkRoot = join(hoistedDir, "node_modules", "hotmilk");
+    const hoistedBootstrapDir = join(hoistedHotmilkRoot, "src", "bootstrap");
+    mkdirSync(hoistedBootstrapDir, { recursive: true });
+    writeFileSync(join(hoistedHotmilkRoot, "package.json"), JSON.stringify({ name: "hotmilk" }));
+    writeFileSync(join(hoistedBootstrapDir, "extensions.ts"), "");
+    const siblingFile = join(hoistedDir, "node_modules", modulePath);
     mkdirSync(dirname(siblingFile), { recursive: true });
     writeFileSync(siblingFile, "");
-
-    const resolved = resolveBundledModule(
+    const hoistedResolved = resolveBundledModule(
       modulePath,
-      pathToFileURL(join(bootstrapDir, "extensions.ts")).href,
+      pathToFileURL(join(hoistedBootstrapDir, "extensions.ts")).href,
     );
-    expect(resolved).toMatch(
+    expect(hoistedResolved).toMatch(
       /node_modules[/\\]context-mode[/\\]build[/\\]adapters[/\\]pi[/\\]extension\.js$/,
     );
-    expect(existsSync(resolved)).toBe(true);
+    expect(existsSync(hoistedResolved)).toBe(true);
   });
 
   it("throws when a bundled module cannot be resolved", () => {
