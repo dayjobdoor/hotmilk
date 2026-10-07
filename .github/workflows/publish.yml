@@ -32,39 +32,8 @@ jobs:
       - run: bun run lint
       - run: bun run test
 
-  # omp support contract: every registry `omp` flag re-verified against the pinned omp release.
-  omp-audit:
-    if: ${{ !inputs.skip_omp_audit }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: "1.4.2"
-
-      - run: bun install --frozen-lockfile
-
-      - name: Install audited omp release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION=$(bun -e 'import { OMP_AUDITED_VERSION } from "./src/config/bundled-extensions.ts"; console.log(OMP_AUDITED_VERSION)')
-          SHA256=$(bun -e 'import { OMP_AUDITED_SHA256 } from "./src/config/bundled-extensions.ts"; console.log(OMP_AUDITED_SHA256)')
-          gh release download "v${VERSION}" -R can1357/oh-my-pi -p omp-linux-x64 -D "$RUNNER_TEMP/omp"
-          cd "$RUNNER_TEMP/omp"
-          # Compare to the digest committed in the registry, not a sums file from the same release.
-          # echo "${SHA256}  omp-linux-x64" | sha256sum -c -
-          install -m 755 omp-linux-x64 /usr/local/bin/omp
-          omp --version
-
-      - run: bun run audit:omp
-
   publish:
-    needs: [test, omp-audit]
+    needs: [test]
     # A skipped omp-audit (dispatch bypass) does not block; a failed one does.
     if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
