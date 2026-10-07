@@ -122,7 +122,6 @@ describe("detectGlobalBundledExtensionSkips", () => {
     const skippedIds = new Set(skips.map((skip) => skip.id));
 
     expect(skippedIds.has("skill-registry")).toBe(true);
-    expect(skippedIds.has("sdd-init")).toBe(true);
     expect(skippedIds.has("gentle-ai")).toBe(true);
     expect(skippedIds.has("graphify")).toBe(false);
   });

@@ -1,89 +1,31 @@
 /**
- * RTK-optimizer / context-mode coexistence bootstrap.
+ * pi-rtk-optimizer / context-mode coexistence seam.
  *
- * Seeds and synchronizes pi-rtk-optimizer config so it works alongside
- * context-mode, and prunes stale context-mode MCP server entries.
+ * With context-mode on, hotmilk forces two fields of pi-rtk-optimizer's
+ * `config.json`: `mode = suggest` and `outputCompaction.readCompaction.enabled =
+ * false`. Without context-mode an existing config is left alone (the mode is the
+ * user's call); a missing one is seeded with the `rewrite` default. Everything
+ * else is the user's. The sync runs once, before bundled extensions load; its result is
+ * reported at session start.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
-import {
-  formatCaughtError,
-  isJsonBoolean,
-  isJsonObject,
-  isJsonString,
-  parseJsonValue,
-  type JsonValue,
-} from "./json.ts";
-import { pruneContextModeFromMcpJsonAt } from "../config/mcp.ts";
-import type { HotmilkRuntime } from "../config/runtime.ts";
+import { formatCaughtError, isJsonObject, parseJsonValue, type JsonObject } from "./json.ts";
 import type { BundledExtensionId } from "../config/bundled-extensions.ts";
 
-const RTK_EXTENSION_DIR = "pi-rtk-optimizer";
-const RTK_CONFIG_FILENAME = "config.json";
-
-/** @returns the absolute path to pi-rtk-optimizer's `config.json`. */
-export function getRtkOptimizerConfigPath(): string {
-  return `${getAgentDir()}/extensions/${RTK_EXTENSION_DIR}/${RTK_CONFIG_FILENAME}`;
-}
-
-/**
- * Decide the RTK mode that best coexists with context-mode.
- *
- * @returns `"suggest"` when context-mode is on, `"rewrite"` otherwise.
- */
-export function expectedRtkMode(contextModeEnabled: boolean): "suggest" | "rewrite" {
-  return contextModeEnabled ? "suggest" : "rewrite";
-}
-
-export type HotmilkRtkConfig = {
-  enabled: boolean;
-  mode: "suggest" | "rewrite";
-  guardWhenRtkMissing: boolean;
-  showRewriteNotifications: boolean;
-  outputCompaction: {
-    enabled: boolean;
-    stripAnsi: boolean;
-    readCompaction: { enabled: boolean };
-    truncate: { enabled: boolean; maxChars: number };
-    sourceCodeFilteringEnabled: boolean;
-    preserveExactSkillReads: boolean;
-    sourceCodeFiltering: string;
-    smartTruncate: { enabled: boolean; maxLines: number };
-    aggregateTestOutput: boolean;
-    filterBuildOutput: boolean;
-    compactGitOutput: boolean;
-    aggregateLinterOutput: boolean;
-    groupSearchOutput: boolean;
-    trackSavings: boolean;
-  };
-};
-
-type SeedRtkResult = {
-  seeded: boolean;
+/** Outcome of one rtk config sync. */
+export type RtkSync = {
   path: string;
+  outcome: "seeded" | "updated" | "unchanged" | "failed";
   error?: string;
 };
 
-type SyncRtkResult = {
-  updated: boolean;
-  seeded: boolean;
-  path: string;
-  error?: string;
-};
-
-type RtkConfigRecord = { [key: string]: JsonValue };
-
-/**
- * Build the default pi-rtk-optimizer config tailored for hotmilk.
- *
- * @param contextModeEnabled - whether context-mode is toggled on
- */
-export function buildHotmilkRtkConfig(contextModeEnabled: boolean): HotmilkRtkConfig {
+function defaultRtkConfig(contextModeEnabled: boolean): JsonObject {
   return {
     enabled: true,
-    mode: expectedRtkMode(contextModeEnabled),
+    mode: contextModeEnabled ? "suggest" : "rewrite",
     guardWhenRtkMissing: true,
     showRewriteNotifications: false,
     outputCompaction: {
@@ -105,163 +47,57 @@ export function buildHotmilkRtkConfig(contextModeEnabled: boolean): HotmilkRtkCo
   };
 }
 
-function writeRtkConfig(configPath: string, config: HotmilkRtkConfig | RtkConfigRecord): void {
-  writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+/** Result of {@link alignRtkConfig}: the config to keep and whether it differs from the input. */
+type RtkAlignment = { config: JsonObject; changed: boolean };
+
+/**
+ * Pure: `existing` with the coexistence fields forced when context-mode is on,
+ * untouched otherwise, or the hotmilk default when there is no config yet.
+ */
+export function alignRtkConfig(existing: JsonObject | undefined, contextModeEnabled: boolean): RtkAlignment {
+  if (!existing) return { config: defaultRtkConfig(contextModeEnabled), changed: true };
+  let config = existing;
+  if (contextModeEnabled && config.mode !== "suggest") config = { ...config, mode: "suggest" };
+  const current = config.outputCompaction;
+  const output = current !== undefined && isJsonObject(current) ? current : {};
+  const readCompaction = output.readCompaction;
+  const readCompactionOff =
+    readCompaction !== undefined && isJsonObject(readCompaction) && readCompaction.enabled === false;
+  if (contextModeEnabled && !readCompactionOff) {
+    config = { ...config, outputCompaction: { ...output, readCompaction: { enabled: false } } };
+  }
+  return { config, changed: config !== existing };
 }
 
-function parseRtkConfigRecord(text: string) {
+function parseRtkConfig(text: string): JsonObject {
   const parsed = parseJsonValue(text);
-  if (!isJsonObject(parsed)) {
-    throw new Error("rtk config must be an object");
-  }
-  const config: RtkConfigRecord = {};
-  for (const key of Object.keys(parsed)) {
-    config[key] = parsed[key];
-  }
-  return config;
+  if (!isJsonObject(parsed)) throw new Error("rtk config must be a JSON object");
+  return parsed;
 }
 
-function rtkModeOf(config: RtkConfigRecord): string | undefined {
-  return isJsonString(config.mode) ? config.mode : undefined;
-}
-
-function readCompactionEnabled(config: RtkConfigRecord): boolean | undefined {
-  if (!isJsonObject(config.outputCompaction)) {
-    return undefined;
-  }
-  if (!isJsonObject(config.outputCompaction.readCompaction)) {
-    return undefined;
-  }
-  const enabled = config.outputCompaction.readCompaction.enabled;
-  return isJsonBoolean(enabled) ? enabled : undefined;
-}
-
-export function seedRtkConfigIfMissing(
+/** Align pi-rtk-optimizer's `config.json` on disk; failures are returned, never thrown. */
+export function syncRtkConfig(
   contextModeEnabled: boolean,
-  configPath = getRtkOptimizerConfigPath(),
-): SeedRtkResult {
-  if (existsSync(configPath)) {
-    return { seeded: false, path: configPath };
-  }
-
+  configPath = join(getAgentDir(), "extensions", "pi-rtk-optimizer", "config.json"),
+): RtkSync {
   try {
+    const existing = existsSync(configPath) ? parseRtkConfig(readFileSync(configPath, "utf8")) : undefined;
+    const { config, changed } = alignRtkConfig(existing, contextModeEnabled);
+    if (!changed) return { path: configPath, outcome: "unchanged" };
     mkdirSync(dirname(configPath), { recursive: true });
-    writeRtkConfig(configPath, buildHotmilkRtkConfig(contextModeEnabled));
-    return { seeded: true, path: configPath };
+    // Temp file + rename: a crash or full disk must not leave a truncated user config.
+    const temp = `${configPath}.${process.pid}.tmp`;
+    writeFileSync(temp, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+    renameSync(temp, configPath);
+    return { path: configPath, outcome: existing ? "updated" : "seeded" };
   } catch (error) {
-    return {
-      seeded: false,
-      path: configPath,
-      error: formatCaughtError(error),
-    };
+    return { path: configPath, outcome: "failed", error: formatCaughtError(error) };
   }
 }
 
-/** Hotmilk-managed fields only — does not touch Pi auto-compaction (settings.json). */
-function alignRtkConfigWithContextMode(
-  config: RtkConfigRecord,
-  contextModeEnabled: boolean,
-): boolean {
-  let changed = false;
-  const mode = expectedRtkMode(contextModeEnabled);
-  if (rtkModeOf(config) !== mode) {
-    config.mode = mode;
-    changed = true;
-  }
-
-  if (contextModeEnabled && readCompactionEnabled(config) !== false) {
-    const output = isJsonObject(config.outputCompaction) ? { ...config.outputCompaction } : {};
-    output.readCompaction = { enabled: false };
-    config.outputCompaction = output;
-    changed = true;
-  }
-
-  return changed;
-}
-
-export function syncRtkConfigForContextStack(
-  contextModeEnabled: boolean,
-  rtkEnabled: boolean,
-  configPath = getRtkOptimizerConfigPath(),
-): SyncRtkResult {
-  if (!rtkEnabled) {
-    return { updated: false, seeded: false, path: configPath };
-  }
-
-  if (!existsSync(configPath)) {
-    const seeded = seedRtkConfigIfMissing(contextModeEnabled, configPath);
-    if (seeded.error) {
-      return { updated: false, seeded: false, path: configPath, error: seeded.error };
-    }
-    return { updated: true, seeded: true, path: configPath };
-  }
-
-  try {
-    const config = parseRtkConfigRecord(readFileSync(configPath, "utf8"));
-    const changed = alignRtkConfigWithContextMode(config, contextModeEnabled);
-    if (changed) {
-      writeRtkConfig(configPath, config);
-    }
-
-    return { updated: changed, seeded: false, path: configPath };
-  } catch (error) {
-    return {
-      updated: false,
-      seeded: false,
-      path: configPath,
-      error: formatCaughtError(error),
-    };
-  }
-}
-
-/**
- * Eagerly seed/sync RTK config before bundled extensions register.
- *
- * @param extensionToggles - resolved bundled-extension toggle state
- */
-export function prepareContextStack(extensionToggles: Record<BundledExtensionId, boolean>): void {
-  if (extensionToggles["rtk-optimizer"]) {
-    syncRtkConfigForContextStack(extensionToggles["context-mode"], true);
-  }
-}
-
-const MCP_PRUNED_MESSAGE = (path: string): string =>
-  `Removed duplicate context-mode entry from ${path}. ctx_* tools use the extension bridge only.`;
-
-const MCP_ADAPTER_DUPLICATE_WARNING =
-  "context-mode runs on the extension bridge (ctx_*). Do not add a context-mode server to mcp.json — use mcp-adapter only for other MCP servers.";
-
-const RTK_SYNC_MESSAGE =
-  "Adjusted pi-rtk-optimizer for context-mode coexistence (mode/readCompaction). Pi auto-compaction unchanged.";
-
-/**
- * Option A: context-mode extension owns ctx_* via built-in MCP bridge.
- * Prune legacy `context-mode` MCP server entries whenever the extension is enabled.
- */
-export function applyContextStackOnSessionStart(
-  runtime: HotmilkRuntime,
-  notify: (message: string, level: "info" | "warning") => void,
-): void {
-  const { extensionToggles } = runtime;
-  const contextModeEnabled = extensionToggles["context-mode"];
-
-  if (extensionToggles["rtk-optimizer"]) {
-    const sync = syncRtkConfigForContextStack(contextModeEnabled, true);
-    if (sync.updated && !sync.seeded) {
-      notify(RTK_SYNC_MESSAGE, "info");
-    }
-  }
-
-  if (!contextModeEnabled) {
-    return;
-  }
-
-  const mcpPrune = pruneContextModeFromMcpJsonAt(`${getAgentDir()}/mcp.json`);
-  if (mcpPrune.pruned) {
-    notify(MCP_PRUNED_MESSAGE(mcpPrune.path), "info");
-  }
-
-  if (extensionToggles["mcp-adapter"]) {
-    notify(MCP_ADAPTER_DUPLICATE_WARNING, "warning");
-  }
+/** Sync the rtk config before bundled extensions register (only when `rtk-optimizer` is on). */
+export function prepareContextStack(
+  extensionToggles: Record<BundledExtensionId, boolean>,
+): RtkSync | undefined {
+  return extensionToggles["rtk-optimizer"] ? syncRtkConfig(extensionToggles["context-mode"]) : undefined;
 }

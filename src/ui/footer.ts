@@ -136,7 +136,7 @@ function latestThinkingLevel(sessionManager: ExtensionContext["sessionManager"])
  * @param ctx - model + modelRegistry from extension context
  * @returns OAuth and subscription status methods by provider ID
  */
-export type FooterModelRuntime = {
+type FooterModelRuntime = {
   isUsingOAuth(providerId: string): boolean;
   isUsingSubscription(providerId: string): boolean;
 };

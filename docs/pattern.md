@@ -21,6 +21,16 @@ Sources: [package.json](../package.json) scripts, [.github/workflows/publish.yml
 
 `oxlint` and `@oxlint/plugins` are at **`^1.85.0`** in [package.json](../package.json).
 
+## Code shape
+
+Borrowed from ponytail and pi-simplify, the reference Pi extensions this repo follows:
+
+- **Pure core, thin handlers**: decisions live in pure functions (input → output, no I/O) that tests call directly, for example `sessionStartNotices`, `resolveProjectTrustDecision`, `skillAliasMessage`, `tildePath`, `markdownSection`. Event and command handlers gather facts by I/O, call the pure function, and apply the result.
+- **Prose in markdown, not string literals**: model-facing text lives in markdown (skills, `src/bootstrap/personas.md`); code selects a section.
+- **Commands alias skills**: a slash command that runs a first-party skill is a one-line forward to `/skill:<name>` (`/pioneer`); the behavior stays in `SKILL.md`.
+- **Ask the host for paths**: directories come from `getAgentDir()` and `CONFIG_DIR_NAME`, never hardcoded `~/.pi` or `.pi`, so Pi and omp directory variables (profiles, `PI_CONFIG_DIR`) apply unchanged.
+- **Don't over-simplify** (pi-simplify): a cut keeps behavior and every existing test green; keep an abstraction that still has more than one caller or a real seam.
+
 ## anti-slop intent
 
 Parse external input once at I/O boundaries. Keep contracts explicit. Justify type assertions with a nearby `// SAFETY:` comment.
@@ -39,7 +49,7 @@ Rule severity: [vite.config.ts](../vite.config.ts) `lint.rules`. Implementations
 
 Not covered by these gates:
 
-- `node_modules`, `dist`, `graphify-out`, agent tool dirs (`.pi/`, `.agents/`, …), `openspec/`
+- `node_modules`, `dist`, `graphify-out`, agent tool dirs (`.pi/`, `.agents/`, …)
 - Anti-slop plugin source (`tools/oxlint/anti-slop/**`); excluded so rule code is not self-referential
 - Bundled extension packages under `node_modules/`; lint targets this repo's `src/` and `test/`
 - Formatter-only style (indent, quotes); `vp fmt` handles that; not repeated here

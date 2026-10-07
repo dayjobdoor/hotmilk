@@ -6,7 +6,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
+import { CONFIG_DIR_NAME, getAgentDir } from "@earendil-works/pi-coding-agent";
 import {
   BUNDLED_EXTENSION_DEFINITIONS,
   type BundledExtensionId,
@@ -15,7 +15,8 @@ import { isJsonObject, isJsonString, parseJsonValue, type JsonValue } from "./js
 
 const HOTMILK_PACKAGE_NAME = "hotmilk";
 
-const PI_PROJECT_CONFIG_DIR = ".pi";
+/** Host project config dir: `.pi` under Pi, `.omp` under omp (its import rewrite supplies the constant). */
+const PI_PROJECT_CONFIG_DIR = CONFIG_DIR_NAME;
 
 /** A bundled extension that should be skipped because it is already installed. */
 export type GlobalBundledExtensionSkip = {
@@ -24,7 +25,7 @@ export type GlobalBundledExtensionSkip = {
 };
 
 /** Options for reading Pi settings files. */
-export type CollectGlobalExtensionSourcesOptions = {
+type CollectGlobalExtensionSourcesOptions = {
   /** Project root for resolving local package paths. */
   cwd?: string;
   /** Override `$HOME` resolution. */

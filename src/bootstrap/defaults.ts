@@ -66,20 +66,18 @@ export function syncPersonaFileFromDefaults(cwd: string, defaults: ResolvedDefau
   );
 }
 
-const GYAL_PERSONA_PROMPT = `Persona:
-- Speak as a bright, confident Japanese gyal: casual, warm, energetic, and candid.
-- Keep the advice technically rigorous; friendliness never replaces correctness.
-- Use light gyal-style phrasing sparingly. Do not overuse slang, emojis, or insults.
-- Explain mistakes directly without humiliating the user, and keep code and technical artifacts professional.
-- Use lots of emojis and casual Japanese style.
-- Tsundere 8:2 (tsun only 0-1 times per response).
-- Speak in Japanese, warm and energetic but slightly tsun.`;
+/** Persona prose lives in markdown (ponytail's skill-text pattern); code only selects a section. */
+const PERSONAS_MARKDOWN = readFileSync(new URL("./personas.md", import.meta.url), "utf8");
 
-const RAIDEN_PERSONA_PROMPT = `Persona:
-- Speak in the spirit of Raiden from Sakigake!! Otokojuku: composed, forceful, erudite, and intensely focused.
-- Explain difficult technical subjects like obscure techniques being revealed: state the name, mechanism, evidence, and limits.
-- Use dramatic martial-arts framing sparingly, including an occasional "知っているのか雷電！？" only when it genuinely fits.
-- Never invent lore or technical facts. Correct errors directly, while keeping code and technical artifacts professional.`;
+/** Pure: body of the `## <name>` section of `markdown`, trimmed; empty when absent. */
+export function markdownSection(markdown: string, name: string): string {
+  const lines = markdown.split("\n");
+  const start = lines.indexOf(`## ${name}`);
+  if (start < 0) return "";
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((line) => line.startsWith("## "));
+  return (end < 0 ? rest : rest.slice(0, end)).join("\n").trim();
+}
 
 /** Replace gentle-pi's built-in persona section without duplicating its harness rules. */
 export function applyHotmilkPersonaPrompt(
@@ -90,7 +88,7 @@ export function applyHotmilkPersonaPrompt(
     return systemPrompt;
   }
 
-  const personaPrompt = persona === "gyal" ? GYAL_PERSONA_PROMPT : RAIDEN_PERSONA_PROMPT;
+  const personaPrompt = markdownSection(PERSONAS_MARKDOWN, persona);
   const modeUpdated = systemPrompt.replace(
     /^Current persona mode: [^\n]+$/mu,
     `Current persona mode: ${persona}`,

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hotmilk — 全体像</title>
+<style>
+  :root {
+    --paper: #fbf7f2;
+    --ink: #2b2620;
+    --accent: #f0683a;
+    --muted: #9a8f80;
+    --line: #d8cdbf;
+    --box: #ffffff;
+    --box-edge: #e4dccf;
+    --group-bg: #f4ede2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  }
+  h1 { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .diagram {
+    background: var(--box);
+    border: 1px solid var(--box-edge);
+    border-radius: 14px;
+    padding: 12px;
+    max-width: 1080px;
+  }
+  .legend { display: flex; gap: 18px; margin-top: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+</style>
+</head>
+<body>
+<h1>hotmilk の全体像</h1>
+<div class="sub">Pi 用のメタパッケージ。1 つのエントリーポイントから、<strong>ON になっているバンドル拡張だけ</strong>をたどりに渡す。</div>
+
+<div class="diagram">
+<svg viewBox="0 0 1080 560" width="100%" role="img" aria-label="hotmilk architecture">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b0a795"/>
+    </marker>
+  </defs>
+
+  <!-- ===== Pi 箱 (上) ===== -->
+  <g>
+    <rect x="410" y="18" width="260" height="64" rx="10" fill="#fff" stroke="#cfc3b0" stroke-width="1.5"/>
+    <text x="540" y="46" text-anchor="middle" font-size="15" font-weight="700">🧑‍💻 pi-coding-agent</text>
+    <text x="540" y="66" text-anchor="middle" font-size="12" fill="#8a7d6a">package.json → pi.extensions が 1 つだけ</text>
+  </g>
+
+  <!-- Pi → Entry 矢印 -->
+  <line x1="540" y1="82" x2="540" y2="128" stroke="#b0a795" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="552" y="112" font-size="11" fill="#8a7d6a">ロード</text>
+
+  <!-- ===== エントリー box ===== -->
+  <g>
+    <rect x="390" y="130" width="300" height="62" rx="10" fill="#f0683a" stroke="#d6532a" stroke-width="1.5"/>
+    <text x="540" y="158" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">src/index.ts</text>
+    <text x="540" y="176" text-anchor="middle" font-size="11.5" fill="#fff" opacity=".85">hotmilk の全ハンドラを登録する窓口</text>
+  </g>
+
+  <!-- ===== hotmilk.json 設定 (左) ===== -->
+  <g>
+    <rect x="70" y="138" width="200" height="54" rx="9" fill="#fff" stroke="#e0b98a" stroke-width="1.4"/>
+    <text x="170" y="162" text-anchor="middle" font-size="13" font-weight="700">📄 hotmilk.json</text>
+    <text x="170" y="180" text-anchor="middle" font-size="11" fill="#8a7d6a">トグル設定・保存先</text>
+  </g>
+  <!-- hotmilk.json → Entry -->
+  <line x1="270" y1="165" x2="388" y2="161" stroke="#c98a5a" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+
+  <!-- /mode 編集ラベル -->
+  <text x="170" y="210" text-anchor="middle" font-size="11" fill="#8a7d6a">「/mode で ON/OFF → /reload で適用」</text>
+
+  <!-- ===== Entry → 拡張群 矢印 ===== -->
+  <line x1="540" y1="192" x2="540" y2="250" stroke="#b0a795" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="552" y="226" font-size="11" fill="#8a7d6a">ON になってるやつだけ渡す</text>
+
+  <!-- ===== 拡張群 (下) ===== -->
+  <!-- row 1 -->
+  <!-- Harness -->
+  <g>
+    <rect x="60" y="252" width="190" height="150" rx="10" fill="#f4ede2" stroke="#e0d6c4" stroke-width="1.3"/>
+    <text x="155" y="276" text-anchor="middle" font-size="12" font-weight="700" fill="#8a6f4f">Harness</text>
+    <rect x="74" y="288" width="162" height="26" rx="13" fill="#fff" stroke="#e6ddcf"/>
+    <text x="155" y="305" text-anchor="middle" font-size="11">skill-registry</text>
+    <rect x="74" y="320" width="162" height="26" rx="13" fill="#fff" stroke="#e6ddcf"/>
+    <text x="155" y="337" text-anchor="middle" font-size="11">gentle-ai</text>
+  </g>
+
+  <!-- Agent tools -->
+  <g>
+    <rect x="266" y="252" width="240" height="150" rx="10" fill="#eaf3ec" stroke="#cfe3d3" stroke-width="1.3"/>
+    <text x="386" y="276" text-anchor="middle" font-size="12" font-weight="700" fill="#4f7a5a">Agent tools</text>
+    <text x="386" y="298" text-anchor="middle" font-size="11" fill="#5f7d68">graphify</text>
+    <text x="386" y="316" text-anchor="middle" font-size="11" fill="#5f7d68">subagents</text>
+    <text x="386" y="334" text-anchor="middle" font-size="11" fill="#5f7d68">lens</text>
+    <text x="386" y="352" text-anchor="middle" font-size="11" fill="#5f7d68">ask-user · todo</text>
+    <text x="386" y="370" text-anchor="middle" font-size="11" fill="#5f7d68">shazam · web-access · …</text>
+  </g>
+
+  <!-- Context & performance -->
+  <g>
+    <rect x="522" y="252" width="240" height="150" rx="10" fill="#e9f1fb" stroke="#c8dcf1" stroke-width="1.3"/>
+    <text x="642" y="276" text-anchor="middle" font-size="12" font-weight="700" fill="#3a6699">Context &amp; performance</text>
+    <text x="642" y="298" text-anchor="middle" font-size="11" fill="#4a6a90">context-mode</text>
+    <text x="64</think>
+
+    <text x="642" y="334" text-anchor="middle" font-size="11" fill="#4a6a90">simplify</text>
+    <text x="642" y="352" text-anchor="middle" font-size="11" fill="#4a6a90">vcc · context-view</text>
+    <text x="642" y="370" text-anchor="middle" font-size="11" fill="#4a6a90">observational-memory · engram</text>
+  </g>
+
+  <!-- Integrations -->
+  <g>
+    <rect x="778" y="252" width="240" height="150" rx="10" fill="#f3e9f6" stroke="#ddc9e4" stroke-width="1.3"/>
+    <text x="898" y="276" text-anchor="middle" font-size="12" font-weight="700" fill="#7a4f8a">Integrations</text>
+    <text x="898" y="298" text-anchor="middle" font-size="11" fill="#6f5f7d">docparser</text>
+    <text x="898" y="316" text-anchor="middle" font-size="11" fill="#6f5f7d">goal</text>
+    <text x="898" y="334" text-anchor="middle" font-size="11" fill="#6f5f7d">intercom · btw</text>
+    <text x="898" y="352" text-anchor="middle" font-size="11" fill="#6f5f7d">…</text>
+  </g>
+
+  <!-- row 2 -->
+  <!-- Workflow -->
+  <g>
+    <rect x="60" y="420" width="230" height="120" rx="10" fill="#fdf0e6" stroke="#f0d6bd" stroke-width="1.3"/>
+    <text x="175" y="444" text-anchor="middle" font-size="12" font-weight="700" fill="#b06a3a">Workflow</text>
+    <text x="175" y="468" text-anchor="middle" font-size="11" fill="#9a7550">planning-with-files</text>
+    <text x="175" y="486" text-anchor="middle" font-size="11" fill="#9a7550">plannotator</text>
+  </g>
+
+  <!-- Output -->
+  <g>
+    <rect x="306" y="420" width="230" height="120" rx="10" fill="#eef2f5" stroke="#d2dde4" stroke-width="1.3"/>
+    <text x="421" y="444" text-anchor="middle" font-size="12" font-weight="700" fill="#5a7488">Output</text>
+    <text x="421" y="468" text-anchor="middle" font-size="11" fill="#647a8a">ponytail</text>
+    <text x="421" y="486" text-anchor="middle" font-size="11" fill="#647a8a">caveman · kanagawa</text>
+  </g>
+
+  <!-- Experiments -->
+  <g>
+    <rect x="552" y="420" width="230" height="120" rx="10" fill="#f5f5f0" stroke="#dfdcd0" stroke-width="1.3"/>
+    <text x="667" y="444" text-anchor="middle" font-size="12" font-weight="700" fill="#6f6a55">Experiments</text>
+    <text x="667" y="468" text-anchor="middle" font-size="11" fill="#7d7660">autoresearch</text>
+    <text x="667" y="486" text-anchor="middle" font-size="11" fill="#7d7660">pi-autoresearch</text>
+  </g>
+
+  <!-- 全体に広がる網掛けエリア（バンドル拡張の領域） -->
+  <rect x="48" y="242" width="984" height="316" fill="#faf8f5" stroke="#efe7d9" stroke-width="1" stroke-dasharray="6 5" rx="12" fill-opacity="0"/>
+  <text x="1040" y="542" text-anchor="end" font-size="11" fill="#b0a795">ON にした拡張だけ、入口から逐次・並列に渡される</text>
+</svg>
+</div>
+
+<div class="legend">
+  <span><span class="swatch" style="background:#f0683a"></span>エントリー: <code>src/index.ts</code>（唯一の <code>pi.extensions</code>）</span>
+  <span><span class="swatch" style="background:#fff"></span>バンドル拡張: 25 本、デフォルト全部 OFF</span>
+  <span><span class="swatch" style="background:#e9f1fb"></span>色はグループ分け（色自体に意味はない）</span>
+</div>

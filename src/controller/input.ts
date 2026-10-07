@@ -38,7 +38,32 @@ function handleInterruptInput(
   ctx.ui.notify("Interrupt prompt sent.", "info");
 }
 
-/** Register `/stop`, `/interrupt`, and `/mode` as Pi commands. */
+/** Pure: the user message a skill alias command sends (`/skill:<name> <args>`). */
+export function skillAliasMessage(skill: string, args: string): string {
+  const rest = args.trim();
+  return rest ? `/skill:${skill} ${rest}` : `/skill:${skill}`;
+}
+
+/**
+ * Register `/<skill>` as a thin alias for `/skill:<skill>` (ponytail's pattern):
+ * behavior stays in the skill's markdown, the command only forwards.
+ */
+function registerSkillAlias(pi: ExtensionAPI, skill: string, description: string): void {
+  pi.registerCommand(skill, {
+    description,
+    handler: async (args, ctx) => {
+      const message = skillAliasMessage(skill, args);
+      if (!ctx.isIdle()) {
+        pi.sendUserMessage(message, { deliverAs: "followUp" });
+        ctx.ui.notify(`${message} queued as follow-up.`, "info");
+        return;
+      }
+      pi.sendUserMessage(message);
+    },
+  });
+}
+
+/** Register `/stop`, `/interrupt`, `/mode`, and the `/pioneer` skill alias as Pi commands. */
 export function registerInputCommands(pi: ExtensionAPI): void {
   pi.registerCommand("stop", {
     description: "Stop current running work.",
@@ -60,4 +85,6 @@ export function registerInputCommands(pi: ExtensionAPI): void {
       await openModeSettingsModal(ctx);
     },
   });
+
+  registerSkillAlias(pi, "pioneer", "Run /skill:pioneer (roadmap-anchored W-model change flow).");
 }

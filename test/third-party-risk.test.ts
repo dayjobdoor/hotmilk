@@ -10,6 +10,8 @@ import {
 } from "./fixtures/manifest.ts";
 import { isJsonObject, isJsonString, parseJsonValue } from "../src/bootstrap/json.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
+import { satisfies } from "semver";
+import { BUNDLED_EXTENSION_DEFINITIONS } from "../src/config/bundled-extensions.ts";
 
 type NestedInstall = { path: string; name: string; version: string };
 
@@ -31,20 +33,17 @@ type BundledPeerRangeExclusion = {
 
 /**
  * Bundled deps whose published peer ranges still exclude Pi 0.80 — and, for
- * pi-lens / pi-mcp-adapter, the current 0.86/0.87 lines too (they stop at
- * ^0.85.0/^0.86.0). Drop a row when npm publishes wider peers and refresh
+ * pi-lens, the 0.86+ lines too (it stops at ^0.85.0). Drop a row when npm publishes wider peers and refresh
  * README peer notes.
  */
 const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly BundledPeerRangeExclusion[] = [
   { packageName: "pi-rtk-optimizer", excludedVersionPrefix: "^0.79.0" },
   { packageName: "pi-lens", excludedVersionPrefix: "^0.84.1" },
-  { packageName: "pi-mcp-adapter", excludedVersionPrefix: "^0.84.1" },
-  { packageName: "pi-goal-x", excludedVersionPrefix: ">=0.83.0" },
 ];
 
 /**
  * Nested @earendil-works copies still below Pi 0.80 — remove rows when upstream dedupes to 0.80.x.
- * pi-subagents / pi-mcp-adapter are the usual sources.
+ * (None known today.)
  */
 const KNOWN_NESTED_DRIFT_BELOW_080: readonly KnownNestedDrift[] = [];
 
@@ -181,6 +180,18 @@ describe("third-party risk (hotmilk meta-package)", () => {
     for (const [, range] of devEntries) {
       expect(range).toBe(declaredRange);
     }
+  });
+
+  it("covers every bundled row: a Pi peer range that excludes the installed Pi must be tracked", () => {
+    const pi = installedPackageVersion(PI_CODING_AGENT_PACKAGE);
+    const tracked = new Set(BUNDLED_PEER_RANGES_EXCLUDING_PI_080.map((row) => row.packageName));
+    const packages = new Set(
+      BUNDLED_EXTENSION_DEFINITIONS.filter((row) => !row.module.startsWith("hotmilk/")).map((row) => row.packageName),
+    );
+    const untracked = [...packages].filter(
+      (name) => !tracked.has(name) && bundledPiPeerRanges(name).some((range) => !satisfies(pi, range)),
+    );
+    expect(untracked, `bundled rows whose peers exclude Pi ${pi}: add to BUNDLED_PEER_RANGES_EXCLUDING_PI_080 and README peer notes`).toEqual([]);
   });
 
   it("tracks bundled deps whose peer ranges still exclude Pi 0.80", () => {

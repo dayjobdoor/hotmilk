@@ -7,7 +7,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import {
@@ -21,6 +21,8 @@ import {
 import {
   BUNDLED_EXTENSION_DEFINITIONS,
   BUNDLED_EXTENSION_IDS,
+  PRE_0_2_DEFAULT_ON_IDS,
+  type BundledExtensionId,
   type ExtensionToggleMap,
 } from "./bundled-extensions.ts";
 
@@ -37,7 +39,7 @@ export function isPersonaMode(value: string | undefined): value is PersonaMode {
   return PERSONA_MODES.some((mode) => mode === value);
 }
 
-export function isProjectTrustMode(
+function isProjectTrustMode(
   value: JsonValue | string | undefined,
 ): value is ProjectTrustMode {
   return value === "delegate" || value === "prompt" || value === "always" || value === "never";
@@ -57,6 +59,9 @@ function parseHotmilkConfig(value: JsonValue): HotmilkConfig {
       }
     }
     config.extensions = extensions;
+  }
+  if (isJsonObject(value.notices) && isJsonBoolean(value.notices.defaultOff020)) {
+    config.notices = { defaultOff020: value.notices.defaultOff020 };
   }
   if (isJsonObject(value.graph)) {
     config.graph = {};
@@ -135,13 +140,17 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): DefaultHotmilk
 }
 
 /** Filename used for hotmilk config under the config root. */
-export const CONFIG_FILENAME = "hotmilk.json";
-/** Human-readable label for the agent-level config path. */
-export const AGENT_HOTMILK_CONFIG_LABEL = "~/.pi/agent/hotmilk.json";
+const CONFIG_FILENAME = "hotmilk.json";
+
+/** Show a path under `home` as `~/…`; other paths stay absolute. */
+export function tildePath(path: string, home: string = homedir()): string {
+  if (path === home) return "~";
+  return path.startsWith(home + sep) ? `~${path.slice(home.length)}` : path;
+}
 
 export { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "./bundled-extensions.ts";
 
-export type ProjectTrustMode = "delegate" | "prompt" | "always" | "never";
+type ProjectTrustMode = "delegate" | "prompt" | "always" | "never";
 
 /** Resolved project-trust settings. */
 export type ResolvedProjectTrust = {
@@ -163,6 +172,10 @@ export type HotmilkConfig = {
   projectTrust?: {
     mode?: ProjectTrustMode;
     remember?: boolean;
+  };
+  /** One-time notices already shown; hotmilk writes these, users need not. */
+  notices?: {
+    defaultOff020?: boolean;
   };
 };
 
@@ -217,20 +230,9 @@ export function resolveHotmilkConfigRoot(configRoot?: string): string {
   return getAgentDir();
 }
 
-/**
- * Path shown in `/mode` and seed notifications.
- *
- * Uses the conventional `~/.pi/agent/hotmilk.json` label when that is the
- * resolved path; otherwise the absolute path (for `PI_CODING_AGENT_DIR`).
- *
- * @param configRoot - explicit config root override
- */
+/** Path shown in `/mode` and seed notifications (home-relative for any harness agent dir). */
 export function hotmilkConfigDisplayPath(configRoot?: string): string {
-  const configPath = getHotmilkConfigPath(configRoot);
-  if (configPath === join(homedir(), ".pi", "agent", CONFIG_FILENAME)) {
-    return AGENT_HOTMILK_CONFIG_LABEL;
-  }
-  return configPath;
+  return tildePath(getHotmilkConfigPath(configRoot));
 }
 
 /**
@@ -301,6 +303,28 @@ export function saveHotmilkConfig(config: HotmilkConfig, configRoot?: string): C
   }
 }
 
+
+/**
+ * Pure: rows that were on by default before 0.2.0 and have no explicit value in this config
+ * (so they are off now). Empty once the notice has been shown, or when nothing was lost.
+ */
+export function legacyDefaultsLost(config: HotmilkConfig): BundledExtensionId[] {
+  if (config.notices?.defaultOff020 === true) return [];
+  return PRE_0_2_DEFAULT_ON_IDS.filter((id) => config.extensions?.[id] === undefined);
+}
+
+/**
+ * Record that the 0.2.0 default-off notice was shown. Never rewrites a config that failed to
+ * parse (that would replace the user's broken file with defaults).
+ */
+export function markDefaultOffNoticeSeen(configRoot?: string): ConfigPathResult {
+  const loaded = loadHotmilkConfig(configRoot);
+  if (loaded.error) return { path: loaded.path, error: loaded.error };
+  return saveHotmilkConfig(
+    { ...loaded.config, notices: { ...loaded.config.notices, defaultOff020: true } },
+    configRoot,
+  );
+}
 
 /** Resolve final bundled-extension toggles by overlaying user config on bundled defaults. */
 export function resolveBundledExtensionToggles(config: HotmilkConfig): ExtensionToggleMap {

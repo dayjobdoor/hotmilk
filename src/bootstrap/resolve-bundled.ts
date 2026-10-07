@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { isJsonObject, isJsonString, parseJsonValue } from "./json.ts";
 
 const HOTMILK_MODULE_PREFIX = "hotmilk/";
-export type BundledModulePath = { pkgName: string; subpath: string };
+type BundledModulePath = { pkgName: string; subpath: string };
 
 function findHotmilkPackageRoot(fromModuleUrl: string): string {
   let dir = dirname(fileURLToPath(fromModuleUrl));

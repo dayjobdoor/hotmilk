@@ -14,7 +14,12 @@ export function allExtensionsDisabled(): Record<BundledExtensionId, boolean> {
 export function testRuntime(overrides: Partial<HotmilkRuntime> = {}): HotmilkRuntime {
   return {
     configPath: "/tmp/hotmilk.json",
+    harness: "pi",
+    harnessVersion: "0.0.0",
     extensionToggles: allExtensionsDisabled(),
+    harnessSkips: [],
+    legacyDefaultsLost: [],
+    extensionFailures: [],
     globalExtensionSkips: [],
     defaults: { persona: "neutral" },
     graph: { warnOnStale: false, autoSuggestUpdate: false },

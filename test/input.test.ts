@@ -61,4 +61,18 @@ describe("registerInputCommands", () => {
     });
     expect(prompted.ui.notify).toHaveBeenCalledWith("Interrupt prompt sent.", "info");
   });
+
+  it("pioneer forwards to /skill:pioneer, queued as follow-up while busy", async () => {
+    const { handlers, sendUserMessage } = captureInputCommandHandlers();
+
+    // SAFETY: command handlers only read isIdle, abort, and ui.notify.
+    await handlers.get("pioneer")!("  ROADMAP 0.2.0  ", inputContext() as never);
+    expect(sendUserMessage).toHaveBeenLastCalledWith("/skill:pioneer ROADMAP 0.2.0");
+
+    const busy = inputContext({ isIdle: false });
+    // SAFETY: command handlers only read isIdle, abort, and ui.notify.
+    await handlers.get("pioneer")!("", busy as never);
+    expect(sendUserMessage).toHaveBeenLastCalledWith("/skill:pioneer", { deliverAs: "followUp" });
+    expect(busy.ui.notify).toHaveBeenCalledWith("/skill:pioneer queued as follow-up.", "info");
+  });
 });

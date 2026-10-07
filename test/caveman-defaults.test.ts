@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
   applyHotmilkPersonaPrompt,
+  markdownSection,
   shouldWarnCavemanJaConflict,
 } from "../src/bootstrap/defaults.ts";
 
@@ -35,10 +36,20 @@ describe("custom persona prompt replacement", () => {
     expect(gyal).toContain("bright, confident Japanese gyal");
     expect(gyal).toContain("Harness principles:");
     expect(gyal).not.toContain("built-in neutral rules");
+    expect(gyal).not.toContain("Raiden");
 
     const raiden = applyHotmilkPersonaPrompt(gentlePrompt, "raiden");
     expect(raiden).toContain("Current persona mode: raiden");
     expect(raiden).toContain("知っているのか雷電！？");
     expect(raiden).toContain("preserve orchestration rules");
+  });
+});
+
+describe("markdownSection", () => {
+  it("returns one section body, stops at the next section, and is empty when absent", () => {
+    const md = "# T\n\n## a\n\nA body\n\n## b\nB body\n";
+    expect(markdownSection(md, "a")).toBe("A body");
+    expect(markdownSection(md, "b")).toBe("B body");
+    expect(markdownSection(md, "c")).toBe("");
   });
 });

@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { initTheme } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { BUNDLED_EXTENSION_IDS } from "../src/config/bundled-extensions.ts";
+import { BUNDLED_EXTENSION_IDS, OMP_SUPPORTED_IDS } from "../src/config/bundled-extensions.ts";
 import { DEFAULT_HOTMILK_CONFIG, PERSONA_MODES } from "../src/config/hotmilk.ts";
 import { createModeSettingItems, openModeSettingsModal, PERSONA_SETTING_ID } from "../src/controller/mode.ts";
 import { withConfigEnv } from "./fixtures/runtime.ts";
@@ -23,6 +23,18 @@ describe("createModeSettingItems", () => {
     const personaIndex = items.findIndex((item) => item.id === PERSONA_SETTING_ID);
     const firstExtensionIndex = items.findIndex((item) => item.id === BUNDLED_EXTENSION_IDS[0]);
     expect(personaIndex).toBeLessThan(firstExtensionIndex);
+  });
+
+  it("marks rows without the omp flag as pi only under omp", () => {
+    const label = (harness: "pi" | "omp", id: string) =>
+      createModeSettingItems(DEFAULT_HOTMILK_CONFIG.extensions, "neutral", harness).find(
+        (item) => item.id === id,
+      )?.label;
+    const unsupported = BUNDLED_EXTENSION_IDS.find((id) => !OMP_SUPPORTED_IDS.includes(id))!;
+    const supported = OMP_SUPPORTED_IDS[0]!;
+    expect(label("omp", unsupported)).toBe(`  ${unsupported} (pi only)`);
+    expect(label("omp", supported)).toBe(`  ${supported}`);
+    expect(label("pi", unsupported)).toBe(`  ${unsupported}`);
   });
 });
 

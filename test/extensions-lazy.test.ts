@@ -92,39 +92,42 @@ it("registers context-stack extensions before parallel bundles", { timeout: 30_0
   expect(graphifyIndex).toBeGreaterThan(rtkIndex);
 });
 
-it("does not initialize BTW config when btw toggle is off", { timeout: 30_000 }, async () => {
+it("leaves Alt+W to Pi: btw's other shortcuts register, its width toggle does not", async () => {
+  const original = resolveBundled.bundledImportUrl;
+  vi.spyOn(resolveBundled, "bundledImportUrl").mockImplementation((relativePath) =>
+    relativePath === "pi-btw/extensions/btw.ts"
+      ? fixtureUrl("./fixtures/shortcut-bundled.ts")
+      : stubBundledImportUrl(relativePath, original),
+  );
   const enabled = allExtensionsDisabled();
-  enabled.graphify = true;
+  enabled.btw = true;
+  const { pi, calls } = recordingPi();
 
-  const { pi, accessed } = recordingPi();
   await registerBundledExtensions(pi, enabled, { globalSkips: [] });
 
-  expect(accessed).toContain("on");
-  const { getHotmilkBtwConfig } = await import("../src/bootstrap/btw.ts");
-  expect(() => getHotmilkBtwConfig()).toThrow(/setHotmilkBtwConfig first/);
+  expect(
+    calls.filter(({ method }) => method === "registerShortcut").map(({ args }) => args[0]),
+  ).toEqual(["alt+/", "ctrl+alt+w"]);
 });
 
-it("throws with extension id when a bundled loader fails", async () => {
+it("reports a failing bundled loader by id and still registers the healthy rows", async () => {
   const original = resolveBundled.bundledImportUrl;
   vi.spyOn(resolveBundled, "bundledImportUrl").mockImplementation((relativePath) => {
     if (relativePath === GRAPHIFY_MODULE) {
       return fixtureUrl("./fixtures/throwing-bundled-extension.ts");
     }
-    return original(relativePath);
+    return stubBundledImportUrl(relativePath, original);
   });
 
   const enabled = allExtensionsDisabled();
   enabled.graphify = true;
+  enabled["context-mode"] = true; // healthy sibling (order-marker stub) must still register
 
-  const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
   const { pi } = recordingPi();
 
-  await expect(registerBundledExtensions(pi, enabled, { globalSkips: [] })).rejects.toThrow(
-    '[hotmilk] Failed to load bundled extension "graphify"',
-  );
+  const { failures } = await registerBundledExtensions(pi, enabled, { globalSkips: [] });
 
-  expect(consoleError).toHaveBeenCalledWith(
-    expect.stringContaining('[hotmilk] Failed to load bundled extension "graphify"'),
-  );
-  consoleError.mockRestore();
+  expect(failures.map((failure) => failure.id)).toEqual(["graphify"]);
+  expect(failures[0]?.message).toEqual(expect.any(String));
+  expect(registrationOrder).toEqual(["context-mode"]);
 });

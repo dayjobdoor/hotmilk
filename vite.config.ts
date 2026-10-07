@@ -17,10 +17,9 @@ const ignorePatterns = [
   ".pi/**",
   ".roo/**",
   ".windsurf/**",
-  "openspec/**",
   "tools/oxlint/anti-slop/**",
   // Vendored upstream code (pi-kanagawa, MIT) — held at upstream parity, not hotmilk lint.
-  "src/bundled/kanagawa-extension.ts",
+  "src/bundled/kanagawa.ts",
 ];
 
 export default defineConfig({

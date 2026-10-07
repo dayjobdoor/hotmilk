@@ -4,8 +4,10 @@ import { Container, SettingsList, Text, type SettingItem } from "@earendil-works
 import {
   BUNDLED_EXTENSION_GROUPS,
   BUNDLED_EXTENSION_IDS,
+  OMP_SUPPORTED_IDS,
   type BundledExtensionId,
 } from "../config/bundled-extensions.ts";
+import { detectHarness, type Harness } from "../config/runtime.ts";
 import {
   hotmilkConfigDisplayPath,
   isPersonaMode,
@@ -40,10 +42,11 @@ function formatModeConfigRows(
   return `Defaults\n  persona: ${persona}\n\n${extensionRows}`;
 }
 
-/** Build `/mode` rows: persona first, then bundled extension toggles. */
+/** Build `/mode` rows: persona first, then bundled extension toggles (omp marks pi-only rows). */
 export function createModeSettingItems(
   toggles: Record<BundledExtensionId, boolean>,
   persona: PersonaMode,
+  harness: Harness = "pi",
 ): SettingItem[] {
   return [
     {
@@ -65,7 +68,8 @@ export function createModeSettingItems(
       },
       ...group.ids.map((id) => ({
         id,
-        label: `  ${id}`,
+        label:
+          harness === "omp" && !OMP_SUPPORTED_IDS.includes(id) ? `  ${id} (pi only)` : `  ${id}`,
         currentValue: toggles[id] ? "on" : "off",
         values: ["on", "off"],
       })),
@@ -106,7 +110,7 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
   const config = loadHotmilkConfig().config;
   const toggles = resolveBundledExtensionToggles(config);
   let persona = resolveDefaults(config).persona;
-  const items = createModeSettingItems(toggles, persona);
+  const items = createModeSettingItems(toggles, persona, detectHarness());
 
   await ctx.ui.custom((_tui, theme, _kb, done) => {
     const container = new Container();

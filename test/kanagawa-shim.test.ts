@@ -1,56 +1,59 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { registerBundledExtensionWithoutThinkingCommand } from "../src/bundled/kanagawa.ts";
+import { isJsonObject, isJsonString, parseJsonValue } from "../src/bootstrap/json.ts";
+import registerKanagawa from "../src/bundled/kanagawa.ts";
+import { recordingPi } from "./fixtures/recording-pi.ts";
 
-type RegisterCommandPi = Pick<ExtensionAPI, "registerCommand">;
+type InputTransformResult =
+  | { action: "continue" | "handled" }
+  | { action: "transform"; text: string };
 
-function registerCommandPi(commands: string[]): ExtensionAPI {
-  const pi: RegisterCommandPi = {
-    registerCommand(name) {
-      commands.push(name);
-    },
-  };
-  // SAFETY: test double; shim only calls registerCommand on this object.
-  return pi as ExtensionAPI;
+type InputEventHandler = (event: { text: string }) => Promise<InputTransformResult>;
+
+type RegisteredInput = {
+  handler: InputEventHandler;
+  calls: { method: PropertyKey; args: unknown[] }[];
+};
+
+function registeredInputHandler(): RegisteredInput {
+  const { pi, calls } = recordingPi();
+  registerKanagawa(pi);
+  // SAFETY: the extracted handler is kanagawa's own code; args[1] of the "on"
+  // call is its handler function.
+  const handler = calls.find(
+    ({ method, args }) => method === "on" && args[0] === "input",
+  )?.args[1] as InputEventHandler;
+  return { handler, calls };
 }
 
-describe("kanagawa shim", () => {
-  it("skips duplicate /thinking command registration", async () => {
-    const commands: string[] = [];
-    const pi = registerCommandPi(commands);
+describe("bundled kanagawa extension", () => {
+  it("registers event handlers and no duplicate /thinking command", () => {
+    const { pi, accessed, calls } = recordingPi();
+    registerKanagawa(pi);
 
-    await registerBundledExtensionWithoutThinkingCommand(pi, (extensionPi) => {
-      extensionPi.registerCommand("thinking", {
-        description: "legacy",
-        handler: async () => {},
+    expect(accessed).toContain("on");
+    const registeredCommands = calls
+      .filter(({ method }) => method === "registerCommand")
+      .map(({ args }) => {
+        const spec = parseJsonValue(JSON.stringify(args[0] ?? null));
+        return isJsonObject(spec) && isJsonString(spec.name) ? spec.name : "?";
       });
-      extensionPi.registerCommand("branch", {
-        description: "git branch widget",
-        handler: async () => {},
-      });
-    });
-
-    expect(commands).toEqual(["branch"]);
+    expect(registeredCommands).toEqual([]);
+    const events = calls
+      .filter(({ method }) => method === "on")
+      .map(({ args }) => args[0]);
+    expect(events).toEqual(
+      expect.arrayContaining(["input", "session_start", "agent_start", "agent_end"]),
+    );
   });
 
-  it("restores command registration when bundled registration throws", async () => {
-    const commands: string[] = [];
-    const pi = registerCommandPi(commands);
+  it("input interceptor maps @thinking tags to the Pi transform result", async () => {
+    const { handler, calls } = registeredInputHandler();
 
-    await expect(
-      registerBundledExtensionWithoutThinkingCommand(pi, async (extensionPi) => {
-        extensionPi.registerCommand("thinking", {
-          description: "legacy",
-          handler: async () => {},
-        });
-        throw new Error("kanagawa failed");
-      }),
-    ).rejects.toThrow("kanagawa failed");
+    const transform = await handler({ text: "x @thinking:high" });
+    expect(transform).toEqual({ action: "transform", text: "x" });
+    expect(calls).toContainEqual({ method: "setThinkingLevel", args: ["high"] });
 
-    pi.registerCommand("thinking", {
-      description: "restored",
-      handler: async () => {},
-    });
-    expect(commands).toEqual(["thinking"]);
+    const noTag = await handler({ text: "plain message" });
+    expect(noTag).toEqual({ action: "continue" });
   });
 });

@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
-import { resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
+import { bundledImportUrl, resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
 import {
   BUNDLED_EXTENSION_DEFINITIONS,
   BUNDLED_EXTENSION_GROUPS,
@@ -33,6 +33,25 @@ describe("bundled extension manifest", () => {
       expect(existsSync(resolved), `${definition.id}: ${definition.module}`).toBe(true);
     }
   });
+
+  // Dependencies float on caret ranges and CI only runs the lockfile tree, so a row whose
+  // module fails to import or lacks a default factory must fail here, not at a user's startup.
+  it(
+    "imports every bundled module and exposes a default extension factory",
+    { timeout: 120_000 },
+    async () => {
+      const broken: string[] = [];
+      for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
+        try {
+          const mod = await import(bundledImportUrl(definition.module));
+          if (!(mod.default instanceof Function)) broken.push(`${definition.id}: no default factory`);
+        } catch (cause) {
+          broken.push(`${definition.id}: ${cause instanceof Error ? cause.message : String(cause)}`);
+        }
+      }
+      expect(broken).toEqual([]);
+    },
+  );
 
   it("orders the context stack: context-mode before rtk-optimizer", () => {
     expect(CONTEXT_STACK_EXTENSION_IDS).toEqual(["context-mode", "rtk-optimizer"]);

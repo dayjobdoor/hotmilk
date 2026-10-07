@@ -5,12 +5,18 @@ import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { parseJsonValue } from "../src/bootstrap/json.ts";
 import * as resolveBundled from "../src/bootstrap/resolve-bundled.ts";
-import * as btwModule from "../src/bootstrap/btw.ts";
 import { HOTMILK_AUTORESEARCH_FULLSCREEN_SHORTCUT } from "../src/bootstrap/autoresearch.ts";
+import { prepareContextStack } from "../src/bootstrap/context-stack.ts";
+import { OMP_AUDITED_VERSION } from "../src/config/bundled-extensions.ts";
+import { createHotmilkRuntime } from "../src/config/runtime.ts";
 import { allExtensionsDisabled, testRuntime, withConfigEnv } from "./fixtures/runtime.ts";
 import { registerDefaultsHandlers } from "../src/bootstrap/defaults.ts";
 import { registerGraphHandlers } from "../src/bootstrap/graph.ts";
-import { registerSessionHandlers } from "../src/bootstrap/session.ts";
+import {
+  detectProjectAgentDefinitions,
+  registerSessionHandlers,
+  sessionStartNotices,
+} from "../src/bootstrap/session.ts";
 import registerHotmilk from "../src/index.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
 import { registrationOrder, resetRegistrationOrder } from "./fixtures/order-marker-state.ts";
@@ -32,7 +38,6 @@ type BeforeAgentStartHandler = (event: { systemPrompt: string }) => Promise<{
 
 afterEach(() => {
   vi.restoreAllMocks();
-  btwModule.resetMainCtxSearchCaptureForTests();
   resetRegistrationOrder();
 });
 
@@ -64,25 +69,23 @@ describe("startup registration", () => {
       await registerHotmilk(pi as never);
 
       expect(events).toEqual(["project_trust", "session_start"]);
-      expect(commands).toEqual(["stop", "interrupt", "mode"]);
+      expect(commands).toEqual(["stop", "interrupt", "mode", "pioneer"]);
       expect(existsSync(join(agentDir, "extensions", "pi-autoresearch.json"))).toBe(false);
     });
   });
 
   const STARTUP_STUB_MODULES: ReadonlySet<string> = new Set([
-    "pi-btw/extensions/btw.ts",
-    "pi-subagents-j0k3r/index.ts",
+    "gentle-pi/extensions/gentle-agents.ts",
     "pi-autoresearch/extensions/pi-autoresearch/index.ts",
   ]);
 
-  it("wires enabled toggles: bundle load, ctx_search capture, autoresearch seed, /subagents-doctor", async () => {
+  it("wires enabled toggles: bundle load, autoresearch seed", async () => {
     const configRoot = makeTempDir("hotmilk-startup-config-on-");
     const agentDir = makeTempDir("hotmilk-startup-agent-on-");
     const originalImportUrl = resolveBundled.bundledImportUrl;
     await withConfigEnv(configRoot, agentDir, async () => {
       const toggles = allExtensionsDisabled();
       toggles["context-mode"] = true;
-      toggles.btw = true;
       toggles.autoresearch = true;
       toggles.subagents = true;
       writeFileSync(
@@ -105,9 +108,6 @@ describe("startup registration", () => {
         return originalImportUrl(relativePath);
       });
 
-      // SAFETY: the btw hook patches an external (frozen) module namespace; faked at this boundary.
-      vi.spyOn(btwModule, "installHotmilkBtwSessionHook").mockImplementation(() => {});
-
       const events: string[] = [];
       const commands: string[] = [];
       const registeredTools: { name: string }[] = [];
@@ -122,16 +122,13 @@ describe("startup registration", () => {
           registeredTools.push(tool);
         },
       };
-      const originalRegisterTool = pi.registerTool;
       // SAFETY: fake pi exposes only members the all-off path proved sufficient.
       await registerHotmilk(pi as never);
 
       expect(registrationOrder).toEqual(["context-mode"]);
-      expect(commands).toEqual(["subagents-doctor", "stop", "interrupt", "mode"]);
+      expect(commands).toEqual(["stop", "interrupt", "mode", "pioneer"]);
       expect(events).toEqual(["project_trust", "session_start"]);
-      expect(pi.registerTool).not.toBe(originalRegisterTool);
       expect(registeredTools.map((tool) => tool.name)).toEqual(["ctx_search"]);
-      expect(btwModule.getHotmilkBtwConfig()).toEqual({ extensionToggles: toggles });
       expect(
         parseJsonValue(readFileSync(join(agentDir, "extensions", "pi-autoresearch.json"), "utf8")),
       ).toEqual({
@@ -198,7 +195,7 @@ describe("startup registration", () => {
       // SAFETY: fake API implements only methods used by the all-bundles-off startup path.
       await registerHotmilk(pi as never, { selfPath, cwd: projectCwd });
       expect(events).toEqual(["project_trust", "session_start"]);
-      expect(commands).toEqual(["stop", "interrupt", "mode"]);
+      expect(commands).toEqual(["stop", "interrupt", "mode", "pioneer"]);
     });
   });
 });
@@ -321,50 +318,134 @@ describe("registerSessionHandlers", () => {
     });
   });
 
-  it("reports config, skip, caveman, and kanagawa warnings at session start", async () => {
-    const configRoot = makeTempDir("hotmilk-session-warnings-config-");
-    const agentDir = makeTempDir("hotmilk-session-warnings-agent-");
-    await withConfigEnv(configRoot, agentDir, async () => {
-      writeFileSync(join(configRoot, "hotmilk.json"), "{}", "utf8");
-      const extensionToggles = allExtensionsDisabled();
-      extensionToggles.caveman = true;
-      extensionToggles.kanagawa = true;
-      const notifications: NotifyCall[] = [];
-      let handler: SessionHandler | undefined;
+  it("tells an upgraded user once which default-on rows are now off", async () => {
+    const configRoot = makeTempDir("hotmilk-default-off-");
+    await withConfigEnv(configRoot, undefined, async () => {
+      // A 0.1.x config: saved before most rows existed, so it has no value for them.
+      writeFileSync(
+        join(configRoot, "hotmilk.json"),
+        JSON.stringify({ extensions: { btw: true }, graph: { warnOnStale: false } }),
+        "utf8",
+      );
+      const cwd = makeTempDir("hotmilk-default-off-cwd-");
+      const startSession = (): NotifyCall[] => {
+        let handler: SessionHandler | undefined;
+        const notifications: NotifyCall[] = [];
+        const pi = { on: (_event: string, next: SessionHandler) => (handler = next) };
+        // SAFETY: fake API implements the session-start registration method.
+        registerSessionHandlers(pi as never, createHotmilkRuntime(configRoot, "pi"));
+        handler?.(
+          {},
+          {
+            hasUI: false,
+            cwd,
+            ui: { notify: (message, level) => notifications.push({ message, level }) },
+            isProjectTrusted: () => false,
+          },
+        );
+        return notifications;
+      };
 
-      // SAFETY: fake API implements the session-start registration contract.
-      registerSessionHandlers(
-        { on: (_event: string, next: SessionHandler) => (handler = next) } as never,
-        testRuntime({
-          configError: "Invalid JSON",
-          globalExtensionSkips: [{ id: "graphify", packageName: "graphify-pi" }],
-          extensionToggles,
-          defaults: { persona: "neutral", language: "ja" },
-        }),
-      );
-      handler?.(
-        {},
-        {
-          hasUI: false,
-          cwd: makeTempDir("hotmilk-session-warnings-cwd-"),
-          ui: { notify: (message, level) => notifications.push({ message, level }) },
-          isProjectTrusted: () => false,
-        },
-      );
-
-      expect(notifications).toHaveLength(4);
-      expect(notifications.map(({ message }) => message)).toEqual(
-        expect.arrayContaining([
-          expect.stringContaining("Failed to parse"),
-          expect.stringContaining("graphify: global graphify-pi"),
-          expect.stringContaining("caveman is on while defaults.language is ja"),
-          expect.stringContaining("kanagawa is on"),
-        ]),
-      );
+      const first = startSession();
+      expect(first).toEqual([
+        { message: expect.stringContaining("skill-registry"), level: "info" },
+      ]);
+      expect(first[0]?.message).not.toContain("btw"); // btw has a saved value
+      // The marker is written without losing the user's other settings...
+      expect(parseJsonValue(readFileSync(join(configRoot, "hotmilk.json"), "utf8"))).toMatchObject({
+        extensions: { btw: true },
+        graph: { warnOnStale: false },
+        notices: { defaultOff020: true },
+      });
+      // ...and the notice does not come back.
+      expect(startSession()).toEqual([]);
     });
   });
 
-  it("applies context-stack synchronization and MCP cleanup at session start", async () => {
+  it("builds config, dedupe, omp harness, context-stack, caveman, and kanagawa notices (pure)", () => {
+    const extensionToggles = allExtensionsDisabled();
+    extensionToggles.caveman = true;
+    extensionToggles.kanagawa = true;
+    const runtime = testRuntime({
+      configError: "Invalid JSON",
+      harness: "omp",
+      harnessVersion: "99.0.0",
+      harnessSkips: ["todo", "btw"],
+      globalExtensionSkips: [{ id: "graphify", packageName: "graphify-pi" }],
+      extensionToggles,
+      defaults: { persona: "neutral", language: "ja" },
+      rtkSync: { path: "/a/rtk.json", outcome: "updated" },
+    });
+
+    const notices = sessionStartNotices(runtime, {
+      seededPath: "~/.omp/agent/hotmilk.json",
+      projectSkips: [{ id: "lens", packageName: "pi-lens" }],
+    });
+
+    expect(notices.map(({ message }) => message)).toEqual([
+      expect.stringContaining("Created ~/.omp/agent/hotmilk.json"),
+      expect.stringContaining("Failed to parse"),
+      expect.stringContaining("pi-only bundled extensions skipped (not flagged omp in the registry): todo, btw"),
+      expect.stringContaining("omp 99.0.0 is not the audited release"),
+      expect.stringContaining("Adjusted pi-rtk-optimizer"),
+      expect.stringContaining("graphify: global graphify-pi"),
+      expect.stringContaining("lens: project pi-lens"),
+      expect.stringContaining("caveman is on while defaults.language is ja"),
+      expect.stringContaining("kanagawa is on"),
+    ]);
+  });
+
+  it("stays silent when there is nothing to report (pi, aligned rtk, omp on the audited release)", () => {
+    const none = { projectSkips: [] };
+    expect(sessionStartNotices(testRuntime(), none)).toEqual([]);
+    expect(sessionStartNotices(testRuntime({ rtkSync: { path: "/a", outcome: "unchanged" } }), none)).toEqual([]);
+    expect(
+      sessionStartNotices(testRuntime({ harness: "omp", harnessVersion: OMP_AUDITED_VERSION }), none),
+    ).toEqual([]);
+  });
+
+  it("reports a failed rtk sync with its path and error instead of swallowing it", () => {
+    const notices = sessionStartNotices(
+      testRuntime({ rtkSync: { path: "/a/rtk.json", outcome: "failed", error: "EACCES" } }),
+      { projectSkips: [] },
+    );
+    expect(notices).toEqual([
+      { message: expect.stringContaining("Could not sync pi-rtk-optimizer config at /a/rtk.json: EACCES"), level: "warning" },
+    ]);
+  });
+
+  it("names a bundled row that failed to load, with its error", () => {
+    const notices = sessionStartNotices(
+      testRuntime({ extensionFailures: [{ id: "graphify", message: "Cannot find module" }] }),
+      { projectSkips: [] },
+    );
+    expect(notices).toEqual([
+      { message: expect.stringContaining("graphify: Cannot find module"), level: "warning" },
+    ]);
+  });
+
+  it("names untrusted project agent definitions only when subagents is on", () => {
+    const agents = { projectSkips: [], untrustedProjectAgents: [".pi/agents/"] };
+    const subagentsOn = allExtensionsDisabled();
+    subagentsOn.subagents = true;
+
+    expect(sessionStartNotices(testRuntime({ extensionToggles: subagentsOn }), agents)).toEqual([
+      { message: expect.stringContaining(".pi/agents/"), level: "warning" },
+    ]);
+    expect(sessionStartNotices(testRuntime(), agents)).toEqual([]);
+  });
+
+  it("detects project subagent definitions only when markdown agents or a config exist", () => {
+    const cwd = makeTempDir("hotmilk-project-agents-");
+    expect(detectProjectAgentDefinitions(cwd)).toEqual([]);
+    mkdirSync(join(cwd, ".pi", "agents"), { recursive: true });
+    expect(detectProjectAgentDefinitions(cwd)).toEqual([]); // empty dir is not a definition
+    writeFileSync(join(cwd, ".pi", "agents", "scout.md"), "---\nname: scout\n---\n", "utf8");
+    writeFileSync(join(cwd, ".pi", "subagents.json"), "{}", "utf8");
+    expect(detectProjectAgentDefinitions(cwd)).toEqual([".pi/agents/", ".pi/subagents.json"]);
+  });
+
+  it("reports the pre-load rtk sync at session start", async () => {
     const configRoot = makeTempDir("hotmilk-session-context-config-");
     const agentDir = makeTempDir("hotmilk-session-context-agent-");
     await withConfigEnv(configRoot, agentDir, async () => {
@@ -379,28 +460,19 @@ describe("registerSessionHandlers", () => {
         }),
         "utf8",
       );
-      const mcpPath = join(agentDir, "mcp.json");
-      writeFileSync(
-        mcpPath,
-        JSON.stringify({
-          mcpServers: {
-            "context-mode": { command: "context-mode" },
-            other: { command: "other" },
-          },
-        }),
-        "utf8",
-      );
 
       const extensionToggles = allExtensionsDisabled();
       extensionToggles["context-mode"] = true;
       extensionToggles["rtk-optimizer"] = true;
-      extensionToggles["mcp-adapter"] = true;
       const notifications: NotifyCall[] = [];
       let handler: SessionHandler | undefined;
+      // The entry syncs rtk before bundles load and stores the result on the runtime.
+      const runtime = testRuntime({ extensionToggles });
+      runtime.rtkSync = prepareContextStack(extensionToggles);
       // SAFETY: fake API implements the session-start registration contract.
       registerSessionHandlers(
         { on: (_event: string, next: SessionHandler) => (handler = next) } as never,
-        testRuntime({ extensionToggles }),
+        runtime,
       );
       handler?.(
         {},
@@ -412,18 +484,11 @@ describe("registerSessionHandlers", () => {
         },
       );
 
-      // Sync and prune internals are pinned by context-stack.test.ts / mcp-prune.test.ts;
-      // this asserts only the session-level wiring outcome.
-      expect(notifications.map(({ message }) => message)).toEqual(
-        expect.arrayContaining([
-          expect.stringContaining("Adjusted pi-rtk-optimizer"),
-          expect.stringContaining("Removed duplicate context-mode entry"),
-          expect.stringContaining("Do not add a context-mode server"),
-        ]),
-      );
-      expect(parseJsonValue(readFileSync(mcpPath, "utf8"))).toEqual({
-        mcpServers: { other: { command: "other" } },
-      });
+      // The alignment itself is pinned by context-stack.test.ts; this asserts the session-level outcome.
+      expect(notifications.map(({ message }) => message)).toEqual([
+        expect.stringContaining("Adjusted pi-rtk-optimizer"),
+      ]);
+      expect(parseJsonValue(readFileSync(rtkPath, "utf8"))).toMatchObject({ mode: "suggest" });
     });
   });
 

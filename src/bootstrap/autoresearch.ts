@@ -13,7 +13,7 @@ type SeedAutoresearchShortcutsResult = {
 };
 
 /** Agent config path for pi-autoresearch shortcut overrides. */
-export function autoresearchShortcutsConfigPath(agentDir: string = getAgentDir()): string {
+function autoresearchShortcutsConfigPath(agentDir: string = getAgentDir()): string {
   return join(agentDir, "extensions", CONFIG_FILE_NAME);
 }
 

@@ -67,10 +67,14 @@ describe("setupHotmilkFooter", () => {
       hasUI: true,
       model: undefined,
       thinkingLevel: "off",
+      // The runtime session manager is the full one: Pi v1's FooterComponent also reads these.
       sessionManager: {
         getEntries: () => [],
+        getEntryCount: () => 0,
         getCwd: () => "/tmp/hotmilk",
         getSessionName: () => undefined,
+        getSessionId: () => "session-1",
+        getLeafId: () => null,
       },
       getContextUsage: () => ({ contextWindow: 1000, percent: 0 }),
       ui: {
