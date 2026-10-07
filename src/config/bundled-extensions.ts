@@ -290,10 +290,10 @@ export const OMP_SUPPORTED_IDS: readonly BundledExtensionId[] = BUNDLED_EXTENSIO
  * omp release the `omp` flags were verified against (`bun run audit:omp`).
  * CI installs exactly this release; other omp versions get a session warning.
  */
-export const OMP_AUDITED_VERSION = "18.4.10";
+export const OMP_AUDITED_VERSION = "18.8.0";
 
 /**
  * sha256 of that release's `omp-linux-x64` asset, committed here so CI checks the binary against
  * a reviewed value instead of a checksum file served by the same release it would vouch for.
  */
-export const OMP_AUDITED_SHA256 = "e3f24c475d90b83acec05a26fd4499d2e6dffbf4ca3b0ee9e3e1bc1ab1a4e289";
+export const OMP_AUDITED_SHA256 = "8fb220c84b0e15cee596f5f94bd5c44b477685aca6678a0fdaf75819f607cb98";
