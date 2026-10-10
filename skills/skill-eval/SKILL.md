@@ -41,7 +41,7 @@ row on; omp: `task`). Never reuse a child.
 Executor task:
 
 ```markdown
-You are a fresh executor. Edit nothing outside a scratch dir; spawn no agents.
+You are a fresh executor. Edit no files; spawn no agents.
 
 ## Target Prompt (target arm only)
 
@@ -75,10 +75,10 @@ harness failure: rerun that child, never score it as a target miss.
 
 Stop when two consecutive iterations (three for High) show zero new
 ambiguities and an accuracy gain ≤ 3 points. At the cap, or after three
-iterations without a critical-item gain, stop and rewrite the target; the
-rewrite starts a new iteration with fresh children. Last, if the tier has a
-hold-out, run it once; a 15-point drop from the last target-arm accuracy
-means overfit, apply another delta.
+iterations without a critical-item gain, stop (`cap` / `stalled`) and report
+that the target needs a rewrite; a rewrite is a new eval run. Last, if the
+tier has a hold-out, run it once; a 15-point drop from the last target-arm
+accuracy means overfit, apply another delta.
 
 ## Output
 
@@ -109,4 +109,4 @@ run.
 
 Edits only the target, one delta at a time. Code review: `pioneer-review`;
 over-engineering: `ponytail-review`; optimisation loops over code metrics:
-`autoresearch-create`.
+`autoresearch-create` (ships with the `autoresearch` row).
