@@ -25,8 +25,8 @@ the body: triggers, scope, outputs. Fix mismatches before any run.
 
 - Scenarios: one median, one edge (High adds a second edge); the hold-out
   stays unseen until the end.
-- Checklist per scenario: 3–7 observable items, at least one `[critical]`. A
-  critical miss fails the scenario.
+- Checklist per scenario: 3–7 observable items, with the tier's count of
+  `[critical]` items. A critical miss fails the scenario.
 - Frozen means frozen: never edit scenarios or checklists after the first run.
 
 ## 2. Run both arms
@@ -76,9 +76,10 @@ harness failure: rerun that child, never score it as a target miss.
 Stop when two consecutive iterations (three for High) show zero new
 ambiguities and an accuracy gain ≤ 3 points. At the cap, or after three
 iterations without a critical-item gain, stop (`cap` / `stalled`) and report
-that the target needs a rewrite; a rewrite is a new eval run. Last, run the
-hold-out once; a 15-point drop from the last target-arm accuracy stops the
-run (`overfit`): the next delta is a new eval run with a new hold-out.
+that the target needs a rewrite; a rewrite is a new eval run. After
+convergence (not after `cap` / `stalled`), run the hold-out once; a 15-point
+drop from the last target-arm accuracy stops the run (`overfit`): the next
+delta is a new eval run with a new hold-out.
 
 ## Output
 
