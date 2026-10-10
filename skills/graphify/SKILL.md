@@ -1,6 +1,6 @@
 ---
 name: graphify
-description: Answer codebase architecture and relationship questions from the graphify knowledge graph instead of grepping raw files, and keep that graph fresh. Use for "how does X connect to Y", "what depends on Z", "where does this flow go", architecture overviews, or when graphify-out/ exists or a stale-graph warning appeared. Needs the hotmilk `graphify` row on (graphify_* tools) and the graphify CLI on PATH. Not for exact-symbol lookups or edits.
+description: Answer codebase architecture and relationship questions from the graphify knowledge graph instead of grepping raw files, and keep that graph fresh. Use for "how does X connect to Y", "what in this codebase depends on Z", "where does this flow go", architecture overviews, or when graphify-out/ exists or a stale-graph warning appeared. Needs the hotmilk `graphify` row on (graphify_* tools) and the graphify CLI on PATH. Not for exact-symbol lookups, package-manager dependency questions, or edits.
 ---
 
 # Graphify
@@ -10,18 +10,19 @@ in the source before you claim or change anything.
 
 ## Pick the tool
 
-| Question                                               | Tool                                                                  |
-| ------------------------------------------------------ | --------------------------------------------------------------------- |
-| "How does the codebase handle X?", overview of an area | `graphify_query` (raise `budget` only when the subgraph is cut short) |
-| "How is A connected to B?"                             | `graphify_path` with `undirected: true` (directed paths miss often)   |
-| "What is X and what touches it?"                       | `graphify_explain`                                                    |
-| Exact symbol, string, or file                          | not graphify: grep/LSP                                                |
+| Question                                               | Tool                                                                   |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| "How does the codebase handle X?", overview of an area | `graphify_query` (raise `budget` only when a node you need is missing) |
+| "How is A connected to B?"                             | `graphify_path` with `undirected: true` (directed paths miss often)    |
+| "What is X and what touches it?"                       | `graphify_explain`                                                     |
+| Exact symbol, string, or file                          | not graphify: grep/LSP                                                 |
 
 ## Freshness
 
 1. No `graphify-out/graph.json`: run `graphify_build` once, then query. It
-   shares the 60 s CLI timeout; on `Error running graphify`, run `graphify .`
-   in the shell instead.
+   shares the 60 s CLI timeout; if the result is a CLI error (often prefixed
+   `Error running graphify`) or `graph.json` is still missing, run `graphify .`
+   in the shell.
 2. `graphify-out/needs_update` exists, session start warned "Graph may be
    stale" or "graph is N commits stale", or you changed code this session:
    run `graphify_update` before relying on the changed area (AST-only, no
@@ -39,6 +40,7 @@ source, and do not invent edges.
 
 ## Boundaries
 
-Writes only `graphify-out/`, through `graphify_build` / `graphify_update`. Without the
-`graphify` row or the CLI, say which is missing and use grep/LSP instead.
+Writes only `graphify-out/`, through `graphify_build` / `graphify_update` or
+`graphify .`. No `graphify_*` tools: run `command -v graphify` to tell a
+missing CLI from the row being off, say which, and use grep/LSP instead.
 Scope exclusions live in `.graphifyignore`.

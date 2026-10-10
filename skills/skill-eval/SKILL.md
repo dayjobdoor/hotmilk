@@ -31,8 +31,9 @@ the body: triggers, scope, outputs. Fix mismatches before any run.
 
 ## 2. Run both arms
 
-Per scenario, dispatch two fresh subagents (pi: `subagent_run` with the
-`subagents` row on; omp: `task`). Never reuse a child.
+Per scenario, dispatch two fresh subagents (pi: `subagent_run` with an agent
+from `subagent_list_agents` and `mode: "task"`, which needs the `subagents`
+row on; omp: `task`). Never reuse a child.
 
 - **baseline**: scenario + checklist, no target text.
 - **target**: the complete target text pasted in, then scenario + checklist.
@@ -74,16 +75,17 @@ harness failure: rerun that child, never score it as a target miss.
 
 Stop when two consecutive iterations (three for High) show zero new
 ambiguities and an accuracy gain ≤ 3 points. At the cap, or after three
-iterations without a critical-item gain, stop and rewrite the target instead.
-Last, run the hold-out once; a 15-point accuracy drop means overfit, apply
-another delta.
+iterations without a critical-item gain, stop and rewrite the target; the
+rewrite starts a new iteration with fresh children. Last, if the tier has a
+hold-out, run it once; a 15-point drop from the last target-arm accuracy
+means overfit, apply another delta.
 
 ## Output
 
 ```text
 skill-eval <target>  stakes=<tier>  iterations=<N>
 scenario   arm       critical  accuracy  ambiguities
-median     baseline  ×         40        -
+median     baseline  ×         40        0
 median     target    ○         95        1
 edge       ...
 hold-out   target    ○         90        0
@@ -99,8 +101,9 @@ beat baseline on any critical item, say so: the target adds nothing yet.
 
 Every number comes from an observed child run. No fresh subagent available:
 print `skill-eval skipped: no fresh agent available` and stop. Never estimate a
-score, never claim convergence without the hold-out, never count a
-structural-only read as a run.
+score, never claim convergence without the hold-out (Low, which has none,
+stops only at `cap` or `stalled`), never count a structural-only read as a
+run.
 
 ## Boundaries
 

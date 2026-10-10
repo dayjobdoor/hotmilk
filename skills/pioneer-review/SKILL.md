@@ -5,10 +5,10 @@ description: Review a diff against its pioneer W table, not as its author. Every
 
 # Pioneer review
 
-Input: the diff against the change base (the commit the change started from;
-unsure: `git merge-base HEAD <default branch>`) and the change's W table.
-No W table: rebuild R1… from the request and say so on the first line.
-Observed check output comes from the change report or a read-only check you
+Input: the diff (`git diff <base>`) against the change base (the commit the
+change started from; unsure: `git merge-base HEAD <default branch>`) and the
+change's W table. No W table: rebuild R1… from the request and say so on the
+first line. Observed check output comes from the change report or a check you
 run yourself (lint, test); reading the diff is never a check.
 
 ## Tags
@@ -22,18 +22,18 @@ run yourself (lint, test); reading the diff is never a check.
 
 ## Format
 
-`<file>:L<line>: <tag> <what>. <fix>.` Whole-diff findings (`split:`) use
-`diff: <tag> ...`. One finding per line, worst first: `weakened`, `unchanged`,
+`<file>:L<line>: <tag> <what>. <fix>.` Findings with no changed line (`split:`,
+an R-level `unverified:`) use `diff: <tag> <R id or what> ...`. One finding per line, worst first: `weakened`, `unchanged`,
 `unverified`, `drift`, `untraced`, `split`.
 
 A refactor that edits a prior test is `weakened:` unless an R says the contract changed.
 
 ## Score
 
-End with `trace: <traced>/<changed> lines, <N> R unverified.` Changed lines:
-added + deleted lines in `git diff --numstat` against the change base, plus
-every line of new untracked files; a line flagged `untraced:` is not traced.
-Nothing found: the `trace:` line, then `Traced. Ship.`
+The last line is `trace: <traced>/<changed> lines, <N> R unverified.` Changed
+lines: added + deleted lines in `git diff --numstat <base>` (binary `-` counts
+0), plus every line of new untracked files; a line flagged `untraced:` is not
+traced. Nothing found: `Traced. Ship.`, then the `trace:` line.
 
 ## Boundaries
 

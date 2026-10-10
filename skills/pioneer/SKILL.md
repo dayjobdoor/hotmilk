@@ -32,7 +32,8 @@ check for a level you run.
 ## Anchor to the roadmap
 
 If the repo has a roadmap (`ROADMAP.md`, `docs/roadmap*`, milestone docs), it
-is the source of the requirements level. Read it before sizing.
+is the source of the requirements level. Read it before applying the sizing
+table above.
 
 1. **Pick the item**: quote the horizon item the change serves. A request that
    matches no item: say so and proceed only as a defect fix or on the user's
@@ -63,7 +64,8 @@ acceptance. If a level has no runner, its check is a throwaway smoke script.
 
 ## Left arm — build and design tests together
 
-Write one W table in chat. No plan file unless the user asks.
+Above code-only size, write one W table in chat. No plan file unless the user
+asks.
 
 ```markdown
 ## Change
@@ -72,12 +74,12 @@ Horizon: <quoted roadmap item, or "none: defect/request"> — slice: <this chang
 <problem in one sentence>
 Known: <facts read> — Assumed: <unverified> — Unchanged: <what must not change>
 
-| Level           | Build                               | Test design                            | Review gate                                                                      |
-| --------------- | ----------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
-| Requirements    | R1 …                                | A1 (R1): <command/action> → <expected> | Each R observable and testable; traces to the horizon item; sequencing gates met |
-| System design   | files, entry points, config touched | S1 (R1): <end-to-end run> → <expected> | Every R traced to a design element; roadmap principles hold                      |
-| Detailed design | functions, interfaces, callers      | I1: <seam/contract test> → <expected>  | Callers of changed symbols found; interfaces named                               |
-| Code            | edit steps                          | U1: <unit test> → <expected>           | lint/typecheck clean                                                             |
+| Level           | Build                               | Test design                            | Review gate                                                                                                            |
+| --------------- | ----------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Requirements    | R1 …                                | A1 (R1): <command/action> → <expected> | Each R observable and testable; traces to the horizon item (or the request when Horizon is none); sequencing gates met |
+| System design   | files, entry points, config touched | S1 (R1): <end-to-end run> → <expected> | Every R traced to a design element; roadmap principles hold                                                            |
+| Detailed design | functions, interfaces, callers      | I1: <seam/contract test> → <expected>  | Callers of changed symbols found; interfaces named                                                                     |
+| Code            | edit steps                          | U1: <unit test> → <expected>           | lint/typecheck clean                                                                                                   |
 ```
 
 1. **Requirements**: derive numbered requirements (R1…) from the horizon item
@@ -112,7 +114,7 @@ fixed at that level, not deferred to code.
 1. Unit → integration → system → acceptance. Run each level's checks with the
    repo's commands; record observed output, not expectations.
 2. On failure, trace it left: which level's build or test design is wrong?
-   - Code defect → fix code, rerun unit.
+   - Code defect → fix code, then rerun from unit upward (step 3).
    - Wrong interface or missed caller → fix detailed design, then code.
    - Wrong file or flow → fix system design and everything below it.
    - Wrong or missing requirement → fix requirements; ask the user when the
@@ -129,11 +131,13 @@ fixed at that level, not deferred to code.
 - Sync docs the requirements and system design touched, in the same change.
 - Sync the roadmap using its own convention (e.g. an inline `done` note on the
   finished part); record what remains of a sliced item. Do not add checkboxes
-  or progress logs the roadmap does not already use.
+  or progress logs the roadmap does not already use. Horizon none: skip this
+  and say so.
 - Remove throwaway smoke scripts; keep only tests that catch plausible
   user-visible regressions and match repo conventions.
-- Run `pioneer-review` on the diff and the W table as a separate step, not as
-  the author; fix every finding at its originating level.
+- Run `pioneer-review` on the diff and the W table as a separate step (a
+  fresh subagent when one is available; otherwise re-read the diff cold, as a
+  reviewer); fix every finding at its originating level.
 - Report: the W table with a result per check (`pass` / `fail` /
   `skipped: why`), changed files, risks and open questions, next step. On a
   timeout or partial run, list what finished and what remains; never report
@@ -141,7 +145,8 @@ fixed at that level, not deferred to code.
 
 ## Rules
 
-- One W table per change, anchored to one horizon item; it is the plan.
+- One W table per change above code-only size, anchored to one horizon item
+  (or to the request when Horizon is none); it is the plan.
   Update it when a level changes.
 - Test design precedes the build step it checks.
 - Fix defects at the originating level; never patch a requirement or design
