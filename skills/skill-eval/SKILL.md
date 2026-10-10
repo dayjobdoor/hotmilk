@@ -17,11 +17,11 @@ the body: triggers, scope, outputs. Fix mismatches before any run.
 
 ## 1. Freeze
 
-| Stakes                                   | Scenarios + hold-out | Critical items | Iteration cap |
-| ---------------------------------------- | -------------------: | -------------: | ------------: |
-| High (security, data loss, release gate) |                3 + 1 |             2+ |          none |
-| Standard                                 |                2 + 1 |             1+ |             5 |
-| Low                                      |                2 + 0 |             1+ |             3 |
+| Stakes                                   | Scenarios + hold-out | Critical items per scenario | Iteration cap |
+| ---------------------------------------- | -------------------: | --------------------------: | ------------: |
+| High (security, data loss, release gate) |                3 + 1 |                          2+ |          none |
+| Standard                                 |                2 + 1 |                          1+ |             5 |
+| Low                                      |                2 + 1 |                          1+ |             3 |
 
 - Scenarios: one median, one edge (High adds a second edge); the hold-out
   stays unseen until the end.
@@ -62,7 +62,7 @@ Put the complete deliverable in your final message; nothing else is read.
 
 Then one fresh reviewer per scenario gets the target, scenario, checklist, and
 the full executor report, and scores it: accuracy = ○ items + 0.5 × partial,
-÷ total items, × 100, minus verified false repo claims. Executors grading
+÷ total items, × 100, minus 5 per verified false repo claim. Executors grading
 themselves do not count. A report whose deliverable body is missing is a
 harness failure: rerun that child, never score it as a target miss.
 
@@ -76,10 +76,9 @@ harness failure: rerun that child, never score it as a target miss.
 Stop when two consecutive iterations (three for High) show zero new
 ambiguities and an accuracy gain ≤ 3 points. At the cap, or after three
 iterations without a critical-item gain, stop (`cap` / `stalled`) and report
-that the target needs a rewrite; a rewrite is a new eval run. Last, if the
-tier has a hold-out, run it once; a 15-point drop from the last target-arm
-accuracy stops the run (`overfit`): the next delta is a new eval run with a
-new hold-out.
+that the target needs a rewrite; a rewrite is a new eval run. Last, run the
+hold-out once; a 15-point drop from the last target-arm accuracy stops the
+run (`overfit`): the next delta is a new eval run with a new hold-out.
 
 ## Output
 
@@ -102,9 +101,8 @@ beat baseline on any critical item, say so: the target adds nothing yet.
 
 Every number comes from an observed child run. No fresh subagent available:
 print `skill-eval skipped: no fresh agent available` and stop. Never estimate a
-score, never claim convergence without the hold-out (Low, which has none,
-stops only at `cap` or `stalled`), never count a structural-only read as a
-run.
+score, never claim convergence without the hold-out, never count a
+structural-only read as a run.
 
 ## Boundaries
 

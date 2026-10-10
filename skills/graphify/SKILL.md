@@ -46,6 +46,7 @@ loadSettings → readJson (calls) [from graph]
 ## Boundaries
 
 Writes only `graphify-out/`, through `graphify_build` / `graphify_update` or
-`graphify .`. No `graphify_*` tools: run `command -v graphify` to tell a
-missing CLI from the row being off, say which, and use grep/LSP instead.
+`graphify .`. No `graphify_*` tools: run `command -v "${GRAPHIFY_BIN:-graphify}"`
+to tell a missing CLI from the row being off, say which, and use grep/LSP
+instead.
 Scope exclusions live in `.graphifyignore`.
