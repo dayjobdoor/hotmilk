@@ -5,7 +5,6 @@ import { parseJsonValue } from "../../src/bootstrap/json.ts";
 
 export type HotmilkJsonTemplate = {
   graph: { warnOnStale: boolean; autoSuggestUpdate: boolean };
-  defaults: { persona: string; language?: string };
   projectTrust: { mode: string; remember: boolean };
 };
 export type PackageJsonManifest = {

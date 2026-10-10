@@ -63,15 +63,10 @@ describe("resolveGraphSettings", () => {
 });
 
 describe("resolveDefaults", () => {
-  it("defaults persona, trims language, and passes supported personas through", () => {
-    expect(resolveDefaults({})).toEqual({ persona: "neutral" });
-    expect(resolveDefaults({ defaults: { language: "  ja  ", persona: "neutral" } })).toEqual({
-      language: "ja",
-      persona: "neutral",
-    });
-    for (const persona of ["gentleman", "gyal", "raiden"] as const) {
-      expect(resolveDefaults({ defaults: { persona } })).toEqual({ persona });
-    }
+  it("trims language and omits it when blank", () => {
+    expect(resolveDefaults({})).toEqual({});
+    expect(resolveDefaults({ defaults: { language: "  ja  " } })).toEqual({ language: "ja" });
+    expect(resolveDefaults({ defaults: { language: "  " } })).toEqual({});
   });
 });
 
@@ -210,14 +205,14 @@ describe("0.2.0 default-off notice state", () => {
     const root = tempConfigDir();
     writeFileSync(
       getHotmilkConfigPath(root),
-      '{"extensions":{"btw":true},"defaults":{"persona":"gyal"}}',
+      '{"extensions":{"btw":true},"defaults":{"language":"ja"}}',
       "utf8",
     );
     expect(markDefaultOffNoticeSeen(root).error).toBeUndefined();
     const loaded = loadHotmilkConfig(root).config;
     expect(loaded).toMatchObject({
       extensions: { btw: true },
-      defaults: { persona: "gyal" },
+      defaults: { language: "ja" },
       notices: { defaultOff020: true },
     });
 

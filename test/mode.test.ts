@@ -3,29 +3,15 @@ import { join } from "node:path";
 import { initTheme } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { BUNDLED_EXTENSION_IDS, OMP_SUPPORTED_IDS } from "../src/config/bundled-extensions.ts";
-import { DEFAULT_HOTMILK_CONFIG, PERSONA_MODES } from "../src/config/hotmilk.ts";
-import {
-  createModeSettingItems,
-  openModeSettingsModal,
-  PERSONA_SETTING_ID,
-} from "../src/controller/mode.ts";
+import { DEFAULT_HOTMILK_CONFIG } from "../src/config/hotmilk.ts";
+import { createModeSettingItems, openModeSettingsModal } from "../src/controller/mode.ts";
 import { withConfigEnv } from "./fixtures/runtime.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
 
 describe("createModeSettingItems", () => {
-  it("exposes persona before extension toggles", () => {
-    const items = createModeSettingItems(DEFAULT_HOTMILK_CONFIG.extensions, "gyal");
-    const persona = items.find((item) => item.id === PERSONA_SETTING_ID);
-
-    expect(persona?.currentValue).toBe("gyal");
-    const personaIndex = items.findIndex((item) => item.id === PERSONA_SETTING_ID);
-    const firstExtensionIndex = items.findIndex((item) => item.id === BUNDLED_EXTENSION_IDS[0]);
-    expect(personaIndex).toBeLessThan(firstExtensionIndex);
-  });
-
   it("marks rows without the omp flag as pi only under omp", () => {
     const label = (harness: "pi" | "omp", id: string) =>
-      createModeSettingItems(DEFAULT_HOTMILK_CONFIG.extensions, "neutral", harness).find(
+      createModeSettingItems(DEFAULT_HOTMILK_CONFIG.extensions, harness).find(
         (item) => item.id === id,
       )?.label;
     const unsupported = BUNDLED_EXTENSION_IDS.find((id) => !OMP_SUPPORTED_IDS.includes(id))!;
@@ -61,17 +47,15 @@ describe("openModeSettingsModal", () => {
     });
   });
 
-  it("persists a toggled row and a cycled persona to hotmilk.json", async () => {
+  it("persists a toggled row to hotmilk.json", async () => {
     const configRoot = makeTempDir("hotmilk-mode-save-");
     const configPath = join(configRoot, "hotmilk.json");
-    writeFileSync(configPath, JSON.stringify({ defaults: { persona: PERSONA_MODES[0] } }), "utf8");
+    writeFileSync(configPath, "{}", "utf8");
 
     const custom = vi.fn(async (factory) => {
       const theme = { fg: (_color: string, text: string) => text, bold: (text: string) => text };
       // SAFETY: modal factory only needs fg/bold from the theme stub.
       const modal = await factory({} as never, theme as never, {} as never, () => {});
-      modal.handleInput("\x1b[B"); // down to the persona row
-      modal.handleInput(" "); // cycle persona
       for (const char of "skill-registry") modal.handleInput(char); // search filters to one row
       modal.handleInput("\r"); // toggle it on
     });
@@ -84,6 +68,5 @@ describe("openModeSettingsModal", () => {
 
     const saved = JSON.parse(readFileSync(configPath, "utf8"));
     expect(saved.extensions["skill-registry"]).toBe(true);
-    expect(saved.defaults.persona).toBe(PERSONA_MODES[1]);
   });
 });

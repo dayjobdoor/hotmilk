@@ -75,8 +75,7 @@ Skipped when `ctx.hasUI` is false. `assets/image.jpeg` remains the pi.dev listin
 
 - Title: `Mode settings`, theme `accent`, bold
 - Body: `SettingsList` with search, height `min(items + 2, 15)`
-- First group: `Defaults` → `persona` (`gentleman` / `neutral` / `gyal` / `raiden`)
-- Later groups: labels from `BUNDLED_EXTENSION_GROUP_ORDER` (`Harness`, `Agent tools`, `Context & performance`, `Integrations`, `Workflow`, `Output`, `Experiments`); each bundled id is `on` or `off`
+- Groups: labels from `BUNDLED_EXTENSION_GROUP_ORDER` (`Harness`, `Agent tools`, `Context & performance`, `Integrations`, `Workflow`, `Output`, `Experiments`); each bundled id is `on` or `off`
 - Group header rows are not editable
 - Closing the list dismisses the modal
 - After close: info notify with config path and current toggles, then "Run /reload to apply"

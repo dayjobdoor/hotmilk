@@ -12,7 +12,7 @@ hotmilk is a Pi **meta-package**: one install bundles gentle-pi, context-mode, g
 
 - **Single Pi extension entry**: only `./src/index.ts` in `package.json` → `pi.extensions`; other bundles load when toggled on.
 - **Lazy registration**: disabled toggles never import their loader (`src/bootstrap/extensions.ts`).
-- **User toggles**: `/mode` edits persona and bundled extension on/off; `/reload` applies extension changes.
+- **User toggles**: `/mode` edits bundled extension on/off; `/reload` applies extension changes.
 - **Config seeding**: missing `hotmilk.json` is created from the bundled template on first session start.
 - **Project trust**: `project_trust` handler; modes `delegate`, `prompt`, `always`, `never` (`hotmilk.json` → `projectTrust`).
 - **Global dedupe**: skip hotmilk registration when the same npm package is already in Pi settings (trust-safe: global settings only at startup). When a hotmilk repo checkout and a globally installed `npm:hotmilk` both load, the npm-installed copy yields to the project copy (project → user precedence). The yield decision reads only two manifests pre-trust: `cwd/package.json` (`name` + `pi.extensions`) and `cwd/.pi/settings.json` (`packages`/`extensions` source strings, resolved paths only, no execution). The settings read is required: without it a fresh clone (gitignored `.pi/`) would make the global copy yield while no project copy loads, silently removing hotmilk. See [security.md](security.md) for the accepted trade-off.

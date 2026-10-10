@@ -29,16 +29,6 @@ import {
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const BUNDLED_TEMPLATE_PATH = join(PACKAGE_ROOT, "hotmilk.json");
 
-/** Supported persona modes. */
-export const PERSONA_MODES = ["gentleman", "neutral", "gyal", "raiden"] as const;
-
-export type PersonaMode = (typeof PERSONA_MODES)[number];
-
-/** Type guard for {@link PersonaMode}. */
-export function isPersonaMode(value: string | undefined): value is PersonaMode {
-  return PERSONA_MODES.some((mode) => mode === value);
-}
-
 function isProjectTrustMode(value: JsonValue | string | undefined): value is ProjectTrustMode {
   return value === "delegate" || value === "prompt" || value === "always" || value === "never";
 }
@@ -75,9 +65,6 @@ function parseHotmilkConfig(value: JsonValue): HotmilkConfig {
     if (isJsonString(value.defaults.language)) {
       config.defaults.language = value.defaults.language;
     }
-    if (isJsonString(value.defaults.persona) && isPersonaMode(value.defaults.persona)) {
-      config.defaults.persona = value.defaults.persona;
-    }
   }
   if (isJsonObject(value.projectTrust)) {
     config.projectTrust = {};
@@ -113,10 +100,7 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): DefaultHotmilk
   const typedExtensions = extensions as ExtensionToggleMap;
   const language = template.defaults?.language?.trim();
 
-  const persona = template.defaults?.persona;
-  const defaults: ResolvedDefaults = {
-    persona: isPersonaMode(persona) ? persona : "neutral",
-  };
+  const defaults: ResolvedDefaults = {};
   if (language) {
     defaults.language = language;
   }
@@ -165,7 +149,6 @@ export type HotmilkConfig = {
   };
   defaults?: {
     language?: string;
-    persona?: PersonaMode;
   };
   projectTrust?: {
     mode?: ProjectTrustMode;
@@ -196,10 +179,9 @@ export type ResolvedGraphSettings = {
   autoSuggestUpdate: boolean;
 };
 
-/** Resolved default persona/language settings. */
+/** Resolved default language settings. */
 export type ResolvedDefaults = {
   language?: string;
-  persona: PersonaMode;
 };
 
 /**
@@ -342,13 +324,10 @@ export function resolveGraphSettings(config: HotmilkConfig): ResolvedGraphSettin
   };
 }
 
-/** Resolve default runtime settings (language, persona) from user config. */
+/** Resolve default runtime settings (language) from user config. */
 export function resolveDefaults(config: HotmilkConfig): ResolvedDefaults {
   const language = config.defaults?.language?.trim();
-  const persona = config.defaults?.persona;
-  const defaults: ResolvedDefaults = {
-    persona: isPersonaMode(persona) ? persona : DEFAULT_HOTMILK_CONFIG.defaults.persona,
-  };
+  const defaults: ResolvedDefaults = {};
   if (language) {
     defaults.language = language;
   }

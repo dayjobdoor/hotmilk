@@ -3,9 +3,6 @@
     "warnOnStale": true,
     "autoSuggestUpdate": true
   },
-  "defaults": {
-    "persona": "neutral"
-  },
   "projectTrust": {
     "mode": "delegate",
     "remember": false

@@ -129,12 +129,12 @@ When a hotmilk repo checkout (project package) and a globally installed `npm:hot
 
 ### Commands (hotmilk)
 
-| Command                | Purpose                                                                                                                         |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `/mode`                | Toggle persona (`gentleman` / `neutral` / `gyal` / `raiden`) and bundled extensions; writes `$PI_CODING_AGENT_DIR/hotmilk.json` |
-| `/stop`                | Stop current running work                                                                                                       |
-| `/interrupt <message>` | Steer in-flight work with an interrupt prompt                                                                                   |
-| `/pioneer [task]`      | Alias for `/skill:pioneer` (queued as follow-up while work runs)                                                                |
+| Command                | Purpose                                                               |
+| ---------------------- | --------------------------------------------------------------------- |
+| `/mode`                | Toggle bundled extensions; writes `$PI_CODING_AGENT_DIR/hotmilk.json` |
+| `/stop`                | Stop current running work                                             |
+| `/interrupt <message>` | Steer in-flight work with an interrupt prompt                         |
+| `/pioneer [task]`      | Alias for `/skill:pioneer` (queued as follow-up while work runs)      |
 
 Upstream packages add their own commands (gentle-pi `/gentle:status`, `/gentle:doctor`, graphify, context-mode, plannotator `/plannotator`, and so on).
 
@@ -148,17 +148,16 @@ Pi agent directory: `$PI_CODING_AGENT_DIR` when set, otherwise `~/.pi/agent`. Pi
 
 Bundled extension defaults live in [`src/config/bundled-extensions.ts`](src/config/bundled-extensions.ts). `hotmilk.json` stores user overrides and non-extension defaults; edit it with `/mode`, then run `/reload` to apply extension changes.
 
-| Key / area                | Behavior                                                                                                                                                                                                                                                                                                                                             |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `extensions.*`            | Set to `true` to register that bundled extension (every id defaults `false`). Per-row notes, omp support, and recommendations: [docs/bundles.md](docs/bundles.md)                                                                                                                                                                                    |
-| Enabled extensions        | `context-mode` / `rtk-optimizer` load first (context stack), then all other enabled extensions in parallel.                                                                                                                                                                                                                                          |
-| `graph.warnOnStale`       | Notify when `graphify-out/needs_update` exists                                                                                                                                                                                                                                                                                                       |
-| `graph.autoSuggestUpdate` | Append `graphify update .` to that notification                                                                                                                                                                                                                                                                                                      |
-| `defaults.persona`        | `/mode` picker; `hotmilk.json` stays authoritative; the gentle-pi marker (`.pi/gentle-ai/persona.json`) is reconciled at session start. Supported: `gentleman`, `neutral`, `gyal`, `raiden`; default `neutral`. `gyal`/`raiden` replace gentle-pi's persona section (or append their own when `gentle-ai` is off); `gentleman` needs `gentle-ai` on. |
-| `defaults.language`       | Appends a project language hint to the system prompt each turn                                                                                                                                                                                                                                                                                       |
-| `projectTrust.mode`       | Pi project trust: `delegate` (default), `prompt`, `always`, or `never`                                                                                                                                                                                                                                                                               |
-| `projectTrust.remember`   | When `mode` is `always` or `never`, persist the decision in Pi `trust.json`                                                                                                                                                                                                                                                                          |
-| `notices.defaultOff020`   | Written by hotmilk after it tells you once which formerly default-on rows are now off (0.2.0); you never need to set it                                                                                                                                                                                                                              |
+| Key / area                | Behavior                                                                                                                                                          |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extensions.*`            | Set to `true` to register that bundled extension (every id defaults `false`). Per-row notes, omp support, and recommendations: [docs/bundles.md](docs/bundles.md) |
+| Enabled extensions        | `context-mode` / `rtk-optimizer` load first (context stack), then all other enabled extensions in parallel.                                                       |
+| `graph.warnOnStale`       | Notify when `graphify-out/needs_update` exists                                                                                                                    |
+| `graph.autoSuggestUpdate` | Append `graphify update .` to that notification                                                                                                                   |
+| `defaults.language`       | Appends a project language hint to the system prompt each turn                                                                                                    |
+| `projectTrust.mode`       | Pi project trust: `delegate` (default), `prompt`, `always`, or `never`                                                                                            |
+| `projectTrust.remember`   | When `mode` is `always` or `never`, persist the decision in Pi `trust.json`                                                                                       |
+| `notices.defaultOff020`   | Written by hotmilk after it tells you once which formerly default-on rows are now off (0.2.0); you never need to set it                                           |
 
 context-mode: the extension registers `ctx_*` via its built-in bridge (same module as [upstream `.pi/extensions/context-mode`](https://github.com/mksglu/context-mode/tree/main/.pi/extensions/context-mode), loaded from `build/adapters/pi/extension.js`). hotmilk does not manage `mcp.json` or bundle an MCP adapter: Pi 1.0 has built-in MCP (`pi mcp add`, `/mcp`, [docs](https://pi.dev/docs/latest/mcp)), and omp reads its own `mcp.json`. Do not also list `context-mode` as an MCP server there; that registers `ctx_*` twice.
 

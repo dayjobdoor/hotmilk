@@ -11,7 +11,6 @@ import { OMP_AUDITED_VERSION } from "../config/bundled-extensions.ts";
 import type { HotmilkRuntime } from "../config/runtime.ts";
 import { setupHotmilkFooter } from "../ui/footer.ts";
 import { playHotmilkIntro } from "../ui/logo.ts";
-import { syncPersonaFileFromDefaults } from "./defaults.ts";
 
 /** Message shown when hotmilk config is seeded. */
 const HOTMILK_SEEDED_MESSAGE = (path: string): string =>
@@ -178,9 +177,6 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
     if (event.reason === "startup") playHotmilkIntro(ctx);
 
     const trusted = ctx.isProjectTrusted();
-    if (runtime.extensionToggles["gentle-ai"] && trusted) {
-      syncPersonaFileFromDefaults(ctx.cwd, runtime.defaults);
-    }
 
     const notices = sessionStartNotices(runtime, {
       seededPath: seedHotmilkConfigIfMissing().seeded ? hotmilkConfigDisplayPath() : undefined,

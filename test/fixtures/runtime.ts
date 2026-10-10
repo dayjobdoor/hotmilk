@@ -24,7 +24,7 @@ export function testRuntime(overrides: Partial<HotmilkRuntime> = {}): HotmilkRun
     legacyDefaultsLost: [],
     extensionFailures: [],
     globalExtensionSkips: [],
-    defaults: { persona: "neutral" },
+    defaults: {},
     graph: { warnOnStale: false, autoSuggestUpdate: false },
     projectTrust: { mode: "delegate", remember: false },
     ...overrides,

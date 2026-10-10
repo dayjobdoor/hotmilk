@@ -51,7 +51,7 @@ flowchart TD
 ## Configuration and trust
 
 - User config: `$PI_CODING_AGENT_DIR/hotmilk.json` (default `~/.pi/agent`; under omp, omp's agent dir, default `~/.omp/agent`); tests may set `HOTMILK_CONFIG_ROOT`.
-- `/mode` edits persona and toggles; `/reload` applies them.
+- `/mode` edits toggles; `/reload` applies them.
 - `projectTrust` is handled by `src/bootstrap/project-trust.ts`.
 - Before trust, startup deduplication scans global Pi settings only (fixed inside `registerBundledExtensions` in `src/bootstrap/extensions.ts`).
 - Pi runs global-package extensions in the pre-trust pass and project packages after trust. When cwd is hotmilk itself and project settings reference the copy, the npm-installed copy yields to the project copy (`shouldYieldToProjectEntry` in `src/bootstrap/global-extension-sources.ts`); an installed release yields only once it carries the guard.
@@ -65,7 +65,7 @@ flowchart TB
   runtime --> toggles[extensionToggles]
   runtime --> trust[projectTrust]
   runtime --> graph[graph.warnOnStale]
-  runtime --> defaults[defaults.persona]
+  runtime --> defaults[defaults.language]
   mode["/mode"] --> user
   user --> reload["/reload to apply extension changes"]
 ```

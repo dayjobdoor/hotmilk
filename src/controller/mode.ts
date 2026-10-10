@@ -1,5 +1,4 @@
 import { getSettingsListTheme, type ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { resolveBundledExtensionToggles, resolveDefaults } from "../config/hotmilk.ts";
 import { Container, SettingsList, Text, type SettingItem } from "@earendil-works/pi-tui";
 import {
   BUNDLED_EXTENSION_GROUPS,
@@ -10,16 +9,11 @@ import {
 import { detectHarness, type Harness } from "../config/runtime.ts";
 import {
   hotmilkConfigDisplayPath,
-  isPersonaMode,
-  PERSONA_MODES,
   type HotmilkConfig,
-  type PersonaMode,
   loadHotmilkConfig,
+  resolveBundledExtensionToggles,
   saveHotmilkConfig,
 } from "../config/hotmilk.ts";
-
-/** SettingsList id for `defaults.persona`. */
-export const PERSONA_SETTING_ID = "defaults.persona";
 
 function isBundledExtensionId(id: string): id is BundledExtensionId {
   return BUNDLED_EXTENSION_IDS.some((candidate) => candidate === id);
@@ -31,50 +25,31 @@ function isBundledExtensionId(id: string): id is BundledExtensionId {
  * @param toggles - extension toggle states
  * @returns formatted toggle rows
  */
-function formatModeConfigRows(
-  toggles: Record<BundledExtensionId, boolean>,
-  persona: PersonaMode,
-): string {
-  const extensionRows = BUNDLED_EXTENSION_GROUPS.map((group) => {
+function formatModeConfigRows(toggles: Record<BundledExtensionId, boolean>): string {
+  return BUNDLED_EXTENSION_GROUPS.map((group) => {
     const rows = group.ids.map((id) => `  ${id}: ${toggles[id] ? "on" : "off"}`);
     return `${group.label}\n${rows.join("\n")}`;
   }).join("\n\n");
-  return `Defaults\n  persona: ${persona}\n\n${extensionRows}`;
 }
 
-/** Build `/mode` rows: persona first, then bundled extension toggles (omp marks pi-only rows). */
+/** Build `/mode` rows: bundled extension toggles by group (omp marks pi-only rows). */
 export function createModeSettingItems(
   toggles: Record<BundledExtensionId, boolean>,
-  persona: PersonaMode,
   harness: Harness = "pi",
 ): SettingItem[] {
-  return [
+  return BUNDLED_EXTENSION_GROUPS.flatMap((group) => [
     {
-      id: "_group:Defaults",
-      label: "Defaults",
+      id: `_group:${group.label}`,
+      label: group.label,
       currentValue: "",
     },
-    {
-      id: PERSONA_SETTING_ID,
-      label: "  persona",
-      currentValue: persona,
-      values: [...PERSONA_MODES],
-    },
-    ...BUNDLED_EXTENSION_GROUPS.flatMap((group) => [
-      {
-        id: `_group:${group.label}`,
-        label: group.label,
-        currentValue: "",
-      },
-      ...group.ids.map((id) => ({
-        id,
-        label:
-          harness === "omp" && !OMP_SUPPORTED_IDS.includes(id) ? `  ${id} (pi only)` : `  ${id}`,
-        currentValue: toggles[id] ? "on" : "off",
-        values: ["on", "off"],
-      })),
-    ]),
-  ];
+    ...group.ids.map((id) => ({
+      id,
+      label: harness === "omp" && !OMP_SUPPORTED_IDS.includes(id) ? `  ${id} (pi only)` : `  ${id}`,
+      currentValue: toggles[id] ? "on" : "off",
+      values: ["on", "off"],
+    })),
+  ]);
 }
 
 /**
@@ -86,9 +61,8 @@ export function createModeSettingItems(
 function notifyCurrentConfig(
   ctx: ExtensionContext,
   toggles: Record<BundledExtensionId, boolean>,
-  persona: PersonaMode,
 ): void {
-  ctx.ui.notify(`${hotmilkConfigDisplayPath()}\n${formatModeConfigRows(toggles, persona)}`, "info");
+  ctx.ui.notify(`${hotmilkConfigDisplayPath()}\n${formatModeConfigRows(toggles)}`, "info");
 }
 
 function saveConfigFile(ctx: ExtensionContext, nextConfig: HotmilkConfig): void {
@@ -107,10 +81,8 @@ function updateConfig(
 
 /** Open the interactive TUI modal for toggling bundled extensions. */
 export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void> {
-  const config = loadHotmilkConfig().config;
-  const toggles = resolveBundledExtensionToggles(config);
-  let persona = resolveDefaults(config).persona;
-  const items = createModeSettingItems(toggles, persona, detectHarness());
+  const toggles = resolveBundledExtensionToggles(loadHotmilkConfig().config);
+  const items = createModeSettingItems(toggles, detectHarness());
 
   await ctx.ui.custom((_tui, theme, _kb, done) => {
     const container = new Container();
@@ -122,17 +94,6 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
       getSettingsListTheme(),
       (id, newValue) => {
         if (id.startsWith("_group:")) {
-          return;
-        }
-        if (id === PERSONA_SETTING_ID) {
-          if (!isPersonaMode(newValue)) {
-            return;
-          }
-          persona = newValue;
-          updateConfig(ctx, (config) => ({
-            ...config,
-            defaults: { ...config.defaults, persona: newValue },
-          }));
           return;
         }
         if (!isBundledExtensionId(id)) {
@@ -157,6 +118,6 @@ export async function openModeSettingsModal(ctx: ExtensionContext): Promise<void
     };
   });
 
-  notifyCurrentConfig(ctx, toggles, persona);
+  notifyCurrentConfig(ctx, toggles);
   ctx.ui.notify(`Updated ${hotmilkConfigDisplayPath()} from /mode. Run /reload to apply.`, "info");
 }

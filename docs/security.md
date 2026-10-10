@@ -28,6 +28,5 @@ Sources: [src/bootstrap/project-trust.ts](../src/bootstrap/project-trust.ts), [s
 
 - `$PI_CODING_AGENT_DIR/hotmilk.json` (seeded on first session start, then `/mode`; one `notices.defaultOff020` marker after the 0.2.0 default-off notice, never written over a config that fails to parse)
 - `$PI_CODING_AGENT_DIR/extensions/pi-autoresearch.json` and `pi-rtk-optimizer/config.json` (with `context-mode` on, `mode` and `readCompaction` are forced at load by `alignRtkConfig`; with it off an existing file is left alone; writes are atomic)
-- Project `.pi/gentle-ai/persona.json` (only after project trust, when `gentle-ai` is on)
 
 `odd/`, `graphify-out/`, and `.agents/` are local gitignored runtime data, not package sources.

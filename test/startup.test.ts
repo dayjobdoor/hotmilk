@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { parseJsonValue } from "../src/bootstrap/json.ts";
 import * as resolveBundled from "../src/bootstrap/resolve-bundled.ts";
@@ -153,7 +153,7 @@ describe("startup registration", () => {
 });
 
 describe("registerDefaultsHandlers", () => {
-  it("injects configured persona and language into before_agent_start", async () => {
+  it("appends the configured language hint in before_agent_start", async () => {
     let handler: BeforeAgentStartHandler | undefined;
     const pi = {
       on: (_event: string, next: BeforeAgentStartHandler) => {
@@ -162,23 +162,19 @@ describe("registerDefaultsHandlers", () => {
     };
 
     // SAFETY: fake API implements the before_agent_start registration contract.
-    registerDefaultsHandlers(pi as never, { persona: "gyal", language: "ja" });
+    registerDefaultsHandlers(pi as never, { language: "ja" });
 
-    const result = await handler!({
-      systemPrompt: [
-        "Current persona mode: neutral",
-        "",
-        "Persona:",
-        "- built-in neutral rules",
-        "",
-        "Harness principles:",
-        "- keep routing",
-      ].join("\n"),
-    });
+    const result = await handler!({ systemPrompt: "base" });
 
-    // Persona section content itself is pinned by defaults.test.ts.
-    expect(result.systemPrompt).toContain("Current persona mode: gyal");
+    expect(result.systemPrompt.startsWith("base")).toBe(true);
     expect(result.systemPrompt).toContain("Prefer responding in ja");
+  });
+
+  it("registers nothing without a language", () => {
+    const on = vi.fn();
+    // SAFETY: fake API implements the before_agent_start registration contract.
+    registerDefaultsHandlers({ on } as never, {});
+    expect(on).not.toHaveBeenCalled();
   });
 });
 
@@ -321,7 +317,7 @@ describe("registerSessionHandlers", () => {
       harnessSkips: ["todo", "btw"],
       globalExtensionSkips: [{ id: "graphify", packageName: "graphify-pi" }],
       extensionToggles,
-      defaults: { persona: "neutral", language: "ja" },
+      defaults: { language: "ja" },
       rtkSync: { path: "/a/rtk.json", outcome: "updated" },
     });
 
@@ -447,78 +443,6 @@ describe("registerSessionHandlers", () => {
         expect.stringContaining("Adjusted pi-rtk-optimizer"),
       ]);
       expect(parseJsonValue(readFileSync(rtkPath, "utf8"))).toMatchObject({ mode: "suggest" });
-    });
-  });
-
-  it("seeds the gentle-ai marker per trust, reconciles stale markers, and skips gentleman", async () => {
-    const configRoot = makeTempDir("hotmilk-persona-config-");
-    await withConfigEnv(configRoot, undefined, async () => {
-      writeFileSync(join(configRoot, "hotmilk.json"), "{}", "utf8");
-      const extensionToggles = allExtensionsDisabled();
-      extensionToggles["gentle-ai"] = true;
-      let handler: SessionHandler | undefined;
-      const pi = { on: (_event: string, next: SessionHandler) => (handler = next) };
-
-      // SAFETY: fake API implements the session-start registration method.
-      registerSessionHandlers(
-        pi as never,
-        testRuntime({ extensionToggles, defaults: { persona: "gyal" } }),
-      );
-      const runSession = (cwd: string, trusted: boolean) =>
-        handler?.(
-          {},
-          {
-            hasUI: false,
-            cwd,
-            ui: { notify: () => {} },
-            isProjectTrusted: () => trusted,
-          },
-        );
-
-      // Untrusted projects never get a marker.
-      const untrustedCwd = makeTempDir("hotmilk-persona-untrusted-");
-      runSession(untrustedCwd, false);
-      expect(existsSync(join(untrustedCwd, ".pi", "gentle-ai", "persona.json"))).toBe(false);
-
-      // Trusted projects get the marker mapped onto gentle-pi's binary mode.
-      const trustedCwd = makeTempDir("hotmilk-persona-trusted-");
-      runSession(trustedCwd, true);
-      // SAFETY: JSON.parse returns any; asserting only the fields we compare.
-      const seeded = JSON.parse(
-        readFileSync(join(trustedCwd, ".pi", "gentle-ai", "persona.json"), "utf8"),
-      ) as { mode?: unknown; hotmilkMode?: unknown };
-      expect(seeded).toEqual({ mode: "neutral", hotmilkMode: "gyal" });
-
-      // A stale marker (wrong persona) is rewritten to the configured default.
-      const staleCwd = makeTempDir("hotmilk-persona-stale-");
-      const staleMarker = join(staleCwd, ".pi", "gentle-ai", "persona.json");
-      mkdirSync(dirname(staleMarker), { recursive: true });
-      writeFileSync(staleMarker, JSON.stringify({ mode: "gentleman" }), "utf8");
-      runSession(staleCwd, true);
-      // SAFETY: JSON.parse returns any; asserting the fields syncPersonaFileFromDefaults writes.
-      const reconciled = JSON.parse(readFileSync(staleMarker, "utf8")) as {
-        mode?: unknown;
-        hotmilkMode?: unknown;
-      };
-      expect(reconciled).toEqual({ mode: "neutral", hotmilkMode: "gyal" });
-
-      // The built-in default (gentleman) never writes a marker at all.
-      const defaultCwd = makeTempDir("hotmilk-persona-default-");
-      // SAFETY: fake API implements the session-start registration method.
-      registerSessionHandlers(
-        pi as never,
-        testRuntime({ extensionToggles, defaults: { persona: "gentleman" } }),
-      );
-      handler?.(
-        {},
-        {
-          hasUI: false,
-          cwd: defaultCwd,
-          ui: { notify: () => {} },
-          isProjectTrusted: () => true,
-        },
-      );
-      expect(existsSync(join(defaultCwd, ".pi", "gentle-ai", "persona.json"))).toBe(false);
     });
   });
 });

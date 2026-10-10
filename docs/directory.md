@@ -47,7 +47,6 @@ flowchart TB
 | `src/controller/`              | `/mode`, `/stop`, `/interrupt`                                                                                                        |
 | `src/ui/`                      | Footer, startup intro (`logo.ts`)                                                                                                     |
 | `src/bootstrap/omp-loaders.js` | Literal-specifier bundle loaders used under omp (plain JS; types in `omp-loaders.d.ts`)                                               |
-| `src/bootstrap/personas.md`    | Persona prose (`## gyal`, `## raiden`) injected for `defaults.persona`; `defaults.ts` selects a section                               |
 | `skills/`                      | First-party skills (`pioneer`, `pioneer-review`, `skill-eval`, `graphify`, `comfortzone`)                                             |
 | `scripts/`                     | Local maintenance scripts (`omp-audit.ts` → `bun run audit:omp`); not shipped. Kept out of `tools/`, which omp scans for custom tools |
 | `assets/`                      | Package images (`pi.image`)                                                                                                           |
@@ -56,5 +55,5 @@ flowchart TB
 | `themes/monokai.json`          | Shipped Pi theme file (runtime color source)                                                                                          |
 | `themes/kanagawa.json`         | Plain theme listed in `pi.themes` (from pi-kanagawa, MIT); selectable, no toggle                                                      |
 | `docs/`                        | Intent: requirements, architecture, testing, problems, guidance, …                                                                    |
-| `hotmilk.json`                 | Default config template for graph, persona, and trust                                                                                 |
+| `hotmilk.json`                 | Default config template for graph and trust                                                                                           |
 | `graphify-out/`                | Graphify index (gitignored)                                                                                                           |

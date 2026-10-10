@@ -25,8 +25,8 @@ Sources: [package.json](../package.json) scripts, [.github/workflows/publish.yml
 
 Borrowed from ponytail and pi-simplify, reference Pi extensions (neither is bundled) whose practices this repo follows:
 
-- **Pure core, thin handlers**: decisions live in pure functions (input → output, no I/O) that tests call directly, for example `sessionStartNotices`, `resolveProjectTrustDecision`, `skillAliasMessage`, `tildePath`, `markdownSection`. Event and command handlers gather facts by I/O, call the pure function, and apply the result.
-- **Prose in markdown, not string literals**: model-facing text lives in markdown (skills, `src/bootstrap/personas.md`); code selects a section.
+- **Pure core, thin handlers**: decisions live in pure functions (input → output, no I/O) that tests call directly, for example `sessionStartNotices`, `resolveProjectTrustDecision`, `skillAliasMessage`, `tildePath`. Event and command handlers gather facts by I/O, call the pure function, and apply the result.
+- **Prose in markdown, not string literals**: model-facing text lives in markdown (skills); code points at it.
 - **Commands alias skills**: a slash command that runs a first-party skill is a one-line forward to `/skill:<name>` (`/pioneer`); the behavior stays in `SKILL.md`.
 - **Ask the host for paths**: directories come from `getAgentDir()` and `CONFIG_DIR_NAME`, never hardcoded `~/.pi` or `.pi`, so Pi and omp directory variables (profiles, `PI_CONFIG_DIR`) apply unchanged.
 - **Don't over-simplify** (pi-simplify): a cut keeps behavior and every existing test green; keep an abstraction that still has more than one caller or a real seam.
