@@ -7,7 +7,7 @@ Pins come from [package.json](../package.json) and [.github/workflows/publish.ym
 | Package                    | `hotmilk`, ESM (`"type": "module"`); version in [package.json](../package.json)  |
 | Runtime                    | Node; see `engines.node` in [package.json](../package.json)                      |
 | Install / test (this repo) | Bun; CI pin in [.github/workflows/publish.yml](../.github/workflows/publish.yml) |
-| Scripts                    | [package.json](../package.json) scripts (`lint`, `format`, `test`, `check`)       |
+| Scripts                    | [package.json](../package.json) scripts (`lint`, `format`, `test`, `check`, `audit:omp`) |
 | Pi peers                   | `@earendil-works/pi-coding-agent` and matching `pi-*` peers in `peerDependencies` |
 | Orchestration              | `gentle-pi` in `dependencies`                                                     |
 | Extension entry            | `pi.extensions`: `./src/index.ts` only                                            |

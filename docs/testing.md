@@ -17,7 +17,7 @@ Run `bun run test` and `bun run lint` before delivery. Use the smallest relevant
 
 ## CI
 
-Push to `main`: `bun install --frozen-lockfile` → `bun run lint` → `bun run test`, plus the `omp-audit` job (`bun run audit:omp` against the pinned omp) → publish when version is new ([maintenance.md](maintenance.md)).
+Push to `main`: `bun install --frozen-lockfile` → `bun run lint` → `bun run test` → publish when version is new ([maintenance.md](maintenance.md)). `bun run audit:omp` is manual: [bundles.md](bundles.md#omp-support).
 
 ## Test areas
 
@@ -25,15 +25,15 @@ Push to `main`: `bun install --frozen-lockfile` → `bun run lint` → `bun run 
 | ---- | ----- | -------------------- |
 | Config I/O and resolve | `hotmilk-config.test.ts` | Seed, load, save, toggles, defaults, trust, graph settings |
 | Bundled manifest | `bundled-extensions.test.ts`, `extensions-lazy.test.ts` | Registry completeness, lazy load, context-stack order, loader errors |
-| omp compatibility | `bun run audit:omp` (needs `omp`; CI job `omp-audit` installs the pinned release) | omp version equals `OMP_AUDITED_VERSION`; each row's `omp` flag matches whether it loads and registers a command or tool |
+| omp compatibility | `bun run audit:omp` (manual; runs against the omp on PATH), `omp-loaders.test.ts` | Each row's `omp` flag matches whether it loads and registers a command or tool; each `omp-loaders.js` entry resolves to its row's module |
 | Module resolution | `resolve-bundled.test.ts` | Nested/hoisted bundled dep paths |
-| Startup integration | `startup.test.ts` | Entry wiring (all-off / toggles-on), two-copy yield, session handlers, ctx_search capture, rtk sync notice at session start |
+| Startup integration | `startup.test.ts` | Entry wiring (all-off / toggles-on), two-copy yield, session handlers, rtk sync notice at session start |
 | Dedupe and two-copy | `global-extension-sources.test.ts` | Pi-settings dedupe scan, npm copy yields to a project hotmilk checkout |
 | Context / RTK | `context-stack.test.ts` | Pure `alignRtkConfig`, RTK sync I/O |
 | TUI | `footer.test.ts`, `logo.test.ts`, `mode.test.ts`, `input.test.ts` | Footer, startup intro, `/mode`, `/stop`, `/interrupt` |
-| Trust / defaults | `project-trust.test.ts`, `caveman-defaults.test.ts` | Trust decisions, persona, caveman+ja warning |
+| Trust / defaults | `project-trust.test.ts`, `defaults.test.ts` | Trust decisions, persona |
 | Supply chain | `third-party-risk.test.ts`, `pi-manifest-assets.test.ts` | Peer floors, published `pi.*` paths exist |
-| Shims | `kanagawa-shim.test.ts`, `autoresearch-shortcuts.test.ts` | `/thinking` skip, shortcut seed |
+| Shims | `autoresearch-shortcuts.test.ts` | Shortcut seed |
 
 - Shared fixtures: `test/fixtures/runtime.ts` (`allExtensionsDisabled`, `testRuntime`, `setEnv`, `withConfigEnv`), `recording-pi.ts`, `tmp.ts`, `manifest.ts`.
 

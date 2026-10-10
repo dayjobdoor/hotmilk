@@ -6,11 +6,9 @@ Known pitfalls and docs↔runtime drift to watch. Fixes belong in code or the ow
 
 | Problem | Symptom | Mitigation |
 | ------- | ------- | ---------- |
-| **caveman + `defaults.language: ja`** | English terse rules fight Japanese language hint | Turn off caveman in `/mode`, clear language, or `/caveman off`; session warns ([DESIGN.md](../DESIGN.md)) |
-| **kanagawa on** | hotmilk footer replaced | Turn off kanagawa in `/mode` for the status footer back |
 | **Toggles without `/reload`** | Extensions still old after `/mode` save | Run `/reload` after changing toggles |
 | **Retired row id in `hotmilk.json`** | Saved `extensions.<id>` for a removed registry row (for example `openspec-context`, `sdd-init`, `mcp-adapter`) | None needed: config parsing keeps only ids in `BUNDLED_EXTENSION_IDS`, so the stale key is ignored and dropped on the next save |
-| **Alt+W does nothing in the editor** | A `keybindings.json` that maps `tui.editor.cursorWordRight` (or another action) to `alt+w` is shadowed by pi-btw's hard-coded Alt+W width toggle, and Pi lets the extension win silently | hotmilk drops that one registration while loading `btw` (`DROPPED_SHORTCUTS`); other btw keys are untouched. A global `npm:pi-btw` in Pi settings registers it untouched |
+| **Alt+W does nothing in the editor** | A `keybindings.json` mapping an action to `alt+w` is shadowed by pi-btw's Alt+W width toggle | See the `btw` row in [bundles.md](bundles.md) |
 | **`[graphify] graph is N commits stale`** | Printed by `@runecraft/graphify-pi` itself (not hotmilk) when HEAD moved past the indexed commit | `graphify_update` (the tool) or `graphify update .`; hotmilk's own warning is the separate `graphify-out/needs_update` flag |
 | **Stale graphify index** | `graphify-out/needs_update` present | Run `graphify update .` ([architecture.md](architecture.md)) |
 

@@ -28,21 +28,18 @@ How work moves from a horizon to a release. Horizons: [ROADMAP.md](../ROADMAP.md
 ## Release
 
 1. Bump `version` in [package.json](../package.json). A commit message of `vX.Y.Z` lets CI tag that exact commit.
-2. Push `main`. CI runs `bun install --frozen-lockfile` (Bun version pinned in the workflow), then `bun run lint`, then `bun run test`; the `omp-audit` job installs the pinned omp release and runs `bun run audit:omp`.
-3. The `publish` job (`needs: [test, omp-audit]`, so an omp audit failure blocks a release) runs only when npm does not already have `hotmilk@<version>`: `npm pack --dry-run`, then `npm publish --provenance --access public` with `NPM_TOKEN` → `NODE_AUTH_TOKEN`.
+2. Push `main`. CI runs `bun install --frozen-lockfile` (Bun version pinned in the workflow), then `bun run lint`, then `bun run test`. If the change touches an `omp` flag or `OMP_AUDITED_VERSION`, run `bun run audit:omp` locally first; CI does not run it.
+3. The `publish` job (`needs: [test]`) runs only when npm does not already have `hotmilk@<version>`: `npm pack --dry-run`, then `npm publish --provenance --access public` with `NPM_TOKEN` → `NODE_AUTH_TOKEN`.
 4. CI then ensures git tag `v<version>` (created on the version-bump commit, or moved to it, else `$GITHUB_SHA`).
 
 - Re-running on the same version skips publish (exact-version check).
-- Emergency Pi-only release while `omp-audit` is blocked by omp or the runner: run the workflow manually (`workflow_dispatch`) with `skip_omp_audit` on. The audit is skipped, not ignored: a failed audit still blocks a normal push.
 - Actions are pinned to commit SHAs (tag in the trailing comment); bump the SHA when updating them.
 - Local publish: `npm login` once, then `npm publish --access public` (token in `~/.npmrc`; `bun publish` also works). `NPM_TOKEN` is CI-only: keep publish tokens out of the repo directory (Bun auto-loads `.env`).
 - GitHub Release is optional; npm publish does not require it.
 
 ## Config operations
 
-- User config: `$PI_CODING_AGENT_DIR/hotmilk.json`, seeded on first session start when missing.
-- Change flow: `/mode` → save → `/reload`.
-- Tests and sandboxes: `HOTMILK_CONFIG_ROOT` overrides the config root; `PI_CODING_AGENT_DIR` otherwise.
+Config path, seeding, and the `/mode` → `/reload` flow: [README.md](../README.md#configuration). Tests and sandboxes set `HOTMILK_CONFIG_ROOT`.
 
 ## Diagnostics
 

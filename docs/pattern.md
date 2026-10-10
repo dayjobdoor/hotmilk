@@ -19,11 +19,11 @@ Sources: [package.json](../package.json) scripts, [.github/workflows/publish.yml
 2. **Oxlint**: type-aware lint and type-check in [vite.config.ts](../vite.config.ts).
 3. **anti-slop**: custom Oxlint plugin in [tools/oxlint/anti-slop/](../tools/oxlint/anti-slop/). Blocks patterns that hide weak typing behind assertions, reflection, or `unknown` escape hatches.
 
-`oxlint` and `@oxlint/plugins` are at **`^1.85.0`** in [package.json](../package.json).
+`oxlint` and `@oxlint/plugins` pins: [package.json](../package.json) `devDependencies`.
 
 ## Code shape
 
-Borrowed from ponytail and pi-simplify, the reference Pi extensions this repo follows:
+Borrowed from ponytail and pi-simplify, reference Pi extensions (neither is bundled) whose practices this repo follows:
 
 - **Pure core, thin handlers**: decisions live in pure functions (input → output, no I/O) that tests call directly, for example `sessionStartNotices`, `resolveProjectTrustDecision`, `skillAliasMessage`, `tildePath`, `markdownSection`. Event and command handlers gather facts by I/O, call the pure function, and apply the result.
 - **Prose in markdown, not string literals**: model-facing text lives in markdown (skills, `src/bootstrap/personas.md`); code selects a section.

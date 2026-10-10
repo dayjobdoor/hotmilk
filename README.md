@@ -2,7 +2,7 @@
 
 hotmilk is a Pi meta-package. One install brings gentle-pi, context-mode, graphify, subagents, and about two dozen other `pi-*` extensions, each behind a toggle in `$PI_CODING_AGENT_DIR/hotmilk.json` (see [Configuration](#configuration)). Every extension starts off. You switch on the ones you use with `/mode`, and you do not have to hand-pick packages or wire `settings.json` yourself.
 
-Requires Pi 1.0 or later and Node.js 22.19+. Also runs on [omp](#harnesses-pi-omp-openclaw) (22 of 28 extensions).
+Requires Pi 1.0 or later and Node.js 22.19+. Also runs on [omp](docs/bundles.md#omp-support).
 
 ## Contents
 
@@ -17,19 +17,19 @@ Requires Pi 1.0 or later and Node.js 22.19+. Also runs on [omp](#harnesses-pi-om
 | Layer                       | Packages / assets                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Orchestration           | [gentle-pi](https://www.npmjs.com/package/gentle-pi) (el Gentleman orchestration and review, skill registry, `/gentle:doctor`) |
-| Context                 | [context-mode](https://www.npmjs.com/package/context-mode), [pi-context-view](https://www.npmjs.com/package/pi-context-view), [@sting8k/pi-vcc](https://www.npmjs.com/package/@sting8k/pi-vcc), [pi-simplify](https://www.npmjs.com/package/pi-simplify), [pi-rtk-optimizer](https://www.npmjs.com/package/pi-rtk-optimizer), [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory)                                                              |
-| Codebase graph          | [@runecraft/graphify-pi](https://www.npmjs.com/package/@runecraft/graphify-pi) (`graphify_build/query/path/explain/update` tools over the [graphify](https://github.com/Graphify-Labs/graphify) CLI); optional [pi-shazam](https://www.npmjs.com/package/pi-shazam)                                                                                                                                                                                                                                                                                                                                                                                  |
-| Subagents & interaction | `subagents` = gentle-pi's `gentle-agents` module (the `subagent_*` tools gentle-ai's delegation calls; `/gentle:agents`), [pi-prompt-template-model](https://www.npmjs.com/package/pi-prompt-template-model) (`/chain-prompts`, `/prompt-tool`), [@juicesharp/rpiv-ask-user-question](https://www.npmjs.com/package/@juicesharp/rpiv-ask-user-question), [@juicesharp/rpiv-todo](https://www.npmjs.com/package/@juicesharp/rpiv-todo), [pi-intercom](https://www.npmjs.com/package/pi-intercom), [pi-lens](https://www.npmjs.com/package/pi-lens), [gentle-engram](https://www.npmjs.com/package/gentle-engram) |
+| Context                 | [context-mode](https://www.npmjs.com/package/context-mode), [pi-rtk-optimizer](https://www.npmjs.com/package/pi-rtk-optimizer), [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory) |
+| Codebase graph          | [@runecraft/graphify-pi](https://www.npmjs.com/package/@runecraft/graphify-pi) (`graphify_build/query/path/explain/update` tools over the [graphify](https://github.com/Graphify-Labs/graphify) CLI) |
+| Subagents & interaction | `subagents`, `ask-user`, and `todo` = gentle-pi modules (`gentle-agents`: the `subagent_*` tools gentle-ai's delegation calls, `/gentle:agents`; `ask-user-question`; `gentle-todo`: the `todo` tool only, no `/todos` command; `todo` is pi-only because omp ships its own), [pi-lens](https://www.npmjs.com/package/pi-lens), [gentle-engram](https://www.npmjs.com/package/gentle-engram) |
 | Goals & docs            | [pi-goal-x](https://www.npmjs.com/package/pi-goal-x) (`/goal`, `/goal-direct`, `/sisyphus`), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                                                                                                                                                                                                                                                          |
-| File-based planning     | [@tomxprime/planning-with-files](https://www.npmjs.com/package/@tomxprime/planning-with-files) (`/plan-*` commands only; hotmilk does not index its skill), [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension) (browser plan approval)                                                                                                                                                                                                                                                                                                          |
+| Planning                | [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension) (browser plan approval) |
 | Integrations            | [pi-btw](https://www.npmjs.com/package/pi-btw) (side questions; see below)                                                                                                                                                                                                                                             |
 | Web tools               | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Search tools            | [@ff-labs/pi-fff](https://www.npmjs.com/package/@ff-labs/pi-fff) (replaces built-in find/grep)                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Experiment loops        | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Output style            | [pi-caveman](https://www.npmjs.com/package/pi-caveman), [@dietrichgebert/ponytail](https://www.npmjs.com/package/@dietrichgebert/ponytail) (lazy-senior mode); bundled kanagawa theme                                                                                                                                                                                                                                                                                               |
-| Local assets            | `./prompts`, `./skills` (`pioneer`, `comfortzone`), `./themes`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Output style            | [@dietrichgebert/ponytail](https://www.npmjs.com/package/@dietrichgebert/ponytail) (lazy-senior mode); `kanagawa` ships as a plain theme in `./themes` (select it with `/settings`; no toggle) |
+| Local assets            | `./prompts`, `./skills` (`pioneer`, `pioneer-review`, `skill-eval`, `graphify`, `comfortzone`), `./themes` |
 
-Bundled extensions switch on and off in `hotmilk.json` (via `/mode`), then `/reload`. Only `src/index.ts` is listed in `package.json` → `pi.extensions`; every other bundled package loads dynamically when its toggle is `true`. Every bundled extension defaults off (0.2.0 minimal core), so a fresh install runs the hotmilk theme, footer, `/mode`, and the indexed skills and prompts only. An existing `hotmilk.json` keeps its saved toggles. Pi always indexes the package's `pi.skills`, `pi.prompts`, and `pi.themes` paths; `/mode` toggles do not gate them.
+Only `src/index.ts` is listed in `package.json` → `pi.extensions`; every other bundled package loads dynamically when its toggle is `true`. Every bundled extension defaults off (0.2.0 minimal core), so a fresh install runs the hotmilk theme, footer, `/mode`, and the indexed skills and prompts only. An existing `hotmilk.json` keeps its saved toggles. Pi always indexes the package's `pi.skills`, `pi.prompts`, and `pi.themes` paths; `/mode` toggles do not gate them.
 
 ## Quick start
 
@@ -87,7 +87,7 @@ Per-extension notes and combination rules: [docs/bundles.md](docs/bundles.md).
 
 ### Pi and npm peers
 
-Peer ranges live in `package.json` → `peerDependencies`. Some bundled dependencies still declare narrow peer ranges that disagree with hotmilk's Pi peers (on Pi 1.0 today: `pi-lens` stops at `pi-tui` 0.85 and `pi-rtk-optimizer` stops at 0.80; all load fine, and CI tracks them in [third-party-risk.test.ts](test/third-party-risk.test.ts)). npm may report `ERESOLVE` until those packages publish wider peers.
+Peer ranges live in `package.json` → `peerDependencies`. Some bundled dependencies still declare narrow peer ranges that disagree with hotmilk's Pi peers (on Pi 1.1 today: `pi-rtk-optimizer` stops at 0.80; it loads fine, and CI tracks it in [third-party-risk.test.ts](test/third-party-risk.test.ts)). npm may report `ERESOLVE` until it publishes wider peers.
 
 This repo ships `.npmrc` with `legacy-peer-deps=true` so `npm install` and `npm ci` succeed. Treat upstream extensions as best-effort until their maintainers widen peer ranges.
 
@@ -98,7 +98,7 @@ hotmilk detects its host at startup from `CONFIG_DIR_NAME` in `@earendil-works/p
 | Host | Status |
 | ---- | ------ |
 | [Pi](https://pi.dev) | Full support: bundled extensions load per `/mode` toggle |
-| [omp](https://github.com/can1357/oh-my-pi) (oh-my-pi) | Supported on omp 18.4.10 (`OMP_AUDITED_VERSION`, CI-audited): hotmilk commands register and the 22 rows flagged `omp: true` load; the other 6 are skipped with a session-start warning and labeled `(pi only)` in `/mode`. Other omp releases work best-effort with a warning. Contract and per-row status: [docs/bundles.md](docs/bundles.md#omp-support). omp stubs `setFooter`, so the hotmilk footer does not render. `hotmilk.json` lives in omp's agent dir (default `~/.omp/agent`). Load with `omp -e <path-to-hotmilk>` or an omp `extensions` setting |
+| [omp](https://github.com/can1357/oh-my-pi) (oh-my-pi) | Supported on the audited release; other releases work best-effort with a warning. Contract, `omp: true` rows, footer, and `(pi only)` labels: [docs/bundles.md](docs/bundles.md#omp-support). `hotmilk.json` lives in omp's agent dir (default `~/.omp/agent`). Load with `omp -e <path-to-hotmilk>` or an omp `extensions` setting |
 | [OpenClaw](https://github.com/openclaw/openclaw) | Not supported: OpenClaw loads only `openclaw.extensions` / native plugins, never `pi.extensions` |
 
 ### Project trust
@@ -136,7 +136,7 @@ When a hotmilk repo checkout (project package) and a globally installed `npm:hot
 | `/interrupt <message>` | Steer in-flight work with an interrupt prompt                                                                                   |
 | `/pioneer [task]`      | Alias for `/skill:pioneer` (queued as follow-up while work runs)                                                                |
 
-Upstream packages add their own commands (gentle-pi `/gentle:status`, `/gentle:doctor`, graphify, context-mode, planning-with-files `/plan-status`, plannotator `/plannotator`, and so on).
+Upstream packages add their own commands (gentle-pi `/gentle:status`, `/gentle:doctor`, graphify, context-mode, plannotator `/plannotator`, and so on).
 
 For how a change runs (W-model: test design per level, bottom-up execution), see [Workflow routing](#workflow-routing) and the bundled [`pioneer`](skills/pioneer/SKILL.md) skill.
 
@@ -168,7 +168,9 @@ context-mode: the extension registers `ctx_*` via its built-in bridge (same modu
 
 ### Workflow routing
 
-The bundled [`pioneer`](skills/pioneer/SKILL.md) skill runs each change as a roadmap-anchored W-model. The change starts from a [ROADMAP.md](ROADMAP.md) horizon item, with sequencing gates respected. Every level (requirements, system design, detailed design, code) gets its test design and review gate before the next. Tests run bottom-up, each failure goes back to the level that caused it, and the roadmap is synced on close. The skill works in any repository and depends on no bundled extension; `plannotator` and `planning-with-files` stay optional paths outside it. Memory and optimize loops layer beside execution. [`comfortzone`](skills/comfortzone/SKILL.md) applies TCZ to the agent: coach it toward a goal, or let it self-coach when work stalls.
+The bundled [`pioneer`](skills/pioneer/SKILL.md) skill runs each change as a roadmap-anchored W-model. The change starts from a [ROADMAP.md](ROADMAP.md) horizon item, with sequencing gates respected. Every level (requirements, system design, detailed design, code) gets its test design and review gate before the next. Tests run bottom-up, each failure goes back to the level that caused it, and the roadmap is synced on close. The skill works in any repository and depends on no bundled extension; `plannotator` stays an optional path outside it. Memory and optimize loops layer beside execution. [`comfortzone`](skills/comfortzone/SKILL.md) applies TCZ to the agent: coach it toward a goal, or let it self-coach when work stalls.
+
+Two companions follow ponytail's core + companion shape. [`pioneer-review`](skills/pioneer-review/SKILL.md) is one-shot: it checks a diff against its W table (untraced lines, unverified requirements, weakened tests, drift) and edits nothing. [`skill-eval`](skills/skill-eval/SKILL.md) measures and hardens a skill or prompt with fresh subagents: frozen scenarios, a baseline arm without the target and a target arm with it, one target edit per iteration, a hold-out run; it needs a subagent tool (pi: the `subagents` row; omp: `task`) and reports `skipped` without one.
 
 ### Skills and scope
 
@@ -182,7 +184,7 @@ Pi resolves assets at user (global), project, and package layers. hotmilk ships 
 
 ### Environment variables
 
-Pi and bundled extensions read the process environment. hotmilk never reads directory variables itself: it asks the host through `getAgentDir()` (agent dir: `hotmilk.json`, dedupe) and `CONFIG_DIR_NAME` (project dir: `.pi`, or `.omp` under omp), so every host rule below applies. `HOTMILK_CONFIG_ROOT` overrides the `hotmilk.json` dir for tests/sandboxes.
+Pi and bundled extensions read the process environment. hotmilk never reads directory variables itself: it asks the host through `getAgentDir()` (agent dir: `hotmilk.json`, dedupe) and `CONFIG_DIR_NAME` (project dir: `.pi`, or `.omp` under omp), so every host rule below applies.
 
 omp directories (omp resolves them; full list in omp's `environment-variables` doc):
 
@@ -245,11 +247,11 @@ CI / publish (this repo only): GitHub Actions uses secret `NPM_TOKEN`, mapped to
 
 The `btw` row loads upstream [pi-btw](https://www.npmjs.com/package/pi-btw) as is. BTW runs a separate Pi session whose tool surface, prompt, and extension sources are pi-btw's: it loads no extensions unless `~/.pi/agent/btw.json` lists them (for example `{"extensions": ["npm:pi-web-access"]}`; see the pi-btw README). hotmilk adds no BTW prompt shaping or proxy tools (retired in 0.2.0: the `createAgentSession` wrap it relied on does not take effect on Pi 1.0).
 
-hotmilk does not bind pi-btw's `Alt+W` width toggle, so Pi's `Alt+W` keybinding stays yours. Set `"btw": false` in `/mode` if you want no side channel.
+Pi's `Alt+W` keybinding stays yours: hotmilk drops pi-btw's `Alt+W` width toggle ([bundles.md](docs/bundles.md), `btw` row). Set `"btw": false` in `/mode` if you want no side channel.
 
 ### Choosing extensions
 
-Every bundled row with its package, `/mode` group, coupling class, omp support, RFC 2119 recommendation level, and combination rules (for example `caveman` vs `defaults.language: ja`, `autoresearch` vs `goal`) lives in [docs/bundles.md](docs/bundles.md). Enable a row in `/mode` or set its key to `true` in `hotmilk.json`, then `/reload`.
+Every bundled row with its package, `/mode` group, coupling class, omp support, RFC 2119 recommendation level, and combination rules (for example `autoresearch` vs `goal`) lives in [docs/bundles.md](docs/bundles.md). Enable a row in `/mode` or set its key to `true` in `hotmilk.json`, then `/reload`.
 
 ### Alternative skill stacks (not bundled)
 

@@ -19,7 +19,7 @@ Sources: [src/bootstrap/project-trust.ts](../src/bootstrap/project-trust.ts), [s
 
 ## Secrets
 
-- CI publish uses the GitHub secret `NPM_TOKEN`, mapped to `NODE_AUTH_TOKEN` on the publish step. It is never committed. The `omp-audit` job runs a downloaded omp release and every bundled extension on the runner; `scripts/omp-audit.ts` hands omp an allowlisted environment only (no tokens), and CI checks the downloaded omp binary against `OMP_AUDITED_SHA256` committed in the registry. Workflow permissions default to `contents: read`; only `publish` gets write and OIDC, and the test and audit checkouts do not persist credentials.
+- CI publish uses the GitHub secret `NPM_TOKEN`, mapped to `NODE_AUTH_TOKEN` on the publish step. It is never committed. `bun run audit:omp` runs locally only; `scripts/omp-audit.ts` hands omp an allowlisted environment (no tokens). Workflow permissions default to `contents: read`; only `publish` gets write and OIDC, and the test checkout does not persist credentials.
 - Local publish tokens live in `~/.npmrc`; the repo `.npmrc` contains only `legacy-peer-deps=true`.
 - Bundled-extension API keys (`GEMINI_API_KEY`, `EXA_API_KEY`, …) are environment-provided; `.env` is gitignored, and Bun auto-loads it for `bun run` scripts, so publish tokens do not belong in the repo directory.
 - The shipped `hotmilk.json` template holds only graph, defaults, and trust settings; no credentials.

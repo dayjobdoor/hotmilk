@@ -13,6 +13,8 @@ flowchart TB
   src --> ui[ui/]
   src --> bundled[bundled/]
   root --> skills[skills/]
+  root --> scripts[scripts/]
+  root --> tools[tools/]
   root --> prompts[prompts/]
   root --> themes[themes/]
   themes --> themesMonokai["monokai.json"]
@@ -31,6 +33,7 @@ flowchart TB
   docs --> docsMaintenance["maintenance.md"]
   docs --> docsPattern["pattern.md"]
   docs --> docsReferences["references.md"]
+  docs --> docsBundles["bundles.md"]
   root --> test[test/]
   root --> tmpl["hotmilk.json"]
   root --> gitig["gitignored: graphify-out/ .agents/ .atl/ odd/ .env"]
@@ -43,15 +46,15 @@ flowchart TB
 | `src/bootstrap/` | Registration, session, graph, defaults, project trust, bundled module types (`extension-module.ts`), JSON helpers (`json.ts`) |
 | `src/controller/` | `/mode`, `/stop`, `/interrupt` |
 | `src/ui/` | Footer, startup intro (`logo.ts`) |
-| `src/bundled/` | Vendored kanagawa theme + extension (MIT, from pi-kanagawa; `/thinking` command removed, `@thinking:` interceptor updated to the Pi `InputEvent` contract) |
 | `src/bootstrap/omp-loaders.js` | Literal-specifier bundle loaders used under omp (plain JS; types in `omp-loaders.d.ts`) |
 | `src/bootstrap/personas.md` | Persona prose (`## gyal`, `## raiden`) injected for `defaults.persona`; `defaults.ts` selects a section |
-| `skills/` | First-party skills (`pioneer`, `comfortzone`) |
+| `skills/` | First-party skills (`pioneer`, `pioneer-review`, `skill-eval`, `graphify`, `comfortzone`) |
 | `scripts/` | Local maintenance scripts (`omp-audit.ts` → `bun run audit:omp`); not shipped. Kept out of `tools/`, which omp scans for custom tools |
 | `assets/` | Package images (`pi.image`) |
+| `tools/oxlint/anti-slop/` | Custom Oxlint plugin ([pattern.md](pattern.md)) |
 | `DESIGN.md` | TUI behavior (footer, `/mode`, commands, trust) and color usage |
 | `themes/monokai.json` | Shipped Pi theme file (runtime color source) |
-| `themes/kanagawa.json` | Vendored theme for the `kanagawa` toggle (from pi-kanagawa, MIT) |
+| `themes/kanagawa.json` | Plain theme listed in `pi.themes` (from pi-kanagawa, MIT); selectable, no toggle |
 | `docs/` | Intent: requirements, architecture, testing, problems, guidance, … |
-| `hotmilk.json` | Default config template for graph, persona, language, and trust |
+| `hotmilk.json` | Default config template for graph, persona, and trust |
 | `graphify-out/` | Graphify index (gitignored) |

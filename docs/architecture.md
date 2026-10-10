@@ -87,5 +87,4 @@ Use [directory.md](directory.md) for module paths and the full tree.
 
 ## Recon
 
-- graphify and shazam are off by default, like every bundled row; enable them in `/mode`.
-- Prefer graphify for architecture and relationship questions. Refresh it with `graphify update .` after code changes before relying on graph output.
+How agents use the graph (tool choice, freshness, verify in source): [skills/graphify](../skills/graphify/SKILL.md). The `graphify` row is off by default like every row; hotmilk's own seam is the stale-graph warning ([graph.ts](../src/bootstrap/graph.ts)).
