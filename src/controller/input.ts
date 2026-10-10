@@ -38,12 +38,6 @@ function handleInterruptInput(
   ctx.ui.notify("Interrupt prompt sent.", "info");
 }
 
-/** Pure: the user message a skill alias command sends (`/skill:<name> <args>`). */
-export function skillAliasMessage(skill: string, args: string): string {
-  const rest = args.trim();
-  return rest ? `/skill:${skill} ${rest}` : `/skill:${skill}`;
-}
-
 /**
  * Register `/<skill>` as a thin alias for `/skill:<skill>` (ponytail's pattern):
  * behavior stays in the skill's markdown, the command only forwards.
@@ -52,7 +46,8 @@ function registerSkillAlias(pi: ExtensionAPI, skill: string, description: string
   pi.registerCommand(skill, {
     description,
     handler: async (args, ctx) => {
-      const message = skillAliasMessage(skill, args);
+      const rest = args.trim();
+      const message = rest ? `/skill:${skill} ${rest}` : `/skill:${skill}`;
       if (!ctx.isIdle()) {
         pi.sendUserMessage(message, { deliverAs: "followUp" });
         ctx.ui.notify(`${message} queued as follow-up.`, "info");

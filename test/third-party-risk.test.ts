@@ -178,11 +178,7 @@ describe("third-party risk (hotmilk meta-package)", () => {
   it("covers every bundled row: a Pi peer range that excludes the installed Pi must be tracked", () => {
     const pi = installedPackageVersion(PI_CODING_AGENT_PACKAGE);
     const tracked = new Set(BUNDLED_PEER_RANGES_EXCLUDING_PI_080);
-    const packages = new Set(
-      BUNDLED_EXTENSION_DEFINITIONS.filter((row) => !row.module.startsWith("hotmilk/")).map(
-        (row) => row.packageName,
-      ),
-    );
+    const packages = new Set(BUNDLED_EXTENSION_DEFINITIONS.map((row) => row.packageName));
     const untracked = [...packages].filter(
       (name) =>
         !tracked.has(name) && bundledPiPeerRanges(name).some((range) => !satisfies(pi, range)),

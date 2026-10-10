@@ -13,8 +13,7 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
  * @returns formatted time string in HH:mm:ss format
  */
 export function formatFooterTime(date: Date): string {
-  const twoDigits = (value: number): string => String(value).padStart(2, "0");
-  return `${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}:${twoDigits(date.getSeconds())}`;
+  return date.toTimeString().slice(0, 8);
 }
 
 /**

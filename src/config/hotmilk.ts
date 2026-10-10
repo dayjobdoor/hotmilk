@@ -98,12 +98,7 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): DefaultHotmilk
   );
   // SAFETY: registry ids are unique and cover every BundledExtensionId.
   const typedExtensions = extensions as ExtensionToggleMap;
-  const language = template.defaults?.language?.trim();
-
-  const defaults: ResolvedLanguage = {};
-  if (language) {
-    defaults.language = language;
-  }
+  const defaults = resolveLanguage(template);
 
   return {
     extensions: typedExtensions,
@@ -129,8 +124,6 @@ export function tildePath(path: string, home: string = homedir()): string {
   if (path === home) return "~";
   return path.startsWith(home + sep) ? `~${path.slice(home.length)}` : path;
 }
-
-export { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "./bundled-extensions.ts";
 
 type ProjectTrustMode = "delegate" | "prompt" | "always" | "never";
 
@@ -224,12 +217,8 @@ export function getHotmilkConfigPath(configRoot?: string): string {
   return join(resolveHotmilkConfigRoot(configRoot), CONFIG_FILENAME);
 }
 
-function ensureConfigDir(configPath: string): void {
-  mkdirSync(join(configPath, ".."), { recursive: true });
-}
-
 function writeHotmilkConfigFile(path: string, config: HotmilkConfig): void {
-  ensureConfigDir(path);
+  mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`, "utf8");
 }
 
@@ -346,5 +335,3 @@ export function resolveProjectTrust(config: HotmilkConfig): ResolvedProjectTrust
         : DEFAULT_HOTMILK_CONFIG.projectTrust.remember,
   };
 }
-
-export type { ExtensionToggleMap } from "./bundled-extensions.ts";

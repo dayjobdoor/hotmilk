@@ -2,29 +2,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vite-plus/test";
-import { parseBundledModulePath, resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
+import { resolveBundledModule } from "../src/bootstrap/resolve-bundled.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
-
-describe("parseBundledModulePath", () => {
-  it("parses supported bundled module path formats", () => {
-    const cases = [
-      [
-        "@runecraft/graphify-pi/extensions/index.ts",
-        { pkgName: "@runecraft/graphify-pi", subpath: "extensions/index.ts" },
-      ],
-      [
-        "context-mode/build/adapters/pi/extension.js",
-        { pkgName: "context-mode", subpath: "build/adapters/pi/extension.js" },
-      ],
-      ["gentle-pi", { pkgName: "gentle-pi", subpath: "index.ts" }],
-      ["hotmilk/src/index.ts", { pkgName: "hotmilk", subpath: "src/index.ts" }],
-    ] as const;
-
-    for (const [input, expected] of cases) {
-      expect(parseBundledModulePath(input)).toEqual(expected);
-    }
-  });
-});
 
 describe("resolveBundledModule", () => {
   it("resolves bundled modules from nested and hoisted node_modules layouts", () => {

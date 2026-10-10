@@ -1,7 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
   BUNDLED_EXTENSION_DEFINITIONS,
+  BUNDLED_EXTENSION_IDS,
   CONTEXT_STACK_EXTENSION_IDS,
+  type BundledExtensionId,
 } from "../config/bundled-extensions.ts";
 import {
   detectInstalledBundledExtensionSkips,
@@ -9,7 +11,6 @@ import {
 } from "./global-extension-sources.ts";
 import type { ExtensionModule } from "./extension-module.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
-import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../config/bundled-extensions.ts";
 import { formatCaughtError } from "./json.ts";
 import type { Harness } from "../config/runtime.ts";
 
@@ -53,12 +54,10 @@ async function registerOne(
     harness === "omp" ? (await import("./omp-loaders.js")).OMP_BUNDLED_LOADERS[id] : undefined;
   const load = ompLoader ?? BUNDLED_EXTENSION_LOADERS[id];
   try {
-    const mod = await load();
-    const factory = mod.default;
-    if (factory instanceof Function) {
-      const dropped = DROPPED_SHORTCUTS.get(id);
-      await factory(dropped ? withoutShortcuts(pi, dropped) : pi);
-    }
+    const factory = (await load()).default;
+    const dropped = DROPPED_SHORTCUTS.get(id);
+    // A row without a default factory throws here and is reported, not silently skipped.
+    await factory(dropped ? withoutShortcuts(pi, dropped) : pi);
     return undefined;
   } catch (cause) {
     return { id, message: formatCaughtError(cause) };
