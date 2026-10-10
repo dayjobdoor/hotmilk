@@ -19,7 +19,7 @@ components:
 
 What is seen and operated in the Pi TUI. State, startup, and load order live in [docs/architecture.md](docs/architecture.md).
 
-Implementation: [src/ui/footer.ts](src/ui/footer.ts), [src/ui/logo.ts](src/ui/logo.ts), [src/controller/mode.ts](src/controller/mode.ts), [src/controller/input.ts](src/controller/input.ts), [src/bootstrap/session.ts](src/bootstrap/session.ts), [src/bootstrap/project-trust.ts](src/bootstrap/project-trust.ts), [src/bootstrap/defaults.ts](src/bootstrap/defaults.ts), [package.json](package.json) `pi.image`. Web surface design (header, paging, styling) is also managed in this file (see the Web surface section).
+Implementation: [src/ui/footer.ts](src/ui/footer.ts), [src/ui/logo.ts](src/ui/logo.ts), [src/controller/mode.ts](src/controller/mode.ts), [src/controller/input.ts](src/controller/input.ts), [src/bootstrap/session.ts](src/bootstrap/session.ts), [src/bootstrap/project-trust.ts](src/bootstrap/project-trust.ts), [src/bootstrap/language.ts](src/bootstrap/language.ts), [package.json](package.json) `pi.image`. Web surface design (header, paging, styling) is also managed in this file (see the Web surface section).
 
 ## Overview
 

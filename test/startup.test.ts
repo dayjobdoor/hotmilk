@@ -9,7 +9,7 @@ import { prepareContextStack } from "../src/bootstrap/context-stack.ts";
 import { OMP_AUDITED_VERSION } from "../src/config/bundled-extensions.ts";
 import { createHotmilkRuntime } from "../src/config/runtime.ts";
 import { allExtensionsDisabled, testRuntime, withConfigEnv } from "./fixtures/runtime.ts";
-import { registerDefaultsHandlers } from "../src/bootstrap/defaults.ts";
+import { registerLanguageHint } from "../src/bootstrap/language.ts";
 import { registerGraphHandlers } from "../src/bootstrap/graph.ts";
 import {
   detectProjectAgentDefinitions,
@@ -152,7 +152,7 @@ describe("startup registration", () => {
   });
 });
 
-describe("registerDefaultsHandlers", () => {
+describe("registerLanguageHint", () => {
   it("appends the configured language hint in before_agent_start", async () => {
     let handler: BeforeAgentStartHandler | undefined;
     const pi = {
@@ -162,7 +162,7 @@ describe("registerDefaultsHandlers", () => {
     };
 
     // SAFETY: fake API implements the before_agent_start registration contract.
-    registerDefaultsHandlers(pi as never, { language: "ja" });
+    registerLanguageHint(pi as never, { language: "ja" });
 
     const result = await handler!({ systemPrompt: "base" });
 
@@ -173,7 +173,7 @@ describe("registerDefaultsHandlers", () => {
   it("registers nothing without a language", () => {
     const on = vi.fn();
     // SAFETY: fake API implements the before_agent_start registration contract.
-    registerDefaultsHandlers({ on } as never, {});
+    registerLanguageHint({ on } as never, {});
     expect(on).not.toHaveBeenCalled();
   });
 });

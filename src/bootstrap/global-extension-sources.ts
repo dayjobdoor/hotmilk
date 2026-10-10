@@ -19,7 +19,7 @@ const HOTMILK_PACKAGE_NAME = "hotmilk";
 const PI_PROJECT_CONFIG_DIR = CONFIG_DIR_NAME;
 
 /** A bundled extension that should be skipped because it is already installed. */
-export type GlobalBundledExtensionSkip = {
+export type BundledExtensionSkip = {
   id: BundledExtensionId;
   packageName: string;
 };
@@ -198,11 +198,11 @@ export function collectInstalledPackageNamesFromPiSettings(
  * @param options - settings search options
  * @returns list of bundled ids to skip and the package that replaces them
  */
-export function detectGlobalBundledExtensionSkips(
+export function detectInstalledBundledExtensionSkips(
   options: CollectGlobalExtensionSourcesOptions = {},
-): GlobalBundledExtensionSkip[] {
+): BundledExtensionSkip[] {
   const installed = collectInstalledPackageNamesFromPiSettings(options);
-  const skips: GlobalBundledExtensionSkip[] = [];
+  const skips: BundledExtensionSkip[] = [];
 
   for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
     const packageName = definition.packageName;

@@ -4,18 +4,18 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   BUNDLED_EXTENSION_IDS,
   OMP_SUPPORTED_IDS,
-  PRE_0_2_DEFAULT_ON_IDS,
+  PRE_020_DEFAULT_ON_IDS,
 } from "../src/config/bundled-extensions.ts";
 import {
   tildePath,
   DEFAULT_HOTMILK_CONFIG,
   getHotmilkConfigPath,
   hotmilkConfigDisplayPath,
-  legacyDefaultsLost,
+  lostDefaultOnIds,
   loadHotmilkConfig,
   markDefaultOffNoticeSeen,
   resolveBundledExtensionToggles,
-  resolveDefaults,
+  resolveLanguage,
   resolveGraphSettings,
   resolveHotmilkConfigRoot,
   resolveProjectTrust,
@@ -62,11 +62,11 @@ describe("resolveGraphSettings", () => {
   });
 });
 
-describe("resolveDefaults", () => {
+describe("resolveLanguage", () => {
   it("trims language and omits it when blank", () => {
-    expect(resolveDefaults({})).toEqual({});
-    expect(resolveDefaults({ defaults: { language: "  ja  " } })).toEqual({ language: "ja" });
-    expect(resolveDefaults({ defaults: { language: "  " } })).toEqual({});
+    expect(resolveLanguage({})).toEqual({});
+    expect(resolveLanguage({ defaults: { language: "  ja  " } })).toEqual({ language: "ja" });
+    expect(resolveLanguage({ defaults: { language: "  " } })).toEqual({});
   });
 });
 
@@ -188,17 +188,17 @@ describe("loadHotmilkConfig", () => {
 
 describe("0.2.0 default-off notice state", () => {
   it("lost = formerly default-on rows without a saved value; nothing once the notice is recorded", () => {
-    expect(legacyDefaultsLost({})).toEqual([...PRE_0_2_DEFAULT_ON_IDS]);
+    expect(lostDefaultOnIds({})).toEqual([...PRE_020_DEFAULT_ON_IDS]);
     // A saved value, whichever way it points, is a decision: only the unsaved rows are lost.
-    expect(legacyDefaultsLost({ extensions: { btw: false, ponytail: true } })).toEqual(
-      PRE_0_2_DEFAULT_ON_IDS.filter((id) => id !== "btw" && id !== "ponytail"),
+    expect(lostDefaultOnIds({ extensions: { btw: false, ponytail: true } })).toEqual(
+      PRE_020_DEFAULT_ON_IDS.filter((id) => id !== "btw" && id !== "ponytail"),
     );
     // Explicit `false` is a saved decision, not a loss.
-    const decided = Object.fromEntries(PRE_0_2_DEFAULT_ON_IDS.map((id) => [id, false]));
-    expect(legacyDefaultsLost({ extensions: decided })).toEqual([]);
-    expect(legacyDefaultsLost({ notices: { defaultOff020: true } })).toEqual([]);
+    const decided = Object.fromEntries(PRE_020_DEFAULT_ON_IDS.map((id) => [id, false]));
+    expect(lostDefaultOnIds({ extensions: decided })).toEqual([]);
+    expect(lostDefaultOnIds({ notices: { defaultOff020: true } })).toEqual([]);
     // A fresh install is seeded with every value explicit, so it never sees the notice.
-    expect(legacyDefaultsLost(DEFAULT_HOTMILK_CONFIG)).toEqual([]);
+    expect(lostDefaultOnIds(DEFAULT_HOTMILK_CONFIG)).toEqual([]);
   });
 
   it("records the marker through load/save, and never overwrites a config that failed to parse", () => {

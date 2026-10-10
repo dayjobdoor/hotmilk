@@ -3,7 +3,7 @@ import path from "node:path";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   collectInstalledPackageNamesFromPiSettings,
-  detectGlobalBundledExtensionSkips,
+  detectInstalledBundledExtensionSkips,
   detectProjectHotmilkEntry,
   parseNpmPackageName,
   shouldYieldToProjectEntry,
@@ -102,7 +102,7 @@ describe("collectInstalledPackageNamesFromPiSettings", () => {
   });
 });
 
-describe("detectGlobalBundledExtensionSkips", () => {
+describe("detectInstalledBundledExtensionSkips", () => {
   let tmpHome: string;
 
   beforeEach(() => {
@@ -118,7 +118,7 @@ describe("detectGlobalBundledExtensionSkips", () => {
       "utf-8",
     );
 
-    const skips = detectGlobalBundledExtensionSkips({ homedir: tmpHome, cwd: tmpHome });
+    const skips = detectInstalledBundledExtensionSkips({ homedir: tmpHome, cwd: tmpHome });
     const skippedIds = new Set(skips.map((skip) => skip.id));
 
     expect(skippedIds.has("skill-registry")).toBe(true);

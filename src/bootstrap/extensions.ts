@@ -4,8 +4,8 @@ import {
   CONTEXT_STACK_EXTENSION_IDS,
 } from "../config/bundled-extensions.ts";
 import {
-  detectGlobalBundledExtensionSkips,
-  type GlobalBundledExtensionSkip,
+  detectInstalledBundledExtensionSkips,
+  type BundledExtensionSkip,
 } from "./global-extension-sources.ts";
 import type { ExtensionModule } from "./extension-module.ts";
 import { bundledImportUrl } from "./resolve-bundled.ts";
@@ -68,7 +68,7 @@ async function registerOne(
 /** Options controlling how bundled extensions are registered. */
 type RegisterBundledExtensionsOptions = {
   /** Precomputed skips (tests); defaults to scanning global Pi settings. */
-  globalSkips?: GlobalBundledExtensionSkip[];
+  globalSkips?: BundledExtensionSkip[];
   /** Host harness; omp loads rows through literal specifiers. Defaults to `pi`. */
   harness?: Harness;
 };
@@ -82,16 +82,16 @@ export async function registerBundledExtensions(
   enabled: Record<BundledExtensionId, boolean>,
   options: RegisterBundledExtensionsOptions = {},
 ): Promise<{
-  globalSkips: GlobalBundledExtensionSkip[];
+  globalSkips: BundledExtensionSkip[];
   failures: BundledExtensionFailure[];
 }> {
   const globalSkips =
-    options.globalSkips ?? detectGlobalBundledExtensionSkips({ includeProjectSettings: false });
+    options.globalSkips ?? detectInstalledBundledExtensionSkips({ includeProjectSettings: false });
   const skipById = new Map(globalSkips.map((skip) => [skip.id, skip] as const));
   const harness = options.harness ?? "pi";
 
   const enabledIds = new Set<BundledExtensionId>();
-  const appliedSkips: GlobalBundledExtensionSkip[] = [];
+  const appliedSkips: BundledExtensionSkip[] = [];
   for (const id of BUNDLED_EXTENSION_IDS) {
     if (!enabled[id]) continue;
     const skip = skipById.get(id);

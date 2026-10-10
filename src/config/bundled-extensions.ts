@@ -177,7 +177,7 @@ export const BUNDLED_EXTENSION_IDS: BundledExtensionId[] = BUNDLED_EXTENSION_DEF
  * Rows that were on by default before 0.2.0 flipped every row off. A saved `hotmilk.json`
  * with no explicit value for one of these silently lost it; session start tells the user once.
  */
-export const PRE_0_2_DEFAULT_ON_IDS: readonly BundledExtensionId[] = [
+export const PRE_020_DEFAULT_ON_IDS: readonly BundledExtensionId[] = [
   "skill-registry",
   "gentle-ai",
   "context-mode",

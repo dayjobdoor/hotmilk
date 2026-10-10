@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { shouldYieldToProjectEntry } from "./bootstrap/global-extension-sources.ts";
 import { createHotmilkRuntime } from "./config/runtime.ts";
-import { registerDefaultsHandlers } from "./bootstrap/defaults.ts";
+import { registerLanguageHint } from "./bootstrap/language.ts";
 import { registerBundledExtensions } from "./bootstrap/extensions.ts";
 import { prepareContextStack } from "./bootstrap/context-stack.ts";
 import { registerGraphHandlers } from "./bootstrap/graph.ts";
@@ -50,7 +50,7 @@ export default async function registerHotmilk(
   runtime.globalExtensionSkips = registration.globalSkips;
   runtime.extensionFailures = registration.failures;
   registerGraphHandlers(pi, runtime.graph);
-  registerDefaultsHandlers(pi, runtime.defaults);
+  registerLanguageHint(pi, runtime.defaults);
   registerSessionHandlers(pi, runtime);
   registerInputCommands(pi);
 }

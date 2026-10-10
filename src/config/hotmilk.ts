@@ -21,7 +21,7 @@ import {
 import {
   BUNDLED_EXTENSION_DEFINITIONS,
   BUNDLED_EXTENSION_IDS,
-  PRE_0_2_DEFAULT_ON_IDS,
+  PRE_020_DEFAULT_ON_IDS,
   type BundledExtensionId,
   type ExtensionToggleMap,
 } from "./bundled-extensions.ts";
@@ -85,7 +85,7 @@ function readBundledHotmilkTemplate(): HotmilkConfig {
 type DefaultHotmilkConfig = {
   extensions: ExtensionToggleMap;
   graph: ResolvedGraphSettings;
-  defaults: ResolvedDefaults;
+  defaults: ResolvedLanguage;
   projectTrust: ResolvedProjectTrust;
 };
 
@@ -100,7 +100,7 @@ function buildDefaultConfigFromTemplate(template: HotmilkConfig): DefaultHotmilk
   const typedExtensions = extensions as ExtensionToggleMap;
   const language = template.defaults?.language?.trim();
 
-  const defaults: ResolvedDefaults = {};
+  const defaults: ResolvedLanguage = {};
   if (language) {
     defaults.language = language;
   }
@@ -180,7 +180,7 @@ export type ResolvedGraphSettings = {
 };
 
 /** Resolved default language settings. */
-export type ResolvedDefaults = {
+export type ResolvedLanguage = {
   language?: string;
 };
 
@@ -287,9 +287,9 @@ export function saveHotmilkConfig(config: HotmilkConfig, configRoot?: string): C
  * Pure: rows that were on by default before 0.2.0 and have no explicit value in this config
  * (so they are off now). Empty once the notice has been shown, or when nothing was lost.
  */
-export function legacyDefaultsLost(config: HotmilkConfig): BundledExtensionId[] {
+export function lostDefaultOnIds(config: HotmilkConfig): BundledExtensionId[] {
   if (config.notices?.defaultOff020 === true) return [];
-  return PRE_0_2_DEFAULT_ON_IDS.filter((id) => config.extensions?.[id] === undefined);
+  return PRE_020_DEFAULT_ON_IDS.filter((id) => config.extensions?.[id] === undefined);
 }
 
 /**
@@ -325,9 +325,9 @@ export function resolveGraphSettings(config: HotmilkConfig): ResolvedGraphSettin
 }
 
 /** Resolve default runtime settings (language) from user config. */
-export function resolveDefaults(config: HotmilkConfig): ResolvedDefaults {
+export function resolveLanguage(config: HotmilkConfig): ResolvedLanguage {
   const language = config.defaults?.language?.trim();
-  const defaults: ResolvedDefaults = {};
+  const defaults: ResolvedLanguage = {};
   if (language) {
     defaults.language = language;
   }

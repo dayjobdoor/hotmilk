@@ -33,7 +33,7 @@ sequenceDiagram
   Note over Ext: includeProjectSettings false — global settings only at startup
   Ext->>Ext: context-stack sequential
   Ext->>Ext: remaining enabled ids in parallel
-  Index->>Index: graph, defaults, session, input commands
+  Index->>Index: graph, language hint, session, input commands
 ```
 
 ## Extension load order

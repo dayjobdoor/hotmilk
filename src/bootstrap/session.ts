@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { CONFIG_DIR_NAME, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { detectGlobalBundledExtensionSkips } from "./global-extension-sources.ts";
+import { detectInstalledBundledExtensionSkips } from "./global-extension-sources.ts";
 import {
   hotmilkConfigDisplayPath,
   markDefaultOffNoticeSeen,
@@ -58,8 +58,8 @@ function formatExtensionSkipsMessage(
  * Detect bundled extensions provided only by project settings.
  */
 function detectProjectOnlyBundledSkips(cwd: string): HotmilkRuntime["globalExtensionSkips"] {
-  const globalOnly = detectGlobalBundledExtensionSkips({ cwd, includeProjectSettings: false });
-  const withProject = detectGlobalBundledExtensionSkips({ cwd, includeProjectSettings: true });
+  const globalOnly = detectInstalledBundledExtensionSkips({ cwd, includeProjectSettings: false });
+  const withProject = detectInstalledBundledExtensionSkips({ cwd, includeProjectSettings: true });
   const globalIds = new Set(globalOnly.map((skip) => skip.id));
   return withProject.filter((skip) => !globalIds.has(skip.id));
 }
@@ -108,9 +108,7 @@ export function sessionStartNotices(runtime: HotmilkRuntime, facts: SessionStart
   };
   add(facts.seededPath && HOTMILK_SEEDED_MESSAGE(facts.seededPath), "info");
   add(
-    runtime.legacyDefaultsLost.length > 0
-      ? DEFAULT_OFF_MESSAGE(runtime.legacyDefaultsLost)
-      : undefined,
+    runtime.lostDefaultOnIds.length > 0 ? DEFAULT_OFF_MESSAGE(runtime.lostDefaultOnIds) : undefined,
     "info",
   );
   add(
@@ -188,6 +186,6 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
     });
     for (const { message, level } of notices) uiNotify(message, level);
     // Shown once: record it only after the notices went out.
-    if (runtime.legacyDefaultsLost.length > 0) markDefaultOffNoticeSeen();
+    if (runtime.lostDefaultOnIds.length > 0) markDefaultOffNoticeSeen();
   });
 }

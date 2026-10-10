@@ -43,7 +43,7 @@ flowchart TB
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/index.ts`                 | Pi extension entry                                                                                                                    |
 | `src/config/`                  | `hotmilk.json` I/O, resolve helpers, `createHotmilkRuntime()`, bundled registry                                                       |
-| `src/bootstrap/`               | Registration, session, graph, defaults, project trust, bundled module types (`extension-module.ts`), JSON helpers (`json.ts`)         |
+| `src/bootstrap/`               | Registration, session, graph, language hint, project trust, bundled module types (`extension-module.ts`), JSON helpers (`json.ts`)    |
 | `src/controller/`              | `/mode`, `/stop`, `/interrupt`                                                                                                        |
 | `src/ui/`                      | Footer, startup intro (`logo.ts`)                                                                                                     |
 | `src/bootstrap/omp-loaders.js` | Literal-specifier bundle loaders used under omp (plain JS; types in `omp-loaders.d.ts`)                                               |

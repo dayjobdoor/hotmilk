@@ -21,7 +21,7 @@ export function testRuntime(overrides: Partial<HotmilkRuntime> = {}): HotmilkRun
     harnessVersion: "0.0.0",
     extensionToggles: allExtensionsDisabled(),
     harnessSkips: [],
-    legacyDefaultsLost: [],
+    lostDefaultOnIds: [],
     extensionFailures: [],
     globalExtensionSkips: [],
     defaults: {},

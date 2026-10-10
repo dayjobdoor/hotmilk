@@ -28,7 +28,7 @@ External projects and theory that inform these horizons: [docs/references.md](do
 
 ### 0.2.0 minimal core plan (light)
 
-Done: registry default-off flip, harness detection (`createHotmilkRuntime`, [src/config/runtime.ts](src/config/runtime.ts)), footer and `/mode` hotmilk-owned, skills need no toggle, README default-off note and pinned registry tests. Risk (users lose default-on behavior) is mitigated by `/mode`, release notes, and a one-time session-start notice (`legacyDefaultsLost`, `notices.defaultOff020`). Shipped behavior: [requirements.md](docs/requirements.md).
+Done: registry default-off flip, harness detection (`createHotmilkRuntime`, [src/config/runtime.ts](src/config/runtime.ts)), footer and `/mode` hotmilk-owned, skills need no toggle, README default-off note and pinned registry tests. Risk (users lose default-on behavior) is mitigated by `/mode`, release notes, and a one-time session-start notice (`lostDefaultOnIds`, `notices.defaultOff020`). Shipped behavior: [requirements.md](docs/requirements.md).
 
 ### Candidate packages (evaluated 2026-09-23, re-checked 2026-10-11)
 
