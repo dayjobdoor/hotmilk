@@ -25,7 +25,7 @@ Requirements ─ acceptance test design           acceptance test ─ fix
 | Typo, one-line fix, known single-file change | Code only: write the unit check, change, run it |
 | Bug fix or small feature in one module | Requirements + code |
 | Multi-file, new behavior, or public contract change | All four levels |
-| Scope, goal, or acceptance unclear | Stop at requirements; ask one blocking question |
+| Scope, goal, or acceptance unclear | Stop at requirements; ask (at most three questions) and wait for the answers before any design |
 
 Skip levels that do not apply and say which were skipped. Never skip the
 check for a level you run.
@@ -37,7 +37,8 @@ is the source of the requirements level. Read it before sizing.
 
 1. **Pick the item**: quote the horizon item the change serves. A request that
    matches no item: say so and proceed only as a defect fix or on the user's
-   go-ahead. Never add, remove, or re-scope roadmap items; that is the user's call.
+   go-ahead (a request that names the change counts; say which). Never add,
+   remove, or re-scope roadmap items; that is the user's call.
 2. **Respect sequencing**: when the roadmap orders work or names gates
    ("X first", "Y is the gate", "lands after Z"), check the prerequisites.
    An unmet gate stops the change at requirements; report which gate.
@@ -81,9 +82,13 @@ Known: <facts read> — Assumed: <unverified> — Unchanged: <what must not chan
 
 1. **Requirements**: derive numbered requirements (R1…) from the horizon item
    and the request. Design acceptance checks from the user's point of view
-   before any design. A requirement with no observable check is not ready;
+   before any design, each labelled with the R it proves (`A1 (R1)`). Before
+   descending, check every R has at least one A; an R with none is not ready:
    fix it or ask (at most three targeted questions, only for decisions that
-   change the implementation). Name what must stay unchanged.
+   change the implementation). Name what must stay unchanged. When the
+   request names a specific set ("removed rows", "public commands"), take its
+   members from the repo's own record of that set; never widen it to a
+   general heuristic. No record: make that gap a requirement or a question.
 2. **System design**: name the files, entry points, config, and docs the
    change touches. Design system checks that run the real program; for UI,
    name the viewports and states to exercise. When designs genuinely compete,
@@ -124,11 +129,8 @@ fixed at that level, not deferred to code.
   or progress logs the roadmap does not already use.
 - Remove throwaway smoke scripts; keep only tests that catch plausible
   user-visible regressions and match repo conventions.
-- Review the diff as a separate step, not as the author: every changed line
-  traces to an R; no unrelated refactor or drift between code, config, and
-  docs; a refactor preserves behavior (all prior tests pass unchanged) and
-  keeps abstractions that still earn their place. Over ~400 changed lines,
-  split into reviewable changes.
+- Run `pioneer-review` on the diff and the W table as a separate step, not as
+  the author; fix every finding at its originating level.
 - Report: the W table with a result per check (`pass` / `fail` /
   `skipped: why`), changed files, risks and open questions, next step. On a
   timeout or partial run, list what finished and what remains; never report
