@@ -1,6 +1,6 @@
 ---
 name: skill-eval
-description: Measure and harden a skill, prompt, or AGENTS.md section with fresh subagents. Frozen scenarios and checklists, a baseline arm without the target and a target arm with it, one minimal edit per iteration, a hold-out run before shipping. Use for skill-eval, "evaluate this skill", "does this prompt work", "harden this skill", "A/B this prompt", or after writing or editing a SKILL.md. Not for code review or app benchmarks.
+description: Measure and harden a skill, prompt, or AGENTS.md section with fresh subagents. Frozen scenarios and checklists, a baseline arm without the target and a target arm with it, one minimal edit per iteration, a hold-out run before shipping. Use for skill-eval, "evaluate this skill", "does this prompt work", "harden this skill", "A/B this prompt". Not for static SKILL.md rubric reviews, code review, or app benchmarks.
 argument-hint: "<path to SKILL.md, prompt file, or AGENTS.md section>"
 ---
 
@@ -17,13 +17,14 @@ the body: triggers, scope, outputs. Fix mismatches before any run.
 
 ## 1. Freeze
 
-| Stakes                                   | Scenarios | Critical items | Iteration cap |
-| ---------------------------------------- | --------: | -------------: | ------------: |
-| High (security, data loss, release gate) |         3 |             2+ |          none |
-| Standard                                 |         2 |             1+ |             5 |
-| Low                                      |         2 |             1+ |             3 |
+| Stakes                                   | Scenarios + hold-out | Critical items | Iteration cap |
+| ---------------------------------------- | -------------------: | -------------: | ------------: |
+| High (security, data loss, release gate) |                3 + 1 |             2+ |          none |
+| Standard                                 |                2 + 1 |             1+ |             5 |
+| Low                                      |                2 + 0 |             1+ |             3 |
 
-- Scenarios: one median, one edge, plus one hold-out kept unseen until the end.
+- Scenarios: one median, one edge (High adds a second edge); the hold-out
+  stays unseen until the end.
 - Checklist per scenario: 3–7 observable items, at least one `[critical]`. A
   critical miss fails the scenario.
 - Frozen means frozen: never edit scenarios or checklists after the first run.
@@ -54,12 +55,15 @@ You are a fresh executor. Edit nothing outside a scratch dir; spawn no agents.
 - Status per item: ○ / partial / × with reason
 - Ambiguities: wording that needed interpretation
 - Discretionary fills: decisions the target did not specify
-- Retries: count and reason
-- Duration: measured wall-clock, with units
+
+Put the complete deliverable in your final message; nothing else is read.
 ```
 
 Then one fresh reviewer per scenario gets the target, scenario, checklist, and
-the full executor report, and scores it. Executors grading themselves do not count.
+the full executor report, and scores it: accuracy = ○ items + 0.5 × partial,
+÷ total items, × 100, minus verified false repo claims. Executors grading
+themselves do not count. A report whose deliverable body is missing is a
+harness failure: rerun that child, never score it as a target miss.
 
 ## 3. Harden (one delta per iteration)
 
@@ -69,8 +73,8 @@ the full executor report, and scores it. Executors grading themselves do not cou
 4. Re-run the target arm with fresh children.
 
 Stop when two consecutive iterations (three for High) show zero new
-ambiguities, accuracy gain ≤ 3 points, steps within ±10%, duration within
-±15%. Hit the cap or stall three times: stop and rewrite the target instead.
+ambiguities and an accuracy gain ≤ 3 points. At the cap, or after three
+iterations without a critical-item gain, stop and rewrite the target instead.
 Last, run the hold-out once; a 15-point accuracy drop means overfit, apply
 another delta.
 
@@ -78,11 +82,11 @@ another delta.
 
 ```text
 skill-eval <target>  stakes=<tier>  iterations=<N>
-scenario   arm       critical  accuracy  steps  duration  ambiguities
-median     baseline  ×         40        12     3m10s     -
-median     target    ○         95        9      2m05s     1
+scenario   arm       critical  accuracy  ambiguities
+median     baseline  ×         40        -
+median     target    ○         95        1
 edge       ...
-hold-out   target    ○         90        10     2m30s     0
+hold-out   target    ○         90        0
 deltas: 1) <ambiguity> → <item> → <edit>
 stop: <converged | cap | stalled | overfit>
 accepted ambiguities: <list or 0>

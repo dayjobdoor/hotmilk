@@ -1,18 +1,20 @@
 ---
 name: pioneer-review
-description: Review a diff against its pioneer W table, not as its author. Every changed line must trace to a requirement, every requirement to an observed check, and code, config, and docs must agree. One line per finding. Use for pioneer-review, "review this change against the plan", "does the diff match the W table", before closing a pioneer change, or before opening a PR. One-shot report, applies nothing.
+description: Review a diff against its pioneer W table, not as its author. Every changed line must trace to a requirement, every requirement to an observed check, and code, config, and docs must agree. Use for pioneer-review, "review this change against the plan", "does the diff match the W table", or when closing a pioneer change. Not for generic PR, logic, or security review. One-shot report, applies nothing.
 ---
 
 # Pioneer review
 
-The diff's best outcome: every line traces, every R is observed, nothing drifts.
-Input: the diff (`git diff` against the change base) and the change's W table.
+Input: the diff against the change base (the commit the change started from;
+unsure: `git merge-base HEAD <default branch>`) and the change's W table.
 No W table: rebuild R1… from the request and say so on the first line.
+Observed check output comes from the change report or a read-only check you
+run yourself (lint, test); reading the diff is never a check.
 
 ## Tags
 
 - `untraced:` changed line serving no R. Fix: drop it or name the R.
-- `unverified:` R with no observed check output (a command run and its result), whether or not it was reported passing. Reading the diff is not a check. Fix: the check to run.
+- `unverified:` R with no observed check output, whether or not it was reported passing. Fix: the check to run.
 - `weakened:` test deleted, loosened, or skipped to pass. Fix: restore it; fix at the source level.
 - `drift:` code, config, and docs disagree, including a pre-existing claim that a new line now contradicts. Name both sides and the owner doc.
 - `unchanged:` something the table marked Unchanged moved. Fix: revert or reopen requirements.
@@ -24,7 +26,6 @@ No W table: rebuild R1… from the request and say so on the first line.
 `diff: <tag> ...`. One finding per line, worst first: `weakened`, `unchanged`,
 `unverified`, `drift`, `untraced`, `split`.
 
-A refactor preserves behavior: prior tests pass unchanged. A refactor that
 edits a prior test is `weakened:` unless an R says the contract changed.
 
 ## Score
@@ -32,7 +33,7 @@ edits a prior test is `weakened:` unless an R says the contract changed.
 End with `trace: <traced>/<changed> lines, <N> R unverified.` Changed lines:
 added + deleted lines in `git diff --numstat` against the change base, plus
 every line of new untracked files; a line flagged `untraced:` is not traced.
-Nothing found: `Traced. Ship.`
+Nothing found: the `trace:` line, then `Traced. Ship.`
 
 ## Boundaries
 

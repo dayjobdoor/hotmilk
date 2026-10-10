@@ -1,14 +1,13 @@
 ---
 name: pioneer
-description: Roadmap-anchored W-model development flow for any repository. Starts each change from a roadmap horizon item, pairs each build level (requirements, system design, detailed design, code) with its test design and a review gate, executes tests bottom-up, routes every failure back to the level that caused it, and syncs the roadmap on close. Use for pioneer, W-model, working on a ROADMAP item, multi-step or multi-file implementation, feature work, bug fixes that need a plan, or when test design should start before code.
+description: Roadmap-anchored W-model development flow for any repository. Starts each change from a roadmap horizon item, pairs each build level (requirements, system design, detailed design, code) with its test design and a review gate, executes tests bottom-up, routes every failure back to the level that caused it, and syncs the roadmap on close. Use for pioneer, W-model, working on a ROADMAP item, multi-file implementation, bug fixes that need a plan, or when test design should start before code. Not for questions or for reviewing an existing diff (pioneer-review).
 ---
 
 # Pioneer
 
-Run one change through the W-model, starting from the roadmap. The left arm
-builds and designs tests at the same time; the right arm executes those tests
-and fixes defects. Every level gets its checks before the next level starts,
-so defects surface at the level that made them.
+Run one change through the W-model, starting from the roadmap. Each level
+gets its checks before the next level starts, so defects surface where they
+were made.
 
 ```text
 Requirements ─ acceptance test design           acceptance test ─ fix
@@ -20,12 +19,12 @@ Requirements ─ acceptance test design           acceptance test ─ fix
 
 ## Size the change
 
-| Signal                                              | Levels                                                                                         |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Typo, one-line fix, known single-file change        | Code only: write the unit check, change, run it                                                |
-| Bug fix or small feature in one module              | Requirements + code                                                                            |
-| Multi-file, new behavior, or public contract change | All four levels                                                                                |
-| Scope, goal, or acceptance unclear                  | Stop at requirements; ask (at most three questions) and wait for the answers before any design |
+| Signal                                              | Levels                                                                                            |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Typo, one-line fix, known single-file change        | Code only: change, then run the check that covers it (a test, lint, or a grep for the fixed text) |
+| Bug fix or small feature in one module              | Requirements + code                                                                               |
+| Multi-file, new behavior, or public contract change | All four levels                                                                                   |
+| Scope, goal, or acceptance unclear                  | Stop at requirements; ask (at most three questions) and wait for the answers before any design    |
 
 Skip levels that do not apply and say which were skipped. Never skip the
 check for a level you run.
@@ -119,6 +118,9 @@ fixed at that level, not deferred to code.
    - Wrong or missing requirement → fix requirements; ask the user when the
      intent is theirs to decide.
 3. After any fix, rerun every level from the fixed one upward (regression).
+   The same check failing twice after fixes at one level: stop, re-read that
+   level's build and test design, and report to the user instead of a third
+   patch.
 4. Done = every acceptance check observed passing and the repo's full gate
    (lint + test, as CI runs it) green.
 
@@ -144,6 +146,3 @@ fixed at that level, not deferred to code.
 - Test design precedes the build step it checks.
 - Fix defects at the originating level; never patch a requirement or design
   error in code, and never weaken a test to pass it.
-- Do not claim a level passed without its observed output.
-- Product, architecture, or scope decisions that are not in the request go
-  back to the user; do not improvise them.
