@@ -148,23 +148,20 @@ describe("registerBundledExtensions global skip", () => {
   );
 });
 
-describe("detectProjectHotmilkEntry", () => {
-  function writeHotmilkCheckout(dir: string, settings?: JsonObject): void {
-    fs.mkdirSync(path.join(dir, ".pi"), { recursive: true });
-    fs.writeFileSync(
-      path.join(dir, "package.json"),
-      JSON.stringify({ name: "hotmilk", pi: { extensions: ["./src/index.ts"] } }),
-      "utf-8",
-    );
-    if (settings) {
-      fs.writeFileSync(
-        path.join(dir, ".pi", "settings.json"),
-        JSON.stringify(settings),
-        "utf-8",
-      );
-    }
+// Shared by the detect/yield suites: a hotmilk checkout with an optional project settings file.
+function writeHotmilkCheckout(dir: string, settings?: JsonObject, entry = "./src/index.ts"): void {
+  fs.mkdirSync(path.join(dir, ".pi"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "package.json"),
+    JSON.stringify({ name: "hotmilk", pi: { extensions: [entry] } }),
+    "utf-8",
+  );
+  if (settings) {
+    fs.writeFileSync(path.join(dir, ".pi", "settings.json"), JSON.stringify(settings), "utf-8");
   }
+}
 
+describe("detectProjectHotmilkEntry", () => {
   it("detects only checkouts whose settings reference the copy", () => {
     // Checkout with the real repo's settings shape: package root + entry dir.
     const dir = makeTempDir("hotmilk-project-entry-pkg-");
@@ -186,22 +183,7 @@ describe("detectProjectHotmilkEntry", () => {
     ];
     for (const { label, settings, entry } of cases) {
       const rejectDir = makeTempDir("hotmilk-project-entry-reject-");
-      fs.mkdirSync(path.join(rejectDir, ".pi"), { recursive: true });
-      fs.writeFileSync(
-        path.join(rejectDir, "package.json"),
-        JSON.stringify({
-          name: "hotmilk",
-          pi: { extensions: [entry ?? "./src/index.ts"] },
-        }),
-        "utf-8",
-      );
-      if (settings) {
-        fs.writeFileSync(
-          path.join(rejectDir, ".pi", "settings.json"),
-          JSON.stringify(settings),
-          "utf-8",
-        );
-      }
+      writeHotmilkCheckout(rejectDir, settings, entry);
       expect(detectProjectHotmilkEntry(rejectDir), label).toBe(false);
     }
     // No manifest at all.
@@ -217,17 +199,7 @@ describe("shouldYieldToProjectEntry", () => {
     // Checkout fixture mirrors the repo's settings shape; no dependence on
     // this repo's gitignored .pi/settings.json.
     const checkout = makeTempDir("hotmilk-pkgdir-checkout-");
-    fs.mkdirSync(path.join(checkout, ".pi"), { recursive: true });
-    fs.writeFileSync(
-      path.join(checkout, "package.json"),
-      JSON.stringify({ name: "hotmilk", pi: { extensions: ["./src/index.ts"] } }),
-      "utf-8",
-    );
-    fs.writeFileSync(
-      path.join(checkout, ".pi", "settings.json"),
-      JSON.stringify({ packages: [".."], extensions: ["../src"] }),
-      "utf-8",
-    );
+    writeHotmilkCheckout(checkout, { packages: [".."], extensions: ["../src"] });
 
     expect(shouldYieldToProjectEntry(globalEntryPath, checkout, { packageDir })).toBe(true);
     expect(

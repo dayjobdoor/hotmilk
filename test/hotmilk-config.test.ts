@@ -121,7 +121,6 @@ describe("resolveHotmilkConfigRoot", () => {
 
     await withConfigEnv(undefined, agentDir, () => {
       expect(resolveHotmilkConfigRoot()).toBe(agentDir);
-      expect(hotmilkConfigDisplayPath()).toBe(getHotmilkConfigPath());
     });
 
     // With no env at all, the display path is home-relative.

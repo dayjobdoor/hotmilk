@@ -10,11 +10,11 @@ import {
 // omp-flagged rows that load through the Pi loader because their entry is not an exported subpath.
 const PI_LOADER_FALLBACK = ["context-mode", "ponytail"];
 
+// A wrong specifier would load a different module under omp than under Pi, and the audit
+// cannot tell that from a row that simply does not work there.
 describe("omp loader table", () => {
-  // A wrong specifier would load a different module under omp than under Pi, and the audit
-  // cannot tell that from a row that simply does not work there.
   it(
-    "every omp loader yields the module its registry row loads under Pi",
+    "matches the registry: right module per row, no unknown ids, loader for every omp row but the fallbacks",
     { timeout: 120_000 },
     async () => {
       const wrong: string[] = [];
@@ -24,19 +24,15 @@ describe("omp loader table", () => {
         const underPi = await import(bundledImportUrl(definition.module));
         if ((await load()) !== underPi) wrong.push(definition.id);
       }
-      expect(wrong).toEqual([]);
+      const unknown = Object.keys(OMP_BUNDLED_LOADERS).filter(
+        (id) => !BUNDLED_EXTENSION_IDS.some((known) => known === id),
+      );
+      const missing = OMP_SUPPORTED_IDS.filter((id) => OMP_BUNDLED_LOADERS[id] === undefined);
+      expect({ wrong, unknown, missing: [...missing].sort() }).toEqual({
+        wrong: [],
+        unknown: [],
+        missing: [...PI_LOADER_FALLBACK].sort(),
+      });
     },
   );
-
-  it("has no loader for an id the registry does not know", () => {
-    const unknown = Object.keys(OMP_BUNDLED_LOADERS).filter(
-      (id) => !BUNDLED_EXTENSION_IDS.some((known) => known === id),
-    );
-    expect(unknown).toEqual([]);
-  });
-
-  it("has a loader for every omp-flagged row except the documented Pi-loader fallbacks", () => {
-    const missing = OMP_SUPPORTED_IDS.filter((id) => OMP_BUNDLED_LOADERS[id] === undefined);
-    expect([...missing].sort()).toEqual([...PI_LOADER_FALLBACK].sort());
-  });
 });

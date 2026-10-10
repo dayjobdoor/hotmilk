@@ -25,21 +25,11 @@ const PI_080_FLOOR = "0.80.0";
 /** Declared Pi coding-agent package and version range. */
 const PI_CODING_AGENT_PACKAGE = "@earendil-works/pi-coding-agent";
 
-type BundledPeerRangeExclusion = {
-  packageName: string;
-  /** Substring expected in the blocking peer range (remove row when upstream widens peers). */
-  excludedVersionPrefix: string;
-};
-
 /**
- * Bundled deps whose published peer ranges still exclude Pi 0.80 — and, for
- * pi-lens, the 0.86+ lines too (it stops at ^0.85.0). Drop a row when npm publishes wider peers and refresh
- * README peer notes.
+ * Bundled deps whose published Pi peer ranges exclude the installed Pi (pi-rtk-optimizer
+ * stops at ^0.80.0). Drop a row when npm publishes wider peers and refresh README peer notes.
  */
-const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly BundledPeerRangeExclusion[] = [
-  { packageName: "pi-rtk-optimizer", excludedVersionPrefix: "^0.79.0" },
-  { packageName: "pi-lens", excludedVersionPrefix: "^0.84.1" },
-];
+const BUNDLED_PEER_RANGES_EXCLUDING_PI_080: readonly string[] = ["pi-rtk-optimizer"];
 
 /**
  * Nested @earendil-works copies still below Pi 0.80 — remove rows when upstream dedupes to 0.80.x.
@@ -184,7 +174,7 @@ describe("third-party risk (hotmilk meta-package)", () => {
 
   it("covers every bundled row: a Pi peer range that excludes the installed Pi must be tracked", () => {
     const pi = installedPackageVersion(PI_CODING_AGENT_PACKAGE);
-    const tracked = new Set(BUNDLED_PEER_RANGES_EXCLUDING_PI_080.map((row) => row.packageName));
+    const tracked = new Set(BUNDLED_PEER_RANGES_EXCLUDING_PI_080);
     const packages = new Set(
       BUNDLED_EXTENSION_DEFINITIONS.filter((row) => !row.module.startsWith("hotmilk/")).map((row) => row.packageName),
     );
@@ -192,15 +182,6 @@ describe("third-party risk (hotmilk meta-package)", () => {
       (name) => !tracked.has(name) && bundledPiPeerRanges(name).some((range) => !satisfies(pi, range)),
     );
     expect(untracked, `bundled rows whose peers exclude Pi ${pi}: add to BUNDLED_PEER_RANGES_EXCLUDING_PI_080 and README peer notes`).toEqual([]);
-  });
-
-  it("tracks bundled deps whose peer ranges still exclude Pi 0.80", () => {
-    expect(BUNDLED_PEER_RANGES_EXCLUDING_PI_080.length).toBeGreaterThan(0);
-    for (const exclusion of BUNDLED_PEER_RANGES_EXCLUDING_PI_080) {
-      const ranges = bundledPiPeerRanges(exclusion.packageName);
-      expect(ranges.length).toBeGreaterThan(0);
-      expect(ranges.some((range) => range.includes(exclusion.excludedVersionPrefix))).toBe(true);
-    }
   });
 
   it(

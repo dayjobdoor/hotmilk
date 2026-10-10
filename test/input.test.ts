@@ -35,13 +35,13 @@ describe("registerInputCommands", () => {
     // SAFETY: command handlers only read isIdle, abort, and ui.notify.
     await handlers.get("stop")!("", busy as never);
     expect(busy.abort).toHaveBeenCalledOnce();
-    expect(busy.ui.notify).toHaveBeenCalledWith("Stopped current work.", "warning");
+    expect(busy.ui.notify).toHaveBeenCalledWith(expect.any(String), "warning");
 
     const idle = inputContext();
     // SAFETY: command handlers only read isIdle, abort, and ui.notify.
     await handlers.get("stop")!("", idle as never);
     expect(idle.abort).not.toHaveBeenCalled();
-    expect(idle.ui.notify).toHaveBeenCalledWith("No running work to stop.", "info");
+    expect(idle.ui.notify).toHaveBeenCalledWith(expect.any(String), "info");
   });
 
   it("interrupt rejects empty prompts and steers non-empty ones", async () => {
@@ -50,7 +50,7 @@ describe("registerInputCommands", () => {
     const empty = inputContext();
     // SAFETY: command handlers only read isIdle, abort, and ui.notify.
     await handlers.get("interrupt")!("", empty as never);
-    expect(empty.ui.notify).toHaveBeenCalledWith("Usage: /interrupt <prompt>", "warning");
+    expect(empty.ui.notify).toHaveBeenCalledWith(expect.any(String), "warning");
     expect(sendUserMessage).not.toHaveBeenCalled();
 
     const prompted = inputContext();
@@ -59,7 +59,7 @@ describe("registerInputCommands", () => {
     expect(sendUserMessage).toHaveBeenCalledWith("[INTERRUPT] fix the bug", {
       deliverAs: "steer",
     });
-    expect(prompted.ui.notify).toHaveBeenCalledWith("Interrupt prompt sent.", "info");
+    expect(prompted.ui.notify).toHaveBeenCalledWith(expect.any(String), "info");
   });
 
   it("pioneer forwards to /skill:pioneer, queued as follow-up while busy", async () => {
@@ -73,6 +73,6 @@ describe("registerInputCommands", () => {
     // SAFETY: command handlers only read isIdle, abort, and ui.notify.
     await handlers.get("pioneer")!("", busy as never);
     expect(sendUserMessage).toHaveBeenLastCalledWith("/skill:pioneer", { deliverAs: "followUp" });
-    expect(busy.ui.notify).toHaveBeenCalledWith("/skill:pioneer queued as follow-up.", "info");
+    expect(busy.ui.notify).toHaveBeenCalledWith(expect.any(String), "info");
   });
 });

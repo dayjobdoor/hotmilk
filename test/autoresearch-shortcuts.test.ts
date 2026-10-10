@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -34,6 +34,5 @@ describe("autoresearch shortcuts", () => {
       path: existingPath,
     });
     expect(parseJsonValue(readFileSync(existingPath, "utf8"))).toEqual(existing);
-    expect(existsSync(existingPath)).toBe(true);
   });
 });

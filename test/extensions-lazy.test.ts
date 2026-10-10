@@ -55,18 +55,16 @@ it(
     expect(offPi.accessed).toEqual([]);
 
     const enabled = allExtensionsDisabled();
-    enabled["context-view"] = true;
-    enabled.vcc = true;
-    const { pi, accessed, calls } = recordingPi();
+    enabled["observational-memory"] = true;
+    const { pi, calls } = recordingPi();
     await registerBundledExtensions(pi, enabled, { globalSkips: [] });
 
-    expect(accessed).toContain("on");
     expect(
       calls.filter(({ method }) => method === "registerCommand").map(({ args }) => args[0]),
-    ).toEqual(expect.arrayContaining(["pi-vcc", "pi-vcc-recall", "context"]));
+    ).toEqual(expect.arrayContaining(["om:status", "om:view"]));
     expect(
       calls.filter(({ method }) => method === "registerTool").map(({ args }) => firstArgName(args)),
-    ).toContain("vcc_recall");
+    ).toContain("recall");
   },
 );
 
@@ -128,6 +126,6 @@ it("reports a failing bundled loader by id and still registers the healthy rows"
   const { failures } = await registerBundledExtensions(pi, enabled, { globalSkips: [] });
 
   expect(failures.map((failure) => failure.id)).toEqual(["graphify"]);
-  expect(failures[0]?.message).toEqual(expect.any(String));
+  expect(failures[0]?.message).toContain("fixture load failed");
   expect(registrationOrder).toEqual(["context-mode"]);
 });

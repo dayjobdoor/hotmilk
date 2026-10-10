@@ -18,8 +18,6 @@ const ignorePatterns = [
   ".roo/**",
   ".windsurf/**",
   "tools/oxlint/anti-slop/**",
-  // Vendored upstream code (pi-kanagawa, MIT) — held at upstream parity, not hotmilk lint.
-  "src/bundled/kanagawa.ts",
 ];
 
 export default defineConfig({
@@ -51,6 +49,5 @@ export default defineConfig({
   fmt: { ignorePatterns },
   test: {
     include: ["test/**/*.test.ts"],
-    includeSource: ["src/**/*.ts"],
   },
 });

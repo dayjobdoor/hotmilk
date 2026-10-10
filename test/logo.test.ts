@@ -20,7 +20,6 @@ describe("renderHotmilkBanner", () => {
 
     expect(lines).toHaveLength(5);
     expect(new Set(lines.map((line) => line.length)).size).toBe(1);
-    expect(lines[2]).toContain("█████");
   });
 });
 

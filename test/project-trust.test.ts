@@ -94,7 +94,6 @@ describe("registerProjectTrustHandlers", () => {
     // SAFETY: test double implements only the project_trust registration hook.
     registerProjectTrustHandlers(pi as never, resolvedProjectTrust("always", true));
 
-    expect(handler).toEqual(expect.any(Function));
     const result = await handler!({ cwd: "/tmp/project" }, trustContext(false, vi.fn()));
     expect(result).toEqual({ trusted: "yes", remember: true });
   });

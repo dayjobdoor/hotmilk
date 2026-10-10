@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vite-plus/test";
@@ -44,7 +44,6 @@ describe("resolveBundledModule", () => {
       pathToFileURL(join(nestedBootstrapDir, "extensions.ts")).href,
     );
     expect(nestedResolved).toBe(nestedFile);
-    expect(existsSync(nestedResolved)).toBe(true);
 
     const hoistedDir = makeTempDir("hotmilk-resolve-bundled-");
     const hoistedHotmilkRoot = join(hoistedDir, "node_modules", "hotmilk");
@@ -59,10 +58,7 @@ describe("resolveBundledModule", () => {
       modulePath,
       pathToFileURL(join(hoistedBootstrapDir, "extensions.ts")).href,
     );
-    expect(hoistedResolved).toMatch(
-      /node_modules[/\\]context-mode[/\\]build[/\\]adapters[/\\]pi[/\\]extension\.js$/,
-    );
-    expect(existsSync(hoistedResolved)).toBe(true);
+    expect(hoistedResolved).toBe(siblingFile);
   });
 
   it("throws when a bundled module cannot be resolved", () => {

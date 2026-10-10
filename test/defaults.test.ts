@@ -1,19 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  applyHotmilkPersonaPrompt,
-  markdownSection,
-  shouldWarnCavemanJaConflict,
-} from "../src/bootstrap/defaults.ts";
-
-describe("caveman vs defaults.language", () => {
-  it("warns only when caveman is on and the language is ja", () => {
-    expect(shouldWarnCavemanJaConflict(true, "ja")).toBe(true);
-    expect(shouldWarnCavemanJaConflict(true, " JA ")).toBe(true);
-    expect(shouldWarnCavemanJaConflict(false, "ja")).toBe(false);
-    expect(shouldWarnCavemanJaConflict(true, "en")).toBe(false);
-    expect(shouldWarnCavemanJaConflict(true, undefined)).toBe(false);
-  });
-});
+import { applyHotmilkPersonaPrompt, markdownSection } from "../src/bootstrap/defaults.ts";
 
 describe("custom persona prompt replacement", () => {
   const gentlePrompt = [
@@ -32,16 +18,13 @@ describe("custom persona prompt replacement", () => {
 
   it("replaces the persona section per persona without touching harness rules", () => {
     const gyal = applyHotmilkPersonaPrompt(gentlePrompt, "gyal");
-    expect(gyal).toContain("Current persona mode: gyal");
-    expect(gyal).toContain("bright, confident Japanese gyal");
-    expect(gyal).toContain("Harness principles:");
-    expect(gyal).not.toContain("built-in neutral rules");
-    expect(gyal).not.toContain("Raiden");
-
     const raiden = applyHotmilkPersonaPrompt(gentlePrompt, "raiden");
-    expect(raiden).toContain("Current persona mode: raiden");
-    expect(raiden).toContain("知っているのか雷電！？");
-    expect(raiden).toContain("preserve orchestration rules");
+    for (const [persona, prompt] of [["gyal", gyal], ["raiden", raiden]]) {
+      expect(prompt).toContain(`Current persona mode: ${persona}`);
+      expect(prompt).not.toContain("built-in neutral rules");
+      expect(prompt).toContain("preserve orchestration rules");
+    }
+    expect(gyal).not.toBe(raiden);
   });
 });
 

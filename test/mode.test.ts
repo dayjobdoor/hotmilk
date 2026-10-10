@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { initTheme } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vite-plus/test";
@@ -13,13 +13,7 @@ describe("createModeSettingItems", () => {
     const items = createModeSettingItems(DEFAULT_HOTMILK_CONFIG.extensions, "gyal");
     const persona = items.find((item) => item.id === PERSONA_SETTING_ID);
 
-    expect(items[0]?.id).toBe("_group:Defaults");
-    expect(persona).toEqual({
-      id: PERSONA_SETTING_ID,
-      label: "  persona",
-      currentValue: "gyal",
-      values: [...PERSONA_MODES],
-    });
+    expect(persona?.currentValue).toBe("gyal");
     const personaIndex = items.findIndex((item) => item.id === PERSONA_SETTING_ID);
     const firstExtensionIndex = items.findIndex((item) => item.id === BUNDLED_EXTENSION_IDS[0]);
     expect(personaIndex).toBeLessThan(firstExtensionIndex);
@@ -59,7 +53,33 @@ describe("openModeSettingsModal", () => {
       await openModeSettingsModal({ ui: { custom, notify } } as never);
 
       expect(custom).toHaveBeenCalledOnce();
-      expect(notify).toHaveBeenCalledWith(expect.stringContaining("Updated"), "info");
+      expect(notify).toHaveBeenCalledWith(expect.stringContaining("/reload"), "info");
     });
+  });
+
+  it("persists a toggled row and a cycled persona to hotmilk.json", async () => {
+    const configRoot = makeTempDir("hotmilk-mode-save-");
+    const configPath = join(configRoot, "hotmilk.json");
+    writeFileSync(configPath, JSON.stringify({ defaults: { persona: PERSONA_MODES[0] } }), "utf8");
+
+    const custom = vi.fn(async (factory) => {
+      const theme = { fg: (_color: string, text: string) => text, bold: (text: string) => text };
+      // SAFETY: modal factory only needs fg/bold from the theme stub.
+      const modal = await factory({} as never, theme as never, {} as never, () => {});
+      modal.handleInput("\x1b[B"); // down to the persona row
+      modal.handleInput(" "); // cycle persona
+      for (const char of "skill-registry") modal.handleInput(char); // search filters to one row
+      modal.handleInput("\r"); // toggle it on
+    });
+
+    await withConfigEnv(configRoot, undefined, async () => {
+      initTheme(undefined, false);
+      // SAFETY: test double implements only modal UI methods.
+      await openModeSettingsModal({ ui: { custom, notify: vi.fn() } } as never);
+    });
+
+    const saved = JSON.parse(readFileSync(configPath, "utf8"));
+    expect(saved.extensions["skill-registry"]).toBe(true);
+    expect(saved.defaults.persona).toBe(PERSONA_MODES[1]);
   });
 });

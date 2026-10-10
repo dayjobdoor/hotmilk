@@ -10,27 +10,6 @@ import { dirname, join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { ResolvedDefaults } from "../config/hotmilk.ts";
 
-/** Warning shown when caveman terse-mode clashes with Japanese language default. */
-export const CAVEMAN_JA_CONFLICT_MESSAGE =
-  "caveman is on while defaults.language is ja — caveman adds English terse rules that fight the Japanese language hint. Turn off caveman (/mode), clear defaults.language, or use /caveman off.";
-
-/**
- * Detect the caveman + Japanese language conflict.
- *
- * @param cavemanEnabled - whether caveman toggle is on
- * @param language - configured language hint
- */
-export function shouldWarnCavemanJaConflict(
-  cavemanEnabled: boolean,
-  language: string | undefined,
-): boolean {
-  return cavemanEnabled && language?.trim().toLowerCase() === "ja";
-}
-
-/** Warning when kanagawa theme replaces the hotmilk footer. */
-export const KANAGAWA_FOOTER_WARNING =
-  "kanagawa is on — it replaces the hotmilk footer. Turn off kanagawa (/mode) if you want the hotmilk status footer back.";
-
 /**
  * Reconcile the project persona marker used by gentle-pi with hotmilk config.
  *

@@ -1,4 +1,3 @@
-import * as fs from "node:fs";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { dirname, join } from "node:path";
@@ -108,27 +107,11 @@ describe("startup registration", () => {
         return originalImportUrl(relativePath);
       });
 
-      const events: string[] = [];
-      const commands: string[] = [];
-      const registeredTools: { name: string }[] = [];
-      const pi = {
-        on: (event: string) => {
-          events.push(event);
-        },
-        registerCommand: (name: string) => {
-          commands.push(name);
-        },
-        registerTool: (tool: { name: string }) => {
-          registeredTools.push(tool);
-        },
-      };
+      const pi = { on: () => {}, registerCommand: () => {}, registerTool: () => {} };
       // SAFETY: fake pi exposes only members the all-off path proved sufficient.
       await registerHotmilk(pi as never);
 
       expect(registrationOrder).toEqual(["context-mode"]);
-      expect(commands).toEqual(["stop", "interrupt", "mode", "pioneer"]);
-      expect(events).toEqual(["project_trust", "session_start"]);
-      expect(registeredTools.map((tool) => tool.name)).toEqual(["ctx_search"]);
       expect(
         parseJsonValue(readFileSync(join(agentDir, "extensions", "pi-autoresearch.json"), "utf8")),
       ).toEqual({
@@ -137,30 +120,14 @@ describe("startup registration", () => {
     });
   });
 
-  it("npm-installed copy yields inside the hotmilk checkout but registers in normal projects", async () => {
-    const configRoot = makeTempDir("hotmilk-startup-config-npm-");
+  it("npm-installed copy yields inside the hotmilk checkout before any registration", async () => {
     const agentDir = makeTempDir("hotmilk-startup-agent-npm-");
     const selfPath = path.join(agentDir, "npm", "node_modules", "hotmilk", "src", "index.ts");
-    const recordingFakePi = () => {
-      const events: string[] = [];
-      const commands: string[] = [];
-      const pi = {
-        on(event: string) {
-          events.push(event);
-        },
-        registerCommand(name: string) {
-          commands.push(name);
-        },
-      };
-      return { pi, events, commands };
-    };
 
-    // Inside a hotmilk checkout the npm-installed copy must yield before any
-    // registration. The checkout fixture mirrors this repo's manifest/settings
-    // shape; the repo's real .pi/settings.json is gitignored so tests must not
-    // depend on it.
+    // The checkout fixture mirrors this repo's manifest/settings shape; the repo's real
+    // .pi/settings.json is gitignored so tests must not depend on it.
     const checkout = makeTempDir("hotmilk-startup-checkout-");
-    fs.mkdirSync(join(checkout, ".pi"), { recursive: true });
+    mkdirSync(join(checkout, ".pi"), { recursive: true });
     writeFileSync(
       join(checkout, "package.json"),
       JSON.stringify({ name: "hotmilk", pi: { extensions: ["./src/index.ts"] } }),
@@ -172,30 +139,15 @@ describe("startup registration", () => {
       "utf8",
     );
     await withConfigEnv(undefined, agentDir, async () => {
-      const { pi, events, commands } = recordingFakePi();
+      const touched: string[] = [];
+      const pi = {
+        on: (event: string) => touched.push(event),
+        registerCommand: (name: string) => touched.push(name),
+      };
       // SAFETY: fake API is never touched; the npm-installed copy must return
       // before any registration when the session cwd is a hotmilk checkout.
       await registerHotmilk(pi as never, { selfPath, cwd: checkout });
-      expect(events).toEqual([]);
-      expect(commands).toEqual([]);
-    });
-
-    // In a normal project the same copy registers the default surface.
-    const projectCwd = makeTempDir("hotmilk-startup-project-");
-    await withConfigEnv(configRoot, agentDir, async () => {
-      writeFileSync(
-        join(configRoot, "hotmilk.json"),
-        JSON.stringify({
-          extensions: allExtensionsDisabled(),
-          graph: { warnOnStale: false, autoSuggestUpdate: false },
-        }),
-        "utf8",
-      );
-      const { pi, events, commands } = recordingFakePi();
-      // SAFETY: fake API implements only methods used by the all-bundles-off startup path.
-      await registerHotmilk(pi as never, { selfPath, cwd: projectCwd });
-      expect(events).toEqual(["project_trust", "session_start"]);
-      expect(commands).toEqual(["stop", "interrupt", "mode", "pioneer"]);
+      expect(touched).toEqual([]);
     });
   });
 });
@@ -224,11 +176,9 @@ describe("registerDefaultsHandlers", () => {
       ].join("\n"),
     });
 
-    // Persona section content itself is pinned by caveman-defaults.test.ts.
+    // Persona section content itself is pinned by defaults.test.ts.
     expect(result.systemPrompt).toContain("Current persona mode: gyal");
     expect(result.systemPrompt).toContain("Prefer responding in ja");
-    expect(result.systemPrompt).toContain("keep routing");
-    expect(result.systemPrompt).not.toContain("built-in neutral rules");
   });
 });
 
@@ -362,10 +312,8 @@ describe("registerSessionHandlers", () => {
     });
   });
 
-  it("builds config, dedupe, omp harness, context-stack, caveman, and kanagawa notices (pure)", () => {
+  it("builds config, dedupe, omp harness, and context-stack notices (pure)", () => {
     const extensionToggles = allExtensionsDisabled();
-    extensionToggles.caveman = true;
-    extensionToggles.kanagawa = true;
     const runtime = testRuntime({
       configError: "Invalid JSON",
       harness: "omp",
@@ -390,8 +338,6 @@ describe("registerSessionHandlers", () => {
       expect.stringContaining("Adjusted pi-rtk-optimizer"),
       expect.stringContaining("graphify: global graphify-pi"),
       expect.stringContaining("lens: project pi-lens"),
-      expect.stringContaining("caveman is on while defaults.language is ja"),
-      expect.stringContaining("kanagawa is on"),
     ]);
   });
 

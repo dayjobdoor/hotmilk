@@ -4,7 +4,7 @@ type BundledExtensionDefinition = {
   readonly id: string;
   /** npm package name that provides a bundled extension when installed via Pi settings. */
   readonly packageName: string;
-  /** Path passed to `loadBundled()` / `bundledImportUrl()`. */
+  /** Package-relative path passed to `bundledImportUrl()`. */
   readonly module: string;
   /** `/mode` section label — must appear in {@link BUNDLED_EXTENSION_GROUP_ORDER}. */
   readonly group: BundledExtensionGroupLabel;
@@ -57,50 +57,22 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     loadPhase: "context-stack",
   },
   {
-    id: "context-view",
-    packageName: "pi-context-view",
-    module: "pi-context-view/src/index.ts",
-    group: "Context & performance",
-  },
-  {
-    id: "vcc",
-    packageName: "@sting8k/pi-vcc",
-    module: "@sting8k/pi-vcc/index.ts",
-    group: "Context & performance",
-    omp: true,
-  },
-  {
     id: "ask-user",
-    packageName: "@juicesharp/rpiv-ask-user-question",
-    module: "@juicesharp/rpiv-ask-user-question/index.ts",
+    packageName: "gentle-pi",
+    module: "gentle-pi/extensions/ask-user-question.ts",
     group: "Agent tools",
     omp: true,
   },
   {
     id: "todo",
-    packageName: "@juicesharp/rpiv-todo",
-    module: "@juicesharp/rpiv-todo/index.ts",
+    packageName: "gentle-pi",
+    module: "gentle-pi/extensions/gentle-todo.ts",
     group: "Agent tools",
-    omp: true,
   },
   {
     id: "graphify",
     packageName: "@runecraft/graphify-pi",
     module: "@runecraft/graphify-pi/extensions/index.ts",
-    group: "Agent tools",
-    omp: true,
-  },
-  {
-    id: "shazam",
-    packageName: "pi-shazam",
-    module: "pi-shazam/dist/index.js",
-    group: "Agent tools",
-    omp: true,
-  },
-  {
-    id: "prompt-template-model",
-    packageName: "pi-prompt-template-model",
-    module: "pi-prompt-template-model/index.ts",
     group: "Agent tools",
     omp: true,
   },
@@ -138,20 +110,6 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     group: "Integrations",
   },
   {
-    id: "intercom",
-    packageName: "pi-intercom",
-    module: "pi-intercom/index.ts",
-    group: "Integrations",
-    omp: true,
-  },
-  {
-    id: "simplify",
-    packageName: "pi-simplify",
-    module: "pi-simplify/dist/index.js",
-    group: "Context & performance",
-    omp: true,
-  },
-  {
     id: "rtk-optimizer",
     packageName: "pi-rtk-optimizer",
     module: "pi-rtk-optimizer/index.ts",
@@ -174,24 +132,10 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     omp: true,
   },
   {
-    id: "planning-with-files",
-    packageName: "@tomxprime/planning-with-files",
-    module: "@tomxprime/planning-with-files/extensions/planning-with-files/index.ts",
-    group: "Workflow",
-    omp: true,
-  },
-  {
     id: "plannotator",
     packageName: "@plannotator/pi-extension",
     module: "@plannotator/pi-extension/index.ts",
     group: "Workflow",
-    omp: true,
-  },
-  {
-    id: "caveman",
-    packageName: "pi-caveman",
-    module: "pi-caveman/extensions/caveman.ts",
-    group: "Output",
     omp: true,
   },
   {
@@ -210,7 +154,7 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
   {
     id: "web-access",
     packageName: "pi-web-access",
-    module: "pi-web-access/index.ts",
+    module: "pi-web-access/dist/index.js",
     group: "Agent tools",
     omp: true,
   },
@@ -220,12 +164,6 @@ export const BUNDLED_EXTENSION_DEFINITIONS = [
     module: "@ff-labs/pi-fff/src/index.ts",
     group: "Agent tools",
     omp: true,
-  },
-  {
-    id: "kanagawa",
-    packageName: "pi-kanagawa",
-    module: "hotmilk/src/bundled/kanagawa.ts",
-    group: "Output",
   },
 ] as const satisfies readonly BundledExtensionDefinition[];
 
@@ -250,10 +188,7 @@ export const PRE_0_2_DEFAULT_ON_IDS: readonly BundledExtensionId[] = [
   "lens",
   "docparser",
   "btw",
-  "intercom",
-  "simplify",
   "engram",
-  "caveman",
   "ponytail",
   "web-access",
 ];
@@ -287,13 +222,7 @@ export const OMP_SUPPORTED_IDS: readonly BundledExtensionId[] = BUNDLED_EXTENSIO
 ).map((definition) => definition.id);
 
 /**
- * omp release the `omp` flags were verified against (`bun run audit:omp`).
- * CI installs exactly this release; other omp versions get a session warning.
+ * omp release the `omp` flags were last verified against by a clean `bun run audit:omp`
+ * (manual, runs against the omp on PATH); other omp versions get a session warning.
  */
-export const OMP_AUDITED_VERSION = "18.8.0";
-
-/**
- * sha256 of that release's `omp-linux-x64` asset, committed here so CI checks the binary against
- * a reviewed value instead of a checksum file served by the same release it would vouch for.
- */
-export const OMP_AUDITED_SHA256 = "8fb220c84b0e15cee596f5f94bd5c44b477685aca6678a0fdaf75819f607cb98";
+export const OMP_AUDITED_VERSION = "18.8.7";

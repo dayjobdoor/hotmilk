@@ -17,10 +17,10 @@ const BANNER_LETTERS = {
   k: ["█  █", "█ █ ", "██  ", "█ █ ", "█  █"],
 } as const;
 
-/** Render the block banner spelling `text` (a-z only) as 5 equal-width rows. */
-export function renderHotmilkBanner(text = "hotmilk"): string[] {
+/** Render the "hotmilk" block banner as 5 equal-width rows. */
+export function renderHotmilkBanner(): string[] {
   const rows: string[] = ["", "", "", "", ""];
-  for (const char of text) {
+  for (const char of "hotmilk") {
     // SAFETY: the banner only spells glyphs defined in this map.
     const glyph = BANNER_LETTERS[char as keyof typeof BANNER_LETTERS];
     if (!glyph) continue;
@@ -164,8 +164,7 @@ export function introLines(tick: number, width: number, paint: Paint): string[] 
  * Play the startup intro in a widget above the editor: the banner is centered on the
  * render width and animates at {@link INTRO_TICK_MS} for {@link introTicks} frames, then
  * the widget renders nothing and its timer stops. Skipped without UI. Call on session
- * `startup` only; it shows beside kanagawa too, which uses the footer and `belowEditor`
- * widgets and never `aboveEditor`.
+ * `startup` only.
  */
 export function playHotmilkIntro(ctx: ExtensionContext): void {
   if (!ctx.hasUI) return;
