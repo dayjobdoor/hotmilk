@@ -26,7 +26,7 @@ run yourself (lint, test); reading the diff is never a check.
 `diff: <tag> ...`. One finding per line, worst first: `weakened`, `unchanged`,
 `unverified`, `drift`, `untraced`, `split`.
 
-edits a prior test is `weakened:` unless an R says the contract changed.
+A refactor that edits a prior test is `weakened:` unless an R says the contract changed.
 
 ## Score
 
