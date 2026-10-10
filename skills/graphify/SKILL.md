@@ -38,6 +38,11 @@ fuzzy-matched and can resolve to the wrong file.
 Graph empty or the area missing: say `not in graph`, fall back to reading
 source, and do not invent edges.
 
+```text
+parseConfig → loadSettings (calls) — src/config.ts:42, src/settings.ts:10
+loadSettings → readJson (calls) [from graph]
+```
+
 ## Boundaries
 
 Writes only `graphify-out/`, through `graphify_build` / `graphify_update` or

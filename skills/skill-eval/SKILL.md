@@ -78,7 +78,8 @@ ambiguities and an accuracy gain ≤ 3 points. At the cap, or after three
 iterations without a critical-item gain, stop (`cap` / `stalled`) and report
 that the target needs a rewrite; a rewrite is a new eval run. Last, if the
 tier has a hold-out, run it once; a 15-point drop from the last target-arm
-accuracy means overfit, apply another delta.
+accuracy stops the run (`overfit`): the next delta is a new eval run with a
+new hold-out.
 
 ## Output
 
