@@ -19,7 +19,9 @@ export async function resolveProjectTrustDecision(
   if (settings.mode === "never") return { trusted: "no", remember: settings.remember };
   if (settings.mode !== "prompt" || !ctx.hasUI) return { trusted: "undecided" };
   const trusted = await ctx.ui.confirm(HOTMILK_TRUST_PROMPT(cwd), "Trust project");
-  return trusted ? { trusted: "yes", remember: settings.remember } : { trusted: "no", remember: false };
+  return trusted
+    ? { trusted: "yes", remember: settings.remember }
+    : { trusted: "no", remember: false };
 }
 
 /**

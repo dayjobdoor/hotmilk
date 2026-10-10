@@ -14,20 +14,20 @@ Requires Pi 1.0 or later and Node.js 22.19+. Also runs on [omp](docs/bundles.md#
 
 ## What you get
 
-| Layer                       | Packages / assets                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Orchestration           | [gentle-pi](https://www.npmjs.com/package/gentle-pi) (el Gentleman orchestration and review, skill registry, `/gentle:doctor`) |
-| Context                 | [context-mode](https://www.npmjs.com/package/context-mode), [pi-rtk-optimizer](https://www.npmjs.com/package/pi-rtk-optimizer), [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory) |
-| Codebase graph          | [@runecraft/graphify-pi](https://www.npmjs.com/package/@runecraft/graphify-pi) (`graphify_build/query/path/explain/update` tools over the [graphify](https://github.com/Graphify-Labs/graphify) CLI) |
+| Layer                   | Packages / assets                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Orchestration           | [gentle-pi](https://www.npmjs.com/package/gentle-pi) (el Gentleman orchestration and review, skill registry, `/gentle:doctor`)                                                                                                                                                                                                                                                               |
+| Context                 | [context-mode](https://www.npmjs.com/package/context-mode), [pi-rtk-optimizer](https://www.npmjs.com/package/pi-rtk-optimizer), [pi-observational-memory](https://www.npmjs.com/package/pi-observational-memory)                                                                                                                                                                             |
+| Codebase graph          | [@runecraft/graphify-pi](https://www.npmjs.com/package/@runecraft/graphify-pi) (`graphify_build/query/path/explain/update` tools over the [graphify](https://github.com/Graphify-Labs/graphify) CLI)                                                                                                                                                                                         |
 | Subagents & interaction | `subagents`, `ask-user`, and `todo` = gentle-pi modules (`gentle-agents`: the `subagent_*` tools gentle-ai's delegation calls, `/gentle:agents`; `ask-user-question`; `gentle-todo`: the `todo` tool only, no `/todos` command; `todo` is pi-only because omp ships its own), [pi-lens](https://www.npmjs.com/package/pi-lens), [gentle-engram](https://www.npmjs.com/package/gentle-engram) |
-| Goals & docs            | [pi-goal-x](https://www.npmjs.com/package/pi-goal-x) (`/goal`, `/goal-direct`, `/sisyphus`), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                                                                                                                                                                                                                                                          |
-| Planning                | [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension) (browser plan approval) |
-| Integrations            | [pi-btw](https://www.npmjs.com/package/pi-btw) (side questions; see below)                                                                                                                                                                                                                                             |
-| Web tools               | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Search tools            | [@ff-labs/pi-fff](https://www.npmjs.com/package/@ff-labs/pi-fff) (replaces built-in find/grep)                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Experiment loops        | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Output style            | [@dietrichgebert/ponytail](https://www.npmjs.com/package/@dietrichgebert/ponytail) (lazy-senior mode); `kanagawa` ships as a plain theme in `./themes` (select it with `/settings`; no toggle) |
-| Local assets            | `./prompts`, `./skills` (`pioneer`, `pioneer-review`, `skill-eval`, `graphify`, `comfortzone`), `./themes` |
+| Goals & docs            | [pi-goal-x](https://www.npmjs.com/package/pi-goal-x) (`/goal`, `/goal-direct`, `/sisyphus`), [pi-docparser](https://www.npmjs.com/package/pi-docparser)                                                                                                                                                                                                                                      |
+| Planning                | [@plannotator/pi-extension](https://www.npmjs.com/package/@plannotator/pi-extension) (browser plan approval)                                                                                                                                                                                                                                                                                 |
+| Integrations            | [pi-btw](https://www.npmjs.com/package/pi-btw) (side questions; see below)                                                                                                                                                                                                                                                                                                                   |
+| Web tools               | [pi-web-access](https://www.npmjs.com/package/pi-web-access)                                                                                                                                                                                                                                                                                                                                 |
+| Search tools            | [@ff-labs/pi-fff](https://www.npmjs.com/package/@ff-labs/pi-fff) (replaces built-in find/grep)                                                                                                                                                                                                                                                                                               |
+| Experiment loops        | [pi-autoresearch](https://www.npmjs.com/package/pi-autoresearch)                                                                                                                                                                                                                                                                                                                             |
+| Output style            | [@dietrichgebert/ponytail](https://www.npmjs.com/package/@dietrichgebert/ponytail) (lazy-senior mode); `kanagawa` ships as a plain theme in `./themes` (select it with `/settings`; no toggle)                                                                                                                                                                                               |
+| Local assets            | `./prompts`, `./skills` (`pioneer`, `pioneer-review`, `skill-eval`, `graphify`, `comfortzone`), `./themes`                                                                                                                                                                                                                                                                                   |
 
 Only `src/index.ts` is listed in `package.json` → `pi.extensions`; every other bundled package loads dynamically when its toggle is `true`. Every bundled extension defaults off (0.2.0 minimal core), so a fresh install runs the hotmilk theme, footer, `/mode`, and the indexed skills and prompts only. An existing `hotmilk.json` keeps its saved toggles. Pi always indexes the package's `pi.skills`, `pi.prompts`, and `pi.themes` paths; `/mode` toggles do not gate them.
 
@@ -95,11 +95,11 @@ This repo ships `.npmrc` with `legacy-peer-deps=true` so `npm install` and `npm 
 
 hotmilk detects its host at startup from `CONFIG_DIR_NAME` in `@earendil-works/pi-coding-agent`:
 
-| Host | Status |
-| ---- | ------ |
-| [Pi](https://pi.dev) | Full support: bundled extensions load per `/mode` toggle |
+| Host                                                  | Status                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Pi](https://pi.dev)                                  | Full support: bundled extensions load per `/mode` toggle                                                                                                                                                                                                                                                                            |
 | [omp](https://github.com/can1357/oh-my-pi) (oh-my-pi) | Supported on the audited release; other releases work best-effort with a warning. Contract, `omp: true` rows, footer, and `(pi only)` labels: [docs/bundles.md](docs/bundles.md#omp-support). `hotmilk.json` lives in omp's agent dir (default `~/.omp/agent`). Load with `omp -e <path-to-hotmilk>` or an omp `extensions` setting |
-| [OpenClaw](https://github.com/openclaw/openclaw) | Not supported: OpenClaw loads only `openclaw.extensions` / native plugins, never `pi.extensions` |
+| [OpenClaw](https://github.com/openclaw/openclaw)      | Not supported: OpenClaw loads only `openclaw.extensions` / native plugins, never `pi.extensions`                                                                                                                                                                                                                                    |
 
 ### Project trust
 
@@ -148,17 +148,17 @@ Pi agent directory: `$PI_CODING_AGENT_DIR` when set, otherwise `~/.pi/agent`. Pi
 
 Bundled extension defaults live in [`src/config/bundled-extensions.ts`](src/config/bundled-extensions.ts). `hotmilk.json` stores user overrides and non-extension defaults; edit it with `/mode`, then run `/reload` to apply extension changes.
 
-| Key / area                        | Behavior                                                                                                                                                                                               |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `extensions.*`                    | Set to `true` to register that bundled extension (every id defaults `false`). Per-row notes, omp support, and recommendations: [docs/bundles.md](docs/bundles.md)                                                                                                                                             |
-| Enabled extensions                | `context-mode` / `rtk-optimizer` load first (context stack), then all other enabled extensions in parallel.             |
-| `graph.warnOnStale`               | Notify when `graphify-out/needs_update` exists                                                                                                                                                         |
-| `graph.autoSuggestUpdate`         | Append `graphify update .` to that notification                                                                                                                                                        |
-| `defaults.persona`                | `/mode` picker; `hotmilk.json` stays authoritative; the gentle-pi marker (`.pi/gentle-ai/persona.json`) is reconciled at session start. Supported: `gentleman`, `neutral`, `gyal`, `raiden`; default `neutral`. `gyal`/`raiden` replace gentle-pi's persona section (or append their own when `gentle-ai` is off); `gentleman` needs `gentle-ai` on. |
-| `defaults.language`               | Appends a project language hint to the system prompt each turn                                                                                                                                         |
-| `projectTrust.mode`               | Pi project trust: `delegate` (default), `prompt`, `always`, or `never`                                                                                                                                 |
-| `projectTrust.remember`           | When `mode` is `always` or `never`, persist the decision in Pi `trust.json`                                                                                                                            |
-| `notices.defaultOff020`           | Written by hotmilk after it tells you once which formerly default-on rows are now off (0.2.0); you never need to set it                                                                              |
+| Key / area                | Behavior                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extensions.*`            | Set to `true` to register that bundled extension (every id defaults `false`). Per-row notes, omp support, and recommendations: [docs/bundles.md](docs/bundles.md)                                                                                                                                                                                    |
+| Enabled extensions        | `context-mode` / `rtk-optimizer` load first (context stack), then all other enabled extensions in parallel.                                                                                                                                                                                                                                          |
+| `graph.warnOnStale`       | Notify when `graphify-out/needs_update` exists                                                                                                                                                                                                                                                                                                       |
+| `graph.autoSuggestUpdate` | Append `graphify update .` to that notification                                                                                                                                                                                                                                                                                                      |
+| `defaults.persona`        | `/mode` picker; `hotmilk.json` stays authoritative; the gentle-pi marker (`.pi/gentle-ai/persona.json`) is reconciled at session start. Supported: `gentleman`, `neutral`, `gyal`, `raiden`; default `neutral`. `gyal`/`raiden` replace gentle-pi's persona section (or append their own when `gentle-ai` is off); `gentleman` needs `gentle-ai` on. |
+| `defaults.language`       | Appends a project language hint to the system prompt each turn                                                                                                                                                                                                                                                                                       |
+| `projectTrust.mode`       | Pi project trust: `delegate` (default), `prompt`, `always`, or `never`                                                                                                                                                                                                                                                                               |
+| `projectTrust.remember`   | When `mode` is `always` or `never`, persist the decision in Pi `trust.json`                                                                                                                                                                                                                                                                          |
+| `notices.defaultOff020`   | Written by hotmilk after it tells you once which formerly default-on rows are now off (0.2.0); you never need to set it                                                                                                                                                                                                                              |
 
 context-mode: the extension registers `ctx_*` via its built-in bridge (same module as [upstream `.pi/extensions/context-mode`](https://github.com/mksglu/context-mode/tree/main/.pi/extensions/context-mode), loaded from `build/adapters/pi/extension.js`). hotmilk does not manage `mcp.json` or bundle an MCP adapter: Pi 1.0 has built-in MCP (`pi mcp add`, `/mcp`, [docs](https://pi.dev/docs/latest/mcp)), and omp reads its own `mcp.json`. Do not also list `context-mode` as an MCP server there; that registers `ctx_*` twice.
 
@@ -176,11 +176,11 @@ Two companions follow ponytail's core + companion shape. [`pioneer-review`](skil
 
 Pi resolves assets at user (global), project, and package layers. hotmilk ships package defaults; you override per machine or per repo. hotmilk ships no subagent prompts: its change-flow practice lives in the [`pioneer`](skills/pioneer/SKILL.md) skill (`/pioneer` or `/skill:pioneer`).
 
-| Layer             | Config                                                                    | Skills / prompts                                                                                              |
-| ----------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| User (global) | `<agent dir>/hotmilk.json`, `<agent dir>/settings.json`                   | User skill dirs indexed by gentle-pi `skill-registry`                                                         |
-| Project       | `.pi/settings.json` (omp: `.omp/`)                                        | `.pi/skills/`; legacy `.agents/skills/`                                                                       |
-| Package       | `pi install npm:hotmilk`                                                  | `package.json` → `pi.skills`, `pi.prompts`, `pi.themes` (always indexed; extension toggles do not gate these) |
+| Layer         | Config                                                  | Skills / prompts                                                                                              |
+| ------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| User (global) | `<agent dir>/hotmilk.json`, `<agent dir>/settings.json` | User skill dirs indexed by gentle-pi `skill-registry`                                                         |
+| Project       | `.pi/settings.json` (omp: `.omp/`)                      | `.pi/skills/`; legacy `.agents/skills/`                                                                       |
+| Package       | `pi install npm:hotmilk`                                | `package.json` → `pi.skills`, `pi.prompts`, `pi.themes` (always indexed; extension toggles do not gate these) |
 
 ### Environment variables
 
@@ -188,49 +188,49 @@ Pi and bundled extensions read the process environment. hotmilk never reads dire
 
 omp directories (omp resolves them; full list in omp's `environment-variables` doc):
 
-| Variable | Effect on hotmilk under omp |
-| -------- | --------------------------- |
-| `OMP_PROFILE` (legacy `PI_PROFILE`) | Named profile: agent dir becomes `~/.omp/profiles/<name>/agent`, so each profile has its own `hotmilk.json`. `OMP_PROFILE` wins even when empty |
-| `PI_CODING_AGENT_DIR` | Agent dir override for the default profile only; named profiles ignore it |
-| `PI_CONFIG_DIR` | Home config root name (default `.omp`); moves the default agent dir to `~/<name>/agent`. The project dir stays `.omp` |
-| `XDG_DATA_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME` | Relocate omp data only when the target omp root already exists |
+| Variable                                            | Effect on hotmilk under omp                                                                                                                     |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OMP_PROFILE` (legacy `PI_PROFILE`)                 | Named profile: agent dir becomes `~/.omp/profiles/<name>/agent`, so each profile has its own `hotmilk.json`. `OMP_PROFILE` wins even when empty |
+| `PI_CODING_AGENT_DIR`                               | Agent dir override for the default profile only; named profiles ignore it                                                                       |
+| `PI_CONFIG_DIR`                                     | Home config root name (default `.omp`); moves the default agent dir to `~/<name>/agent`. The project dir stays `.omp`                           |
+| `XDG_DATA_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME` | Relocate omp data only when the target omp root already exists                                                                                  |
 
 Notifications show the resolved path home-relative (for example `~/.omp/profiles/work/agent/hotmilk.json`).
 
 Pi core (full list in [Pi usage: environment variables](https://pi.dev/docs/latest/usage#environment-variables)):
 
-| Variable                      | Purpose                                                                                                                       |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Variable                      | Purpose                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `PI_CODING_AGENT_DIR`         | Override agent config dir (default `~/.pi/agent`). hotmilk uses this for `hotmilk.json` and global settings dedupe |
-| `PI_CODING_AGENT_SESSION_DIR` | Override session storage (also `--session-dir`)                                                                               |
-| `PI_PACKAGE_DIR`              | Override package dir (Nix/Guix store paths)                                                                                   |
-| `PI_OFFLINE`                  | Disable startup network (update checks, package checks, install telemetry)                                                    |
-| `PI_SKIP_VERSION_CHECK`       | Skip `pi.dev` latest-version check only                                                                                       |
-| `PI_TELEMETRY`                | Opt in/out of install/update telemetry and provider attribution headers (`1`/`0`)                                             |
-| `PI_CACHE_RETENTION`          | `long` for extended prompt cache where supported                                                                              |
-| `PI_TIMING`                   | `1`: emit timing diagnostics                                                                                                 |
-| `PI_HARDWARE_CURSOR`          | `1`: show hardware cursor (IME / some terminals)                                                                             |
-| `PI_TUI_WRITE_LOG`            | Path; log raw TUI ANSI to a file (debug)                                                                                     |
-| `VISUAL`, `EDITOR`            | External editor for Ctrl+G                                                                                                    |
+| `PI_CODING_AGENT_SESSION_DIR` | Override session storage (also `--session-dir`)                                                                    |
+| `PI_PACKAGE_DIR`              | Override package dir (Nix/Guix store paths)                                                                        |
+| `PI_OFFLINE`                  | Disable startup network (update checks, package checks, install telemetry)                                         |
+| `PI_SKIP_VERSION_CHECK`       | Skip `pi.dev` latest-version check only                                                                            |
+| `PI_TELEMETRY`                | Opt in/out of install/update telemetry and provider attribution headers (`1`/`0`)                                  |
+| `PI_CACHE_RETENTION`          | `long` for extended prompt cache where supported                                                                   |
+| `PI_TIMING`                   | `1`: emit timing diagnostics                                                                                       |
+| `PI_HARDWARE_CURSOR`          | `1`: show hardware cursor (IME / some terminals)                                                                   |
+| `PI_TUI_WRITE_LOG`            | Path; log raw TUI ANSI to a file (debug)                                                                           |
+| `VISUAL`, `EDITOR`            | External editor for Ctrl+G                                                                                         |
 
 LLM providers (Pi `auth.json` → env fallback; not hotmilk-specific): common keys include `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_API_KEY`, Azure (`AZURE_OPENAI_*`), Vertex (`GOOGLE_CLOUD_*`). See [@earendil-works/pi-ai](https://www.npmjs.com/package/@earendil-works/pi-ai) for the full provider table.
 
 hotmilk-owned:
 
-| Variable              | Purpose                                                                                                                            |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `HOTMILK_CONFIG_ROOT` | Test/sandbox override for the directory that contains `hotmilk.json`. Wins over the host agent dir. Normal installs leave unset |
+| Variable              | Purpose                                                                                                                                      |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HOTMILK_CONFIG_ROOT` | Test/sandbox override for the directory that contains `hotmilk.json`. Wins over the host agent dir. Normal installs leave unset              |
 | `HOTMILK_OMP_UNGATED` | `1`: under omp, load enabled rows even without the `omp` flag. Honored only together with `OMP_AUDIT_TOOLS`, i.e. inside `bun run audit:omp` |
 
 Bundled extensions (only when the matching `/mode` toggle is on):
 
-| Variable                                              | Toggle / package | Purpose                                               |
-| ----------------------------------------------------- | ---------------- | ----------------------------------------------------- |
-| `GENTLE_PI_AGENTS=0`                                  | `subagents`      | Disable gentle-agents without flipping the toggle     |
-| `GENTLE_PI_AGENTS_PI`                                 | `subagents`      | Command used to spawn child agents (default `pi`)     |
-| `GEMINI_API_KEY`, `GOOGLE_API_KEY`                    | `graphify` (CLI) | Semantic extraction backend for `graphify extract`    |
-| `GRAPHIFY_GEMINI_MODEL`, `GRAPHIFY_WHISPER_MODEL`     | `graphify` (CLI) | Override graphify LLM / Whisper model                 |
-| `EXA_API_KEY`, `PERPLEXITY_API_KEY`, `GEMINI_API_KEY` | `web-access`     | Search / fetch keys (`~/.pi/web-search.json` also)    |
+| Variable                                              | Toggle / package | Purpose                                              |
+| ----------------------------------------------------- | ---------------- | ---------------------------------------------------- |
+| `GENTLE_PI_AGENTS=0`                                  | `subagents`      | Disable gentle-agents without flipping the toggle    |
+| `GENTLE_PI_AGENTS_PI`                                 | `subagents`      | Command used to spawn child agents (default `pi`)    |
+| `GEMINI_API_KEY`, `GOOGLE_API_KEY`                    | `graphify` (CLI) | Semantic extraction backend for `graphify extract`   |
+| `GRAPHIFY_GEMINI_MODEL`, `GRAPHIFY_WHISPER_MODEL`     | `graphify` (CLI) | Override graphify LLM / Whisper model                |
+| `EXA_API_KEY`, `PERPLEXITY_API_KEY`, `GEMINI_API_KEY` | `web-access`     | Search / fetch keys (`~/.pi/web-search.json` also)   |
 | `PI_ALLOW_BROWSER_COOKIES`                            | `web-access`     | `1`: allow Chromium cookie extraction for Gemini Web |
 | `CTX_FETCH_STRICT`                                    | `context-mode`   | `1`: stricter fetch routing in context-mode          |
 
@@ -238,12 +238,12 @@ CI / publish (this repo only): GitHub Actions uses secret `NPM_TOKEN`, mapped to
 
 ### pi-btw (side questions)
 
-| Do this                                    | Tool                                                          |
-| ------------------------------------------ | ------------------------------------------------------------- |
+| Do this                                    | Tool                                                           |
+| ------------------------------------------ | -------------------------------------------------------------- |
 | Exploration, implementation, review        | subagents (`subagent_*` tools; `/pioneer` for the change flow) |
-| Ask a quick question while main is working | `/btw` or `/btw:tangent` (`Alt+/` toggles BTW ↔ main) |
-| Same context, structurally read-only tools | `/btw:ask`                                                |
-| Bring BTW results back to the main thread  | `/btw:inject`                                             |
+| Ask a quick question while main is working | `/btw` or `/btw:tangent` (`Alt+/` toggles BTW ↔ main)          |
+| Same context, structurally read-only tools | `/btw:ask`                                                     |
+| Bring BTW results back to the main thread  | `/btw:inject`                                                  |
 
 The `btw` row loads upstream [pi-btw](https://www.npmjs.com/package/pi-btw) as is. BTW runs a separate Pi session whose tool surface, prompt, and extension sources are pi-btw's: it loads no extensions unless `~/.pi/agent/btw.json` lists them (for example `{"extensions": ["npm:pi-web-access"]}`; see the pi-btw README). hotmilk adds no BTW prompt shaping or proxy tools (retired in 0.2.0: the `createAgentSession` wrap it relied on does not take effect on Pi 1.0).
 

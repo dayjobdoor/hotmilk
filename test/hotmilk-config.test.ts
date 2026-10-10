@@ -164,11 +164,7 @@ describe("seedHotmilkConfigIfMissing", () => {
 describe("loadHotmilkConfig", () => {
   it("loads the file, falls back to defaults, and never writes", async () => {
     const withFile = tempConfigDir();
-    writeFileSync(
-      getHotmilkConfigPath(withFile),
-      '{"extensions":{"context-mode":false}}',
-      "utf8",
-    );
+    writeFileSync(getHotmilkConfigPath(withFile), '{"extensions":{"context-mode":false}}', "utf8");
     const loaded = loadHotmilkConfig(withFile);
     expect(loaded.config.extensions?.["context-mode"]).toBe(false);
     expect(loaded.path).toBe(getHotmilkConfigPath(withFile));
@@ -212,7 +208,11 @@ describe("0.2.0 default-off notice state", () => {
 
   it("records the marker through load/save, and never overwrites a config that failed to parse", () => {
     const root = tempConfigDir();
-    writeFileSync(getHotmilkConfigPath(root), '{"extensions":{"btw":true},"defaults":{"persona":"gyal"}}', "utf8");
+    writeFileSync(
+      getHotmilkConfigPath(root),
+      '{"extensions":{"btw":true},"defaults":{"persona":"gyal"}}',
+      "utf8",
+    );
     expect(markDefaultOffNoticeSeen(root).error).toBeUndefined();
     const loaded = loadHotmilkConfig(root).config;
     expect(loaded).toMatchObject({

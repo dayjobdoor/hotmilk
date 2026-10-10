@@ -17,11 +17,11 @@ the body: triggers, scope, outputs. Fix mismatches before any run.
 
 ## 1. Freeze
 
-| Stakes | Scenarios | Critical items | Iteration cap |
-| ------ | --------: | -------------: | ------------: |
-| High (security, data loss, release gate) | 3 | 2+ | none |
-| Standard | 2 | 1+ | 5 |
-| Low | 2 | 1+ | 3 |
+| Stakes                                   | Scenarios | Critical items | Iteration cap |
+| ---------------------------------------- | --------: | -------------: | ------------: |
+| High (security, data loss, release gate) |         3 |             2+ |          none |
+| Standard                                 |         2 |             1+ |             5 |
+| Low                                      |         2 |             1+ |             3 |
 
 - Scenarios: one median, one edge, plus one hold-out kept unseen until the end.
 - Checklist per scenario: 3–7 observable items, at least one `[critical]`. A
@@ -40,7 +40,9 @@ Executor task:
 
 ```markdown
 You are a fresh executor. Edit nothing outside a scratch dir; spawn no agents.
-## Target Prompt        (target arm only)
+
+## Target Prompt (target arm only)
+
 <full target text>
 ## Scenario
 <one scenario>

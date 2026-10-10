@@ -20,12 +20,12 @@ Requirements ─ acceptance test design           acceptance test ─ fix
 
 ## Size the change
 
-| Signal | Levels |
-| ------ | ------ |
-| Typo, one-line fix, known single-file change | Code only: write the unit check, change, run it |
-| Bug fix or small feature in one module | Requirements + code |
-| Multi-file, new behavior, or public contract change | All four levels |
-| Scope, goal, or acceptance unclear | Stop at requirements; ask (at most three questions) and wait for the answers before any design |
+| Signal                                              | Levels                                                                                         |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Typo, one-line fix, known single-file change        | Code only: write the unit check, change, run it                                                |
+| Bug fix or small feature in one module              | Requirements + code                                                                            |
+| Multi-file, new behavior, or public contract change | All four levels                                                                                |
+| Scope, goal, or acceptance unclear                  | Stop at requirements; ask (at most three questions) and wait for the answers before any design |
 
 Skip levels that do not apply and say which were skipped. Never skip the
 check for a level you run.
@@ -68,16 +68,17 @@ Write one W table in chat. No plan file unless the user asks.
 
 ```markdown
 ## Change
+
 Horizon: <quoted roadmap item, or "none: defect/request"> — slice: <this change>
 <problem in one sentence>
 Known: <facts read> — Assumed: <unverified> — Unchanged: <what must not change>
 
-| Level | Build | Test design | Review gate |
-| ----- | ----- | ----------- | ----------- |
-| Requirements | R1 … | A1 (R1): <command/action> → <expected> | Each R observable and testable; traces to the horizon item; sequencing gates met |
-| System design | files, entry points, config touched | S1 (R1): <end-to-end run> → <expected> | Every R traced to a design element; roadmap principles hold |
-| Detailed design | functions, interfaces, callers | I1: <seam/contract test> → <expected> | Callers of changed symbols found; interfaces named |
-| Code | edit steps | U1: <unit test> → <expected> | lint/typecheck clean |
+| Level           | Build                               | Test design                            | Review gate                                                                      |
+| --------------- | ----------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+| Requirements    | R1 …                                | A1 (R1): <command/action> → <expected> | Each R observable and testable; traces to the horizon item; sequencing gates met |
+| System design   | files, entry points, config touched | S1 (R1): <end-to-end run> → <expected> | Every R traced to a design element; roadmap principles hold                      |
+| Detailed design | functions, interfaces, callers      | I1: <seam/contract test> → <expected>  | Callers of changed symbols found; interfaces named                               |
+| Code            | edit steps                          | U1: <unit test> → <expected>           | lint/typecheck clean                                                             |
 ```
 
 1. **Requirements**: derive numbered requirements (R1…) from the horizon item

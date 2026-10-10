@@ -67,7 +67,8 @@ export function createHotmilkRuntime(
   // reach packages hotmilk imports itself, and one failing row aborts hotmilk.
   // HOTMILK_OMP_UNGATED=1 loads every enabled row anyway, but only inside `bun run audit:omp`
   // (which also sets OMP_AUDIT_TOOLS): a stray inherited variable must not lift the gate.
-  const ungated = process.env.HOTMILK_OMP_UNGATED === "1" && process.env.OMP_AUDIT_TOOLS !== undefined;
+  const ungated =
+    process.env.HOTMILK_OMP_UNGATED === "1" && process.env.OMP_AUDIT_TOOLS !== undefined;
   const gated = harness === "omp" && !ungated;
   const harnessSkips = gated
     ? BUNDLED_EXTENSION_IDS.filter((id) => extensionToggles[id] && !OMP_SUPPORTED_IDS.includes(id))

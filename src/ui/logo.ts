@@ -49,7 +49,9 @@ function splitHalves(char: string): readonly [string, string] {
 /** Pure: scale block rows 2× (each cell becomes 2 columns × 2 rows; half blocks split cleanly). */
 export function scaleBanner(rows: readonly string[]): string[] {
   return rows.flatMap((row) =>
-    [0, 1].map((half) => Array.from(row, (char) => (splitHalves(char)[half] ?? char).repeat(2)).join("")),
+    [0, 1].map((half) =>
+      Array.from(row, (char) => (splitHalves(char)[half] ?? char).repeat(2)).join(""),
+    ),
   );
 }
 
@@ -85,7 +87,11 @@ export function introTicks(width: number): number {
 }
 
 /** Paint `row` column by column; consecutive columns with the same role share one color run. */
-function paintColumns(row: string, roleAt: (col: number) => ThemeColor | null, paint: Paint): string {
+function paintColumns(
+  row: string,
+  roleAt: (col: number) => ThemeColor | null,
+  paint: Paint,
+): string {
   let out = "";
   let run = "";
   let runRole: ThemeColor | null = null;
@@ -145,7 +151,9 @@ export function introLines(tick: number, width: number, paint: Paint): string[] 
     if (index >= height - level) return line(row, (col) => (inBand(col) ? "accent" : milk));
     if (index === height - level - 1) {
       return line(
-        Array.from(row, (char, col) => (char === " " ? " " : (col + tick) % 2 ? "∿" : "~")).join(""),
+        Array.from(row, (char, col) => (char === " " ? " " : (col + tick) % 2 ? "∿" : "~")).join(
+          "",
+        ),
         () => "accent",
       );
     }
@@ -183,7 +191,9 @@ export function playHotmilkIntro(ctx: ExtensionContext): void {
       return {
         render(renderWidth: number): string[] {
           width = renderWidth;
-          return introLines(tick, renderWidth, paint).map((line) => truncateToWidth(line, renderWidth));
+          return introLines(tick, renderWidth, paint).map((line) =>
+            truncateToWidth(line, renderWidth),
+          );
         },
         invalidate() {},
         dispose() {

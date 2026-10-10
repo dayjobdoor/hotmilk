@@ -33,7 +33,11 @@ describe("scaleBanner", () => {
 });
 
 describe("introLines", () => {
-  const solid = (lines: string[]) => lines.map(plain).join("").replace(/[^█▄▀]/g, "").length;
+  const solid = (lines: string[]) =>
+    lines
+      .map(plain)
+      .join("")
+      .replace(/[^█▄▀]/g, "").length;
   const ink = (lines: string[]) => lines.map(plain).join("\n");
 
   it("fills the letters from the bottom: ink grows through the rise, bottom rows first", () => {
@@ -80,7 +84,10 @@ describe("playHotmilkIntro", () => {
       ui: {
         setWidget: (
           name: string,
-          factory: (tui: TUI, theme: Theme) => { render: (width: number) => string[]; dispose: () => void },
+          factory: (
+            tui: TUI,
+            theme: Theme,
+          ) => { render: (width: number) => string[]; dispose: () => void },
           opts: { placement: string },
         ) => {
           placements.push({ name, placement: opts.placement });

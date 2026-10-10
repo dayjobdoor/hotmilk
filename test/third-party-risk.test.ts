@@ -127,7 +127,10 @@ describe("third-party risk (hotmilk meta-package)", () => {
       ...Object.keys(PACKAGE_JSON.devDependencies ?? {}),
       ...Object.keys(PACKAGE_JSON.overrides ?? {}),
     ].filter((name) => name.startsWith("@mariozechner/"));
-    expect(legacyEntries, "the pre-rename @mariozechner scope was eliminated — do not reintroduce (pi imports are virtualized to the host)").toEqual([]);
+    expect(
+      legacyEntries,
+      "the pre-rename @mariozechner scope was eliminated — do not reintroduce (pi imports are virtualized to the host)",
+    ).toEqual([]);
   });
 
   it("resolves installed copies at or above their declared semver floors", () => {
@@ -176,12 +179,18 @@ describe("third-party risk (hotmilk meta-package)", () => {
     const pi = installedPackageVersion(PI_CODING_AGENT_PACKAGE);
     const tracked = new Set(BUNDLED_PEER_RANGES_EXCLUDING_PI_080);
     const packages = new Set(
-      BUNDLED_EXTENSION_DEFINITIONS.filter((row) => !row.module.startsWith("hotmilk/")).map((row) => row.packageName),
+      BUNDLED_EXTENSION_DEFINITIONS.filter((row) => !row.module.startsWith("hotmilk/")).map(
+        (row) => row.packageName,
+      ),
     );
     const untracked = [...packages].filter(
-      (name) => !tracked.has(name) && bundledPiPeerRanges(name).some((range) => !satisfies(pi, range)),
+      (name) =>
+        !tracked.has(name) && bundledPiPeerRanges(name).some((range) => !satisfies(pi, range)),
     );
-    expect(untracked, `bundled rows whose peers exclude Pi ${pi}: add to BUNDLED_PEER_RANGES_EXCLUDING_PI_080 and README peer notes`).toEqual([]);
+    expect(
+      untracked,
+      `bundled rows whose peers exclude Pi ${pi}: add to BUNDLED_PEER_RANGES_EXCLUDING_PI_080 and README peer notes`,
+    ).toEqual([]);
   });
 
   it(
@@ -202,7 +211,6 @@ describe("third-party risk (hotmilk meta-package)", () => {
         unexpected.map((entry) => `${entry.name}@${entry.version} (${entry.path})`),
         "unexpected nested @earendil-works below 0.80 — add to KNOWN_NESTED_DRIFT_BELOW_080 or fix upstream",
       ).toEqual([]);
-
     },
   );
 });

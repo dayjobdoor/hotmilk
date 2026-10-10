@@ -237,10 +237,7 @@ function projectSettingsReferenceCopy(cwd: string): boolean {
     }
     const baseDir = path.join(cwd, PI_PROJECT_CONFIG_DIR);
     const copyPaths = [cwd, path.join(cwd, "src"), path.join(cwd, "src", "index.ts")];
-    for (const entry of [
-      ...toStringArray(parsed.packages),
-      ...toStringArray(parsed.extensions),
-    ]) {
+    for (const entry of [...toStringArray(parsed.packages), ...toStringArray(parsed.extensions)]) {
       if (/^(npm:|git:|github:|http:|https:|ssh:)/.test(entry.trim())) {
         continue;
       }

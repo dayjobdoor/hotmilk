@@ -4,12 +4,12 @@ Lint and format design for hotmilk. Commands and CI pins: [tech.md](tech.md). Wh
 
 ## Commands
 
-| Command | Purpose |
-| ------- | ------- |
-| `bun run lint` | Oxlint via vite-plus (`vp lint`); CI gate |
-| `bun run format` | Formatter (`vp fmt --write`) |
-| `bun run check` | Format check + lint (`vp check`); does not run tests |
-| `bun run test` | Vitest via vite-plus |
+| Command          | Purpose                                              |
+| ---------------- | ---------------------------------------------------- |
+| `bun run lint`   | Oxlint via vite-plus (`vp lint`); CI gate            |
+| `bun run format` | Formatter (`vp fmt --write`)                         |
+| `bun run check`  | Format check + lint (`vp check`); does not run tests |
+| `bun run test`   | Vitest via vite-plus                                 |
 
 Sources: [package.json](../package.json) scripts, [.github/workflows/publish.yml](../.github/workflows/publish.yml).
 
@@ -35,13 +35,13 @@ Borrowed from ponytail and pi-simplify, reference Pi extensions (neither is bund
 
 Parse external input once at I/O boundaries. Keep contracts explicit. Justify type assertions with a nearby `// SAFETY:` comment.
 
-| Theme | Rules | Why |
-| ----- | ----- | --- |
-| Boundaries | `no-unknown-parameters`, `no-unknown-returns`, `no-unknown-type-aliases`, `no-unsafe-dictionary-type`, `no-runtime-typeof` | `unknown` stays at the edge, not in function contracts |
-| Assertions | `no-chained-type-assertions`, `no-widen-then-assert`, `require-safety-comment-for-type-assertion` | Assertions document invariants TypeScript cannot express |
-| Structure | `no-object-parameters`, `no-conditional-empty-object-spread`, `no-known-value-widening` | Avoid shapes that discard evidence the type checker already had |
-| Reflection / tests | `no-reflect-apply`, `no-reflect-get`, `no-module-mocking` | Typed interfaces and real fakes instead of reflection or `vi.mock` |
-| Naming | `no-shape-in-symbol-names` | Ban low-signal tokens in symbol names |
+| Theme              | Rules                                                                                                                      | Why                                                                |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Boundaries         | `no-unknown-parameters`, `no-unknown-returns`, `no-unknown-type-aliases`, `no-unsafe-dictionary-type`, `no-runtime-typeof` | `unknown` stays at the edge, not in function contracts             |
+| Assertions         | `no-chained-type-assertions`, `no-widen-then-assert`, `require-safety-comment-for-type-assertion`                          | Assertions document invariants TypeScript cannot express           |
+| Structure          | `no-object-parameters`, `no-conditional-empty-object-spread`, `no-known-value-widening`                                    | Avoid shapes that discard evidence the type checker already had    |
+| Reflection / tests | `no-reflect-apply`, `no-reflect-get`, `no-module-mocking`                                                                  | Typed interfaces and real fakes instead of reflection or `vi.mock` |
+| Naming             | `no-shape-in-symbol-names`                                                                                                 | Ban low-signal tokens in symbol names                              |
 
 Rule severity: [vite.config.ts](../vite.config.ts) `lint.rules`. Implementations: [tools/oxlint/anti-slop/rules/](../tools/oxlint/anti-slop/rules/).
 

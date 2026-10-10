@@ -333,7 +333,9 @@ describe("registerSessionHandlers", () => {
     expect(notices.map(({ message }) => message)).toEqual([
       expect.stringContaining("Created ~/.omp/agent/hotmilk.json"),
       expect.stringContaining("Failed to parse"),
-      expect.stringContaining("pi-only bundled extensions skipped (not flagged omp in the registry): todo, btw"),
+      expect.stringContaining(
+        "pi-only bundled extensions skipped (not flagged omp in the registry): todo, btw",
+      ),
       expect.stringContaining("omp 99.0.0 is not the audited release"),
       expect.stringContaining("Adjusted pi-rtk-optimizer"),
       expect.stringContaining("graphify: global graphify-pi"),
@@ -344,9 +346,14 @@ describe("registerSessionHandlers", () => {
   it("stays silent when there is nothing to report (pi, aligned rtk, omp on the audited release)", () => {
     const none = { projectSkips: [] };
     expect(sessionStartNotices(testRuntime(), none)).toEqual([]);
-    expect(sessionStartNotices(testRuntime({ rtkSync: { path: "/a", outcome: "unchanged" } }), none)).toEqual([]);
     expect(
-      sessionStartNotices(testRuntime({ harness: "omp", harnessVersion: OMP_AUDITED_VERSION }), none),
+      sessionStartNotices(testRuntime({ rtkSync: { path: "/a", outcome: "unchanged" } }), none),
+    ).toEqual([]);
+    expect(
+      sessionStartNotices(
+        testRuntime({ harness: "omp", harnessVersion: OMP_AUDITED_VERSION }),
+        none,
+      ),
     ).toEqual([]);
   });
 
@@ -356,7 +363,12 @@ describe("registerSessionHandlers", () => {
       { projectSkips: [] },
     );
     expect(notices).toEqual([
-      { message: expect.stringContaining("Could not sync pi-rtk-optimizer config at /a/rtk.json: EACCES"), level: "warning" },
+      {
+        message: expect.stringContaining(
+          "Could not sync pi-rtk-optimizer config at /a/rtk.json: EACCES",
+        ),
+        level: "warning",
+      },
     ]);
   });
 

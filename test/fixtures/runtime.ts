@@ -1,5 +1,8 @@
 import type { HotmilkRuntime } from "../../src/config/runtime.ts";
-import { BUNDLED_EXTENSION_IDS, type BundledExtensionId } from "../../src/config/bundled-extensions.ts";
+import {
+  BUNDLED_EXTENSION_IDS,
+  type BundledExtensionId,
+} from "../../src/config/bundled-extensions.ts";
 
 /** Every bundled extension id disabled. */
 export function allExtensionsDisabled(): Record<BundledExtensionId, boolean> {

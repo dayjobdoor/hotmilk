@@ -217,9 +217,10 @@ function buildBundledExtensionGroups(): BundledExtensionGroup[] {
 export const BUNDLED_EXTENSION_GROUPS = buildBundledExtensionGroups();
 
 /** Ids flagged `omp: true`: the only rows hotmilk loads under omp. */
-export const OMP_SUPPORTED_IDS: readonly BundledExtensionId[] = BUNDLED_EXTENSION_DEFINITIONS.filter(
-  (definition) => "omp" in definition && definition.omp === true,
-).map((definition) => definition.id);
+export const OMP_SUPPORTED_IDS: readonly BundledExtensionId[] =
+  BUNDLED_EXTENSION_DEFINITIONS.filter(
+    (definition) => "omp" in definition && definition.omp === true,
+  ).map((definition) => definition.id);
 
 /**
  * omp release the `omp` flags were last verified against by a clean `bun run audit:omp`

@@ -16,7 +16,10 @@ import type { Harness } from "../config/runtime.ts";
 /** Derived from {@link BUNDLED_EXTENSION_DEFINITIONS} — one loader per manifest row. */
 // SAFETY: every BundledExtensionId is present because we map BUNDLED_EXTENSION_DEFINITIONS.
 const BUNDLED_EXTENSION_LOADERS = Object.fromEntries(
-  BUNDLED_EXTENSION_DEFINITIONS.map((definition) => [definition.id, () => import(bundledImportUrl(definition.module))]),
+  BUNDLED_EXTENSION_DEFINITIONS.map((definition) => [
+    definition.id,
+    () => import(bundledImportUrl(definition.module)),
+  ]),
 ) as Record<BundledExtensionId, () => Promise<ExtensionModule>>;
 
 /** A bundled row that failed to import or register; reported at session start, never thrown. */

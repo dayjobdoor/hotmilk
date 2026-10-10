@@ -146,7 +146,9 @@ function run(extensions: Record<string, boolean>): Promise<Surface> {
       stdout += chunk.toString();
       if (!asked && stdout.includes('"type":"ready"')) {
         asked = true;
-        proc.stdin.write('{"id":"c","type":"get_available_commands"}\n{"id":"t","type":"prompt","message":"/audit-tools"}\n');
+        proc.stdin.write(
+          '{"id":"c","type":"get_available_commands"}\n{"id":"t","type":"prompt","message":"/audit-tools"}\n',
+        );
       }
       if (stdout.includes('"type":"prompt_result","id":"t"')) finish();
     });
@@ -188,7 +190,9 @@ if (unknownIds.length > 0) {
 
 const baseline = await runStable({});
 if (baseline.error) throw new Error(`baseline failed: ${baseline.error}`);
-const ownCommands = ["mode", "stop", "interrupt"].filter((name) => !baseline.commands.includes(name));
+const ownCommands = ["mode", "stop", "interrupt"].filter(
+  (name) => !baseline.commands.includes(name),
+);
 if (ownCommands.length > 0) {
   throw new Error(`baseline is missing hotmilk command(s): ${ownCommands.join(", ")}`);
 }

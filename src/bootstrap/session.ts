@@ -124,7 +124,10 @@ export function sessionStartNotices(runtime: HotmilkRuntime, facts: SessionStart
       : undefined,
     "warning",
   );
-  add(runtime.harnessSkips.length > 0 ? OMP_HARNESS_SKIP_MESSAGE(runtime.harnessSkips) : undefined, "warning");
+  add(
+    runtime.harnessSkips.length > 0 ? OMP_HARNESS_SKIP_MESSAGE(runtime.harnessSkips) : undefined,
+    "warning",
+  );
   add(
     runtime.harness === "omp" && runtime.harnessVersion !== OMP_AUDITED_VERSION
       ? OMP_UNAUDITED_VERSION_MESSAGE(runtime.harnessVersion)
@@ -133,7 +136,12 @@ export function sessionStartNotices(runtime: HotmilkRuntime, facts: SessionStart
   );
   const rtk = runtime.rtkSync;
   add(rtk?.outcome === "updated" ? RTK_UPDATED_MESSAGE : undefined, "info");
-  add(rtk?.outcome === "failed" ? RTK_FAILED_MESSAGE(rtk.path, rtk.error ?? "unknown error") : undefined, "warning");
+  add(
+    rtk?.outcome === "failed"
+      ? RTK_FAILED_MESSAGE(rtk.path, rtk.error ?? "unknown error")
+      : undefined,
+    "warning",
+  );
   add(
     formatExtensionSkipsMessage(
       runtime.globalExtensionSkips,
@@ -178,7 +186,9 @@ export function registerSessionHandlers(pi: ExtensionAPI, runtime: HotmilkRuntim
       seededPath: seedHotmilkConfigIfMissing().seeded ? hotmilkConfigDisplayPath() : undefined,
       projectSkips: trusted ? detectProjectOnlyBundledSkips(ctx.cwd) : [],
       untrustedProjectAgents:
-        runtime.extensionToggles.subagents && !trusted ? detectProjectAgentDefinitions(ctx.cwd) : [],
+        runtime.extensionToggles.subagents && !trusted
+          ? detectProjectAgentDefinitions(ctx.cwd)
+          : [],
     });
     for (const { message, level } of notices) uiNotify(message, level);
     // Shown once: record it only after the notices went out.

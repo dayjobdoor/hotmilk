@@ -10,12 +10,12 @@ in the source before you claim or change anything.
 
 ## Pick the tool
 
-| Question | Tool |
-| -------- | ---- |
+| Question                                               | Tool                                                                  |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
 | "How does the codebase handle X?", overview of an area | `graphify_query` (raise `budget` only when the subgraph is cut short) |
-| "How is A connected to B?" | `graphify_path` |
-| "What is X and what touches it?" | `graphify_explain` |
-| Exact symbol, string, or file | not graphify: grep/LSP |
+| "How is A connected to B?"                             | `graphify_path`                                                       |
+| "What is X and what touches it?"                       | `graphify_explain`                                                    |
+| Exact symbol, string, or file                          | not graphify: grep/LSP                                                |
 
 ## Freshness
 

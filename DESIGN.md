@@ -30,11 +30,11 @@ hotmilk adds five surfaces to the Pi TUI: a startup intro animation, a footer wr
 
 ## Colors
 
-| Token    | Value     | Use                                                        |
-| -------- | --------- | ---------------------------------------------------------- |
-| primary  | `#E8E8E3` | Footer working-directory and stats lines (Pi default text) |
-| accent   | `#F92772` | `/mode` title, bold (monokai `purple`)                     |
-| dim      | `#8b8674` | Extension status lines, clock metadata (monokai `comment`) |
+| Token   | Value     | Use                                                        |
+| ------- | --------- | ---------------------------------------------------------- |
+| primary | `#E8E8E3` | Footer working-directory and stats lines (Pi default text) |
+| accent  | `#F92772` | `/mode` title, bold (monokai `purple`)                     |
+| dim     | `#8b8674` | Extension status lines, clock metadata (monokai `comment`) |
 
 Notify levels `info` / `warning` / `error` are passed through from hotmilk; Pi maps each level through the active theme (monokai defines `warning` as `#FD9720` orange and `error` as `#E73C50` red). No custom colors exist in hotmilk code.
 
@@ -69,7 +69,6 @@ Frames are pure (`introLines`, `introTicks`, `scaleBanner`); the widget only adv
 
 Skipped when `ctx.hasUI` is false. `assets/image.jpeg` remains the pi.dev listing image, not a runtime surface.
 
-
 ### Mode modal
 
 `/mode` opens a custom TUI modal (`ctx.ui.custom`):
@@ -100,11 +99,11 @@ The companion web surface renders the Pi API server-side with `hono/jsx`. It car
 
 Tokens (web):
 
-| Token    | Value                       | Use                                        |
-| -------- | --------------------------- | ------------------------------------------ |
-| surface  | `{colors.primary}`          | Page background (Pi default text tone)     |
-| web-dim  | `{colors.dim}`              | Metadata, pager counts                     |
-| web-link | `{colors.accent}`           | Links, active page, passkey actions        |
+| Token    | Value              | Use                                    |
+| -------- | ------------------ | -------------------------------------- |
+| surface  | `{colors.primary}` | Page background (Pi default text tone) |
+| web-dim  | `{colors.dim}`     | Metadata, pager counts                 |
+| web-link | `{colors.accent}`  | Links, active page, passkey actions    |
 
 Components (web):
 

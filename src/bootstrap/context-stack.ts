@@ -54,7 +54,10 @@ type RtkAlignment = { config: JsonObject; changed: boolean };
  * Pure: `existing` with the coexistence fields forced when context-mode is on,
  * untouched otherwise, or the hotmilk default when there is no config yet.
  */
-export function alignRtkConfig(existing: JsonObject | undefined, contextModeEnabled: boolean): RtkAlignment {
+export function alignRtkConfig(
+  existing: JsonObject | undefined,
+  contextModeEnabled: boolean,
+): RtkAlignment {
   if (!existing) return { config: defaultRtkConfig(contextModeEnabled), changed: true };
   let config = existing;
   if (contextModeEnabled && config.mode !== "suggest") config = { ...config, mode: "suggest" };
@@ -62,7 +65,9 @@ export function alignRtkConfig(existing: JsonObject | undefined, contextModeEnab
   const output = current !== undefined && isJsonObject(current) ? current : {};
   const readCompaction = output.readCompaction;
   const readCompactionOff =
-    readCompaction !== undefined && isJsonObject(readCompaction) && readCompaction.enabled === false;
+    readCompaction !== undefined &&
+    isJsonObject(readCompaction) &&
+    readCompaction.enabled === false;
   if (contextModeEnabled && !readCompactionOff) {
     config = { ...config, outputCompaction: { ...output, readCompaction: { enabled: false } } };
   }
@@ -81,7 +86,9 @@ export function syncRtkConfig(
   configPath = join(getAgentDir(), "extensions", "pi-rtk-optimizer", "config.json"),
 ): RtkSync {
   try {
-    const existing = existsSync(configPath) ? parseRtkConfig(readFileSync(configPath, "utf8")) : undefined;
+    const existing = existsSync(configPath)
+      ? parseRtkConfig(readFileSync(configPath, "utf8"))
+      : undefined;
     const { config, changed } = alignRtkConfig(existing, contextModeEnabled);
     if (!changed) return { path: configPath, outcome: "unchanged" };
     mkdirSync(dirname(configPath), { recursive: true });
@@ -99,5 +106,7 @@ export function syncRtkConfig(
 export function prepareContextStack(
   extensionToggles: Record<BundledExtensionId, boolean>,
 ): RtkSync | undefined {
-  return extensionToggles["rtk-optimizer"] ? syncRtkConfig(extensionToggles["context-mode"]) : undefined;
+  return extensionToggles["rtk-optimizer"]
+    ? syncRtkConfig(extensionToggles["context-mode"])
+    : undefined;
 }

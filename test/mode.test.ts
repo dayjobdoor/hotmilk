@@ -4,7 +4,11 @@ import { initTheme } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { BUNDLED_EXTENSION_IDS, OMP_SUPPORTED_IDS } from "../src/config/bundled-extensions.ts";
 import { DEFAULT_HOTMILK_CONFIG, PERSONA_MODES } from "../src/config/hotmilk.ts";
-import { createModeSettingItems, openModeSettingsModal, PERSONA_SETTING_ID } from "../src/controller/mode.ts";
+import {
+  createModeSettingItems,
+  openModeSettingsModal,
+  PERSONA_SETTING_ID,
+} from "../src/controller/mode.ts";
 import { withConfigEnv } from "./fixtures/runtime.ts";
 import { makeTempDir } from "./fixtures/tmp.ts";
 

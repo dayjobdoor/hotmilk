@@ -39,9 +39,7 @@ export function isPersonaMode(value: string | undefined): value is PersonaMode {
   return PERSONA_MODES.some((mode) => mode === value);
 }
 
-function isProjectTrustMode(
-  value: JsonValue | string | undefined,
-): value is ProjectTrustMode {
+function isProjectTrustMode(value: JsonValue | string | undefined): value is ProjectTrustMode {
   return value === "delegate" || value === "prompt" || value === "always" || value === "never";
 }
 
@@ -302,7 +300,6 @@ export function saveHotmilkConfig(config: HotmilkConfig, configRoot?: string): C
     return { path: configPath, error: formatCaughtError(error) };
   }
 }
-
 
 /**
  * Pure: rows that were on by default before 0.2.0 and have no explicit value in this config

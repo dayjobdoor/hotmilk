@@ -30,9 +30,12 @@ describe("bundled extension manifest", () => {
       for (const definition of BUNDLED_EXTENSION_DEFINITIONS) {
         try {
           const mod = await import(bundledImportUrl(definition.module));
-          if (!(mod.default instanceof Function)) broken.push(`${definition.id}: no default factory`);
+          if (!(mod.default instanceof Function))
+            broken.push(`${definition.id}: no default factory`);
         } catch (cause) {
-          broken.push(`${definition.id}: ${cause instanceof Error ? cause.message : String(cause)}`);
+          broken.push(
+            `${definition.id}: ${cause instanceof Error ? cause.message : String(cause)}`,
+          );
         }
       }
       expect(broken).toEqual([]);

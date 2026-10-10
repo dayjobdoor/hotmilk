@@ -18,6 +18,8 @@ const ignorePatterns = [
   ".roo/**",
   ".windsurf/**",
   "tools/oxlint/anti-slop/**",
+  // Theory reference kept verbatim.
+  "skills/comfortzone/references/TCZ.md",
 ];
 
 export default defineConfig({

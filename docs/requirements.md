@@ -31,12 +31,12 @@ hotmilk is a Pi **meta-package**: one install bundles gentle-pi, context-mode, g
 
 ## Done looks like
 
-| Area | Acceptance |
-| ---- | ---------- |
+| Area                  | Acceptance                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | New bundled extension | Registry row, `package.json` dependency, README toggle note, module imports with a default factory; checklist in [bundles.md](bundles.md#adding-a-row) |
-| Toggle change | Persists to `hotmilk.json`; operator runs `/reload` to apply |
-| Startup | Enabled bundles register; context-stack order preserved |
-| Trust | Untrusted projects do not load project settings for dedupe; trust prompt when `mode: prompt` and UI exists |
-| Tests | `bun run test` and `bun run lint` pass (CI gate) |
+| Toggle change         | Persists to `hotmilk.json`; operator runs `/reload` to apply                                                                                           |
+| Startup               | Enabled bundles register; context-stack order preserved                                                                                                |
+| Trust                 | Untrusted projects do not load project settings for dedupe; trust prompt when `mode: prompt` and UI exists                                             |
+| Tests                 | `bun run test` and `bun run lint` pass (CI gate)                                                                                                       |
 
 Requirement add/remove is human except factual drift sync ([AGENTS.md](../AGENTS.md)).
