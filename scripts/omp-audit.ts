@@ -7,16 +7,16 @@
  * without error AND adds at least one command or tool; a row that loads but
  * adds nothing has no observable evidence and stays unverified.
  *
- * Exits 1 when omp's version differs from `OMP_AUDITED_VERSION` or when a row's
- * `omp` flag disagrees with the verdict. CI runs this against the pinned omp
- * release. Run: `bun run audit:omp [ids...]`.
+ * Runs against the omp on PATH and exits 1 when a row's `omp` flag disagrees with
+ * the verdict; a clean run on a release other than `OMP_AUDITED_VERSION` prints the
+ * pin to set. Manual (not in CI). Run: `bun run audit:omp [ids...]`.
  *
  * Lives outside `tools/`: omp scans a loaded package's `tools/` dir for custom
  * tools, and a script there hangs omp startup in `loadCustomTools`.
  */
 import { execFileSync, spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { availableParallelism, tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -26,7 +26,8 @@ import {
 
 const REPO = fileURLToPath(new URL("..", import.meta.url));
 const TIMEOUT_MS = 90_000;
-const BATCH = 8;
+// Each omp is CPU-heavy at startup; one per core starves them all into timeouts.
+const BATCH = Math.max(1, Math.floor(availableParallelism() / 2));
 const TIMEOUT_ERROR = "no RPC answer before timeout";
 // Optional ids on argv audit only those rows: `bun run audit:omp -- todo btw`.
 const ONLY = process.argv.slice(2);
@@ -133,30 +134,23 @@ function run(extensions: Record<string, boolean>): Promise<Surface> {
   let stdout = "";
   let stderr = "";
   proc.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString())); // drain: a full pipe blocks omp
-  // omp drops requests sent before startup finishes; resend until it answers.
-  const poll = setInterval(
-    () => proc.stdin.write('{"id":"c","type":"get_available_commands"}\n'),
-    2_000,
-  );
+  // Ask once omp says it is ready (omp://rpc.md: the ready frame comes first); earlier requests are dropped.
   let asked = false;
   return new Promise((done) => {
     const finish = () => {
-      clearInterval(poll);
       clearTimeout(deadline);
       if (pid !== undefined) killGroup(pid); // omp ignores SIGTERM in rpc mode; strays pile up otherwise
     };
     const deadline = setTimeout(finish, TIMEOUT_MS);
     proc.stdout.on("data", (chunk: Buffer) => {
       stdout += chunk.toString();
-      if (!asked && stdout.includes('"id":"c"')) {
+      if (!asked && stdout.includes('"type":"ready"')) {
         asked = true;
-        clearInterval(poll);
-        proc.stdin.write('{"id":"t","type":"prompt","message":"/audit-tools"}\n');
+        proc.stdin.write('{"id":"c","type":"get_available_commands"}\n{"id":"t","type":"prompt","message":"/audit-tools"}\n');
       }
       if (stdout.includes('"type":"prompt_result","id":"t"')) finish();
     });
     proc.on("close", () => {
-      clearInterval(poll);
       clearTimeout(deadline);
       if (pid !== undefined) live.delete(pid);
       const frames = parseFrames(stdout);
@@ -174,12 +168,11 @@ function run(extensions: Record<string, boolean>): Promise<Surface> {
   });
 }
 
+// Audit whatever omp is installed: installing the pinned release just to compare is the slow part.
+// A clean run on another release is the evidence for moving the pin (printed at the end).
 const ompVersion = execFileSync("omp", ["--version"]).toString().trim();
-if (ompVersion !== `omp/${OMP_AUDITED_VERSION}`) {
-  console.error(`${ompVersion} on PATH; OMP_AUDITED_VERSION is ${OMP_AUDITED_VERSION}.`);
-  console.error("Install the audited omp, or bump OMP_AUDITED_VERSION and re-audit every row.");
-  process.exit(1);
-}
+const repin = ompVersion !== `omp/${OMP_AUDITED_VERSION}`;
+if (repin) console.error(`${ompVersion} on PATH; OMP_AUDITED_VERSION is ${OMP_AUDITED_VERSION}.`);
 
 /** One retry for a timeout only: a CPU-starved runner is not a verdict; a load error is. */
 async function runStable(extensions: Record<string, boolean>): Promise<Surface> {
@@ -226,5 +219,8 @@ for (const { id, flag, surface } of rows) {
   );
 }
 console.log(`\n${mismatches} mismatch(es) against ${ompVersion}`);
+if (repin && mismatches === 0 && ONLY.length === 0) {
+  console.log(`All rows match: set OMP_AUDITED_VERSION = "${ompVersion.replace("omp/", "")}".`);
+}
 rmSync(PROBE_DIR, { recursive: true, force: true });
 process.exit(mismatches > 0 ? 1 : 0);

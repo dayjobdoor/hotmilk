@@ -4,13 +4,6 @@ on:
   push:
     branches:
       - main
-  # Emergency Pi-only release when omp-audit is blocked by omp or runner trouble; see docs/maintenance.md.
-  workflow_dispatch:
-    inputs:
-      skip_omp_audit:
-        description: Publish without the omp audit gate
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -34,8 +27,6 @@ jobs:
 
   publish:
     needs: [test]
-    # A skipped omp-audit (dispatch bypass) does not block; a failed one does.
-    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -64,7 +55,6 @@ jobs:
       - run: bun install --frozen-lockfile
         if: steps.publish_check.outputs.publish == 'true'
 
-      # Rely on the `test` and `omp-audit` jobs (`needs`) for lint/test/audit; pack only here.
       - name: Pack dry-run
         if: steps.publish_check.outputs.publish == 'true'
         run: npm pack --dry-run
