@@ -78,7 +78,7 @@ Skipped when `ctx.hasUI` is false. `assets/image.jpeg` remains the pi.dev listin
 - Groups: labels from `BUNDLED_EXTENSION_GROUP_ORDER` (`Harness`, `Agent tools`, `Context & performance`, `Integrations`, `Workflow`, `Output`, `Experiments`); each bundled id is `on` or `off`
 - Group header rows are not editable
 - Closing the list dismisses the modal
-- After close: info notify with config path and current toggles, then "Run /reload to apply"
+- After close: info notify `Updated <config path> from /mode. Run /reload to apply.`
 
 ### Status commands
 
@@ -92,7 +92,7 @@ Commands that notify without a modal:
 
 When `projectTrust.mode` is `prompt` and UI exists, `ctx.ui.confirm` asks `Trust project` with the project cwd and what trust enables. No UI → `undecided`.
 
-## Web surface (hono, Short-term)
+## Web surface (hono, Mid-term)
 
 The companion web surface renders the Pi API server-side with `hono/jsx`. It carries no client framework; all interaction is links and forms. Styling uses vendored daisyUI CSS served by hono (a browser asset, not a package dependency, and offline-safe). Paging and styles are managed here so the web surface and the TUI stay one design system.
 
