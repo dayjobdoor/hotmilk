@@ -9,16 +9,13 @@ import { existsSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-/** Split `pkg/subpath` or `@scope/pkg/subpath`; a bare name resolves to `index.ts`. */
+/** Split a registry specifier (`pkg/subpath` or `@scope/pkg/subpath`) into package and subpath. */
 function parseBundledModulePath(relativePath: string) {
   if (relativePath.startsWith("@")) {
     const parts = relativePath.split("/");
     return { pkgName: `${parts[0]}/${parts[1]}`, subpath: parts.slice(2).join("/") };
   }
   const slash = relativePath.indexOf("/");
-  if (slash === -1) {
-    return { pkgName: relativePath, subpath: "index.ts" };
-  }
   return { pkgName: relativePath.slice(0, slash), subpath: relativePath.slice(slash + 1) };
 }
 
