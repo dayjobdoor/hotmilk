@@ -1,3 +1,4 @@
+import { afterEach } from "vite-plus/test";
 import type { HotmilkRuntime } from "../../src/config/runtime.ts";
 import {
   BUNDLED_EXTENSION_IDS,
@@ -31,14 +32,26 @@ export function testRuntime(overrides: Partial<HotmilkRuntime> = {}): HotmilkRun
   };
 }
 
-/** Set a process env var and return a restore function. */
+const pendingEnvRestores: (() => void)[] = [];
+
+// A test that throws before its own restore() call must not leak env into the next test.
+afterEach(() => {
+  while (pendingEnvRestores.length > 0) pendingEnvRestores.pop()!();
+});
+
+/** Set a process env var; restored by the returned function or, at the latest, after the test. */
 export function setEnv(name: string, value: string): () => void {
   const previous = process.env[name];
   process.env[name] = value;
-  return () => {
+  let restored = false;
+  const restore = () => {
+    if (restored) return;
+    restored = true;
     if (previous === undefined) delete process.env[name];
     else process.env[name] = previous;
   };
+  pendingEnvRestores.push(restore);
+  return restore;
 }
 
 /**

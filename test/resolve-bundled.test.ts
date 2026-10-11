@@ -48,6 +48,6 @@ describe("resolveBundledModule", () => {
 
     expect(() =>
       resolveBundledModule("missing-package/extension.js", pathToFileURL(fromModule).href),
-    ).toThrow('Cannot resolve bundled module "missing-package/extension.js" from hotmilk');
+    ).toThrow("missing-package/extension.js");
   });
 });

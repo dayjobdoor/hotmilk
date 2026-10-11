@@ -73,7 +73,7 @@ describe("syncRtkConfig", () => {
 });
 
 describe("prepareContextStack", () => {
-  it("syncs only when rtk-optimizer is on", () => {
+  it("skips the rtk sync while rtk-optimizer is off", () => {
     const toggles = allExtensionsDisabled();
     expect(prepareContextStack(toggles)).toBeUndefined();
   });

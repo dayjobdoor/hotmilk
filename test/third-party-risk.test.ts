@@ -190,7 +190,7 @@ describe("third-party risk (hotmilk meta-package)", () => {
   });
 
   it(
-    "records known nested @earendil-works copies below Pi 0.80 as supply-chain drift",
+    "fails on nested @earendil-works copies below Pi 0.80 that are not known drift",
     { timeout: 15_000 },
     () => {
       const topLevelScope = join(REPO_ROOT, "node_modules", "@earendil-works");

@@ -23,7 +23,7 @@ describe("createModeSettingItems", () => {
 });
 
 describe("openModeSettingsModal", () => {
-  it("opens the custom settings UI and notifies after save", async () => {
+  it("opens the settings UI and tells the user to /reload", async () => {
     const configRoot = makeTempDir("hotmilk-mode-modal-");
     writeFileSync(join(configRoot, "hotmilk.json"), "{}", "utf8");
 

@@ -192,10 +192,10 @@ describe("detectProjectHotmilkEntry", () => {
 });
 
 describe("shouldYieldToProjectEntry", () => {
-  const packageDir = path.join(makeTempDir("hotmilk-pkgdir-"), "npm");
-  const globalEntryPath = path.join(packageDir, "node_modules", "hotmilk", "src", "index.ts");
-
   it("yields only for the npm-installed copy inside a hotmilk checkout", () => {
+    // packageDir is compared as a path only; it never has to exist on disk.
+    const packageDir = path.join(makeTempDir("hotmilk-pkgdir-"), "npm");
+    const globalEntryPath = path.join(packageDir, "node_modules", "hotmilk", "src", "index.ts");
     // Checkout fixture mirrors the repo's settings shape; no dependence on
     // this repo's gitignored .pi/settings.json.
     const checkout = makeTempDir("hotmilk-pkgdir-checkout-");

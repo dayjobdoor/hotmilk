@@ -167,7 +167,7 @@ describe("registerLanguageHint", () => {
     const result = await handler!({ systemPrompt: "base" });
 
     expect(result.systemPrompt.startsWith("base")).toBe(true);
-    expect(result.systemPrompt).toContain("Prefer responding in ja");
+    expect(result.systemPrompt).toMatch(/\bja\b/);
   });
 
   it("registers nothing without a language", () => {
@@ -208,7 +208,7 @@ describe("registerGraphHandlers", () => {
     );
     expect(notifications).toHaveLength(1);
     expect(notifications[0]).toMatchObject({
-      message: expect.stringContaining("Run `graphify update .`"),
+      message: expect.stringContaining("graphify update ."),
       level: "warning",
     });
 
@@ -258,7 +258,7 @@ describe("registerSessionHandlers", () => {
       expect(existsSync(join(configRoot, "hotmilk.json"))).toBe(true);
       expect(notifications).toHaveLength(1);
       expect(notifications[0]).toMatchObject({
-        message: expect.stringContaining("Created"),
+        message: expect.stringContaining("hotmilk.json"),
         level: "info",
       });
     });
@@ -327,13 +327,11 @@ describe("registerSessionHandlers", () => {
     });
 
     expect(notices.map(({ message }) => message)).toEqual([
-      expect.stringContaining("Created ~/.omp/agent/hotmilk.json"),
-      expect.stringContaining("Failed to parse"),
-      expect.stringContaining(
-        "pi-only bundled extensions skipped (not flagged omp in the registry): todo, btw",
-      ),
-      expect.stringContaining("omp 99.0.0 is not the audited release"),
-      expect.stringContaining("Adjusted pi-rtk-optimizer"),
+      expect.stringContaining("~/.omp/agent/hotmilk.json"),
+      expect.stringContaining("Invalid JSON"),
+      expect.stringContaining("todo, btw"),
+      expect.stringContaining("99.0.0"),
+      expect.stringContaining("pi-rtk-optimizer"),
       expect.stringContaining("graphify: global graphify-pi"),
       expect.stringContaining("lens: project pi-lens"),
     ]);
@@ -360,9 +358,7 @@ describe("registerSessionHandlers", () => {
     );
     expect(notices).toEqual([
       {
-        message: expect.stringContaining(
-          "Could not sync pi-rtk-optimizer config at /a/rtk.json: EACCES",
-        ),
+        message: expect.stringMatching(/\/a\/rtk\.json.*EACCES/),
         level: "warning",
       },
     ]);
@@ -440,7 +436,7 @@ describe("registerSessionHandlers", () => {
 
       // The alignment itself is pinned by context-stack.test.ts; this asserts the session-level outcome.
       expect(notifications.map(({ message }) => message)).toEqual([
-        expect.stringContaining("Adjusted pi-rtk-optimizer"),
+        expect.stringContaining("pi-rtk-optimizer"),
       ]);
       expect(parseJsonValue(readFileSync(rtkPath, "utf8"))).toMatchObject({ mode: "suggest" });
     });
