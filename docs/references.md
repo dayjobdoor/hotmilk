@@ -36,7 +36,7 @@ Bundled rows and their grounds live in [bundles.md](bundles.md); these are point
 
 | Package                                                                      | Informs                                                                                                                                  |
 | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| [@runecraft/graphify-pi](https://pi.dev/packages/@runecraft/graphify-pi)     | Bundled `graphify` row: lazy graph tools with git-based staleness; the first-party `skills/graphify` layer sits on it.                   |
+| [@runecraft/graphify-pi](https://pi.dev/packages/@runecraft/graphify-pi)     | Bundled `graphify` row: lazy graph tools with git-based staleness.                                                                       |
 | [pi-goal-x](https://pi.dev/packages/pi-goal-x)                               | Bundled `goal` row: `/goal` planning with persistent progress and an independent completion auditor; baseline for the native GOAL layer. |
 | [context-mode](https://pi.dev/packages/context-mode)                         | Bundled `context-mode` row: sandboxed execution and indexed context (`ctx_execute`).                                                     |
 | [pi-openspec-context](https://pi.dev/packages/pi-openspec-context)           | Removed `openspec-context` row; OpenSpec injection replaced by the change flow in [maintenance.md](maintenance.md#change-flow).          |

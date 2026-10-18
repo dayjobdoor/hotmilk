@@ -22,5 +22,4 @@ Read only what the current task needs. Entry: [README.md](../README.md). Bans an
 | Change flow: W-model plan, test, verify, docs sync    | [maintenance.md](maintenance.md#change-flow); agents run it via [skills/pioneer](../skills/pioneer/SKILL.md) |
 | Review a diff against its W table                     | [skills/pioneer-review/SKILL.md](../skills/pioneer-review/SKILL.md)                                          |
 | Measure or harden a skill/prompt                      | [skills/skill-eval/SKILL.md](../skills/skill-eval/SKILL.md)                                                  |
-| Architecture questions via the code graph             | [skills/graphify/SKILL.md](../skills/graphify/SKILL.md)                                                      |
 | AI coaching, self-coaching                            | [skills/comfortzone/SKILL.md](../skills/comfortzone/SKILL.md)                                                |

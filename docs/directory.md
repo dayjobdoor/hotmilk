@@ -47,7 +47,7 @@ flowchart TB
 | `src/controller/`              | `/mode`, `/stop`, `/interrupt`                                                                                                        |
 | `src/ui/`                      | Footer, startup intro (`logo.ts`)                                                                                                     |
 | `src/bootstrap/omp-loaders.js` | Literal-specifier bundle loaders used under omp (plain JS; types in `omp-loaders.d.ts`)                                               |
-| `skills/`                      | First-party skills (`pioneer`, `pioneer-review`, `skill-eval`, `graphify`, `comfortzone`)                                             |
+| `skills/`                      | First-party skills (`pioneer`, `pioneer-review`, `skill-eval`, `comfortzone`)                                                         |
 | `scripts/`                     | Local maintenance scripts (`omp-audit.ts` → `bun run audit:omp`); not shipped. Kept out of `tools/`, which omp scans for custom tools |
 | `assets/`                      | Package images (`pi.image`)                                                                                                           |
 | `tools/oxlint/anti-slop/`      | Custom Oxlint plugin ([pattern.md](pattern.md))                                                                                       |

@@ -84,7 +84,3 @@ Do not append toggled packages to `pi.extensions`.
 ## Layout
 
 Use [directory.md](directory.md) for module paths and the full tree.
-
-## Recon
-
-How agents use the graph (tool choice, freshness, verify in source): [skills/graphify](../skills/graphify/SKILL.md). The `graphify` row is off by default like every row; hotmilk's own seam is the stale-graph warning ([graph.ts](../src/bootstrap/graph.ts)).
