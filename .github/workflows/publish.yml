@@ -58,11 +58,9 @@ jobs:
             exit 0
           fi
 
-          # Prefer the version-bump commit on this branch (commit message "vX.Y.Z").
-          TAG_COMMIT=$(git log --format=%H --grep="^v${VERSION}$" -n 1 HEAD || true)
-          if [ -z "$TAG_COMMIT" ]; then
-            TAG_COMMIT="$GITHUB_SHA"
-          fi
+          # Tag the commit npm published from, not the push that happens to run this step.
+          TAG_COMMIT=$(npm view "hotmilk@$VERSION" gitHead)
+          git fetch --depth=1 origin "$TAG_COMMIT"
 
           REMOTE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG^{}" | awk '{print $1}')
           if [ "$REMOTE_SHA" = "$TAG_COMMIT" ]; then
