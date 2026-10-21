@@ -1,6 +1,2 @@
 .env
-
-!bun.lock
-
-# Local Pi runtime state
 .atl/

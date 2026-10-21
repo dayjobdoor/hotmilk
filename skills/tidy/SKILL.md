@@ -1,5 +1,6 @@
 ---
-description: Small, safe code cleanups — separate from feature work
+name: tidy
+description: Small, safe code cleanups kept separate from feature work (Tidy First). Use for tidy, "tidy this", "clean this up", rename, extract, clarify. Not for multi-hour refactors or redesigns.
 ---
 
 # Tidy First
