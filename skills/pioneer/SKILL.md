@@ -1,6 +1,6 @@
 ---
 name: pioneer
-description: Roadmap-anchored W-model change flow: pair each build level (requirements, system, detailed design, code) with its test design, run tests bottom-up, fix at the originating level. Use for pioneer, W-model, working on a ROADMAP item, multi-file changes, 計画付き実装. Not for questions or diff review (pioneer-review).
+description: "Roadmap-anchored W-model change flow: pair each build level (requirements, system, detailed design, code) with its test design, run tests bottom-up, fix at the originating level. Use for pioneer, W-model, working on a ROADMAP item, multi-file changes, 計画付き実装. Not for questions or diff review (pioneer-review)."
 ---
 
 # Pioneer

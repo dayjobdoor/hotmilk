@@ -1,11 +1,12 @@
-// Every skill dir needs SKILL.md with frontmatter name == dir name and a description.
+// Every skill dir needs SKILL.md with frontmatter name == dir name and a double-quoted
+// description (an unquoted ": " inside it breaks strict YAML parsers and the skill silently fails to load).
 import { readdirSync, readFileSync } from "node:fs";
 
 let bad = 0;
 for (const dir of readdirSync("skills", { withFileTypes: true }).filter((d) => d.isDirectory())) {
   const fm = readFileSync(`skills/${dir.name}/SKILL.md`, "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
   const name = fm.match(/^name:\s*(.+)$/m)?.[1].trim();
-  if (name !== dir.name || !/^description:\s*\S/m.test(fm)) {
+  if (name !== dir.name || !/^description: ".+"$/m.test(fm)) {
     console.error(`skills/${dir.name}/SKILL.md: bad frontmatter (name=${name})`);
     bad++;
   }

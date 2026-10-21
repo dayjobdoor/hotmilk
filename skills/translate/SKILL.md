@@ -1,6 +1,6 @@
 ---
 name: translate
-description: Translate text between English and Japanese, auto-detecting direction. Use for translate, 翻訳, 英訳, 和訳, "translate this". Not for other language pairs.
+description: "Translate text between English and Japanese, auto-detecting direction. Use for translate, 翻訳, 英訳, 和訳, \"translate this\". Not for other language pairs."
 argument-hint: "<text to translate>"
 ---
 

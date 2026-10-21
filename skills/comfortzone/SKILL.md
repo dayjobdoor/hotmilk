@@ -1,6 +1,6 @@
 ---
 name: comfortzone
-description: 苫米地理論 TCZ で AI エージェントをコーチング／セルフコーチングする。Use for comfortzone, TCZ, "coach the agent", "self-coach", "diagnose stall", エージェントをコーチングして, セルフコーチングで進めて, 行き詰まりを診断して. Not for manipulating third parties.
+description: "苫米地理論 TCZ で AI エージェントをコーチング／セルフコーチングする。Use for comfortzone, TCZ, \"coach the agent\", \"self-coach\", \"diagnose stall\", エージェントをコーチングして, セルフコーチングで進めて, 行き詰まりを診断して. Not for manipulating third parties."
 ---
 
 # Comfortzone（AI コーチング／セルフコーチング）

@@ -1,6 +1,6 @@
 ---
 name: skill-eval
-description: A/B-measure and harden a skill, prompt, or AGENTS.md section with fresh subagents (baseline vs target, one edit per iteration, hold-out). Use for skill-eval, "evaluate this skill", "A/B this prompt", スキル評価. Not for static rubric review, code review, or app benchmarks.
+description: "A/B-measure and harden a skill, prompt, or AGENTS.md section with fresh subagents (baseline vs target, one edit per iteration, hold-out). Use for skill-eval, \"evaluate this skill\", \"A/B this prompt\", スキル評価. Not for static rubric review, code review, or app benchmarks."
 argument-hint: "<path to SKILL.md, prompt file, or AGENTS.md section>"
 ---
 

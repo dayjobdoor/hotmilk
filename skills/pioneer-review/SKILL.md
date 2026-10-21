@@ -1,6 +1,6 @@
 ---
 name: pioneer-review
-description: Review a diff against its pioneer W table: every changed line traces to a requirement, every requirement to an observed check. Use for pioneer-review, "does the diff match the W table", when closing a pioneer change, 計画との差分レビュー. Not for generic PR, logic, or security review.
+description: "Review a diff against its pioneer W table: every changed line traces to a requirement, every requirement to an observed check. Use for pioneer-review, \"does the diff match the W table\", when closing a pioneer change, 計画との差分レビュー. Not for generic PR, logic, or security review."
 ---
 
 # Pioneer review
