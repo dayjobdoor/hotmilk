@@ -33,5 +33,8 @@
       "./themes"
     ],
     "image": "https://raw.githubusercontent.com/dayjobdoor/hotmilk/main/assets/image.jpeg"
+  },
+  "scripts": {
+    "check": "node scripts/check.mjs && npm pack --dry-run"
   }
 }
