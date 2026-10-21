@@ -8,14 +8,15 @@ pi install npm:hotmilk     # or: omp install hotmilk
 
 ## Contents
 
-| Path                | What                                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------------ |
-| `skills/pioneer`        | W-model change flow anchored on a roadmap item                                                     |
-| `skills/pioneer-review` | Review a diff against its W table                                                                  |
-| `skills/skill-eval`     | Measure and harden a skill or prompt with A/B runs                                                 |
-| `skills/comfortzone`    | Coach the agent toward a terminal-check goal; self-coach on long or stalled work (TCZ)             |
-| `skills/tidy`, `skills/translate` | Small safe cleanups (Tidy First); English ⇄ Japanese translation (former prompts) |
-| `themes/`               | `monokai`, `kanagawa` (select in `/settings`)                                                      |
+| Path                    | What                                                                                   |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| `skills/pioneer`        | W-model change flow anchored on a roadmap item                                         |
+| `skills/pioneer-review` | Review a diff against its W table                                                      |
+| `skills/skill-eval`     | A/B-measure and harden a skill or prompt                                               |
+| `skills/comfortzone`    | Coach the agent toward a terminal-check goal; self-coach on long or stalled work (TCZ) |
+| `skills/tidy`           | Small, safe cleanups (Tidy First)                                                      |
+| `skills/translate`      | English ⇄ Japanese translation                                                         |
+| `themes/`               | `monokai`, `kanagawa` (select in `/settings`)                                          |
 
 ## Upgrading from 0.2.x
 

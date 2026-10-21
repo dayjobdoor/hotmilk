@@ -1,6 +1,6 @@
 ---
 name: skill-eval
-description: Measure and harden a skill, prompt, or AGENTS.md section with fresh subagents. Frozen scenarios and checklists, a baseline arm without the target and a target arm with it, one minimal edit per iteration, a hold-out run before shipping. Use for skill-eval, "evaluate this skill", "does this prompt work", "harden this skill", "A/B this prompt". Not for static SKILL.md rubric reviews, code review, or app benchmarks.
+description: A/B-measure and harden a skill, prompt, or AGENTS.md section with fresh subagents (baseline vs target, one edit per iteration, hold-out). Use for skill-eval, "evaluate this skill", "A/B this prompt", スキル評価. Not for static rubric review, code review, or app benchmarks.
 argument-hint: "<path to SKILL.md, prompt file, or AGENTS.md section>"
 ---
 
@@ -31,9 +31,8 @@ the body: triggers, scope, outputs. Fix mismatches before any run.
 
 ## 2. Run both arms
 
-Per scenario, dispatch two fresh subagents (pi: `subagent_run` with an agent
-from `subagent_list_agents` and `mode: "task"`, which needs the `subagents`
-row on; omp: `task`). Never reuse a child.
+Per scenario, dispatch two fresh subagents with the host's own subagent tool
+(omp: `task`). Never reuse a child. No such tool: see the honesty boundary.
 
 - **baseline**: scenario + checklist, no target text.
 - **target**: the complete target text pasted in, then scenario + checklist.
@@ -107,6 +106,5 @@ structural-only read as a run.
 
 ## Boundaries
 
-Edits only the target, one delta at a time. Code review: `pioneer-review`;
-over-engineering: `ponytail-review`; optimisation loops over code metrics:
-`autoresearch-create` (ships with the `autoresearch` row).
+Edits only the target, one delta at a time. Plan-conformance review of a
+diff: `pioneer-review`. Not for code review or optimisation loops over code metrics.

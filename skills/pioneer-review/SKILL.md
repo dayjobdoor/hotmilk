@@ -1,6 +1,6 @@
 ---
 name: pioneer-review
-description: Review a diff against its pioneer W table, not as its author. Every changed line must trace to a requirement, every requirement to an observed check, and code, config, and docs must agree. Use for pioneer-review, "review this change against the plan", "does the diff match the W table", or when closing a pioneer change. Not for generic PR, logic, or security review. One-shot report, applies nothing.
+description: Review a diff against its pioneer W table: every changed line traces to a requirement, every requirement to an observed check. Use for pioneer-review, "does the diff match the W table", when closing a pioneer change, 計画との差分レビュー. Not for generic PR, logic, or security review.
 ---
 
 # Pioneer review
@@ -38,4 +38,4 @@ traced. Nothing found: `Traced. Ship.`, then the `trace:` line.
 ## Boundaries
 
 Plan conformance only. Logic bugs and security: a normal review pass.
-Over-engineering: `ponytail-review`. Lists findings, edits nothing. One-shot.
+Lists findings, edits nothing. One-shot.

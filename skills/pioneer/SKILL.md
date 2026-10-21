@@ -1,6 +1,6 @@
 ---
 name: pioneer
-description: Roadmap-anchored W-model development flow for any repository. Starts each change from a roadmap horizon item, pairs each build level (requirements, system design, detailed design, code) with its test design and a review gate, executes tests bottom-up, routes every failure back to the level that caused it, and syncs the roadmap on close. Use for pioneer, W-model, working on a ROADMAP item, multi-file implementation, bug fixes that need a plan, or when test design should start before code. Not for questions or for reviewing an existing diff (pioneer-review).
+description: Roadmap-anchored W-model change flow: pair each build level (requirements, system, detailed design, code) with its test design, run tests bottom-up, fix at the originating level. Use for pioneer, W-model, working on a ROADMAP item, multi-file changes, 計画付き実装. Not for questions or diff review (pioneer-review).
 ---
 
 # Pioneer
